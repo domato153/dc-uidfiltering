@@ -15,3 +15,9 @@ All seven example assets are unchanged actual anonymous public wutheringwaves pa
 Validation is impact-selected:four inline/native overflow/refresh contexts,four header/scroll/material/14-palette contexts,two suspended-render recovery contexts;site1440/980/390 images,tabs/keyboard/local anchors/equal CTAs/no horizontal overflow. No broad product suite or live writes. Source injection is not installed-extension/device qualification. Pixel deltas identify intended navigation/composition changes and dynamic live content;manual image review/user approval remain separate.
 
 Next:user reviews the rendered site/README proposal;revise concrete feedback or begin separately approved stage4. Do not infer publication from a screenshot/checkpoint.
+
+## Final list-only alignment correction
+
+List GNB center repair2026-11-05:the64px list first row contains a60px wrapped GNB while its normal8px top margin loses to the verified early important zero-margin reset. Existing GNB presenter now scopes an important8px inset and24px border-box links to list context at>=900px;two rows fit48px centered at36 with4px clearance against the8..64 plate. Other routes and<900px stress retain existing rules. Positive GNB center/clearance was missing from the previous global chrome assertion;include it with wrapped navigation,not only logo/search/recent. Actual article GNB style/geometry is identical to control. Only list/palette/menu example images were recaptured;unchanged article/write/PC captures retain original receipt/runtime bindings.
+
+README remains a separate native Markdown proposal in design-prototypes/site-v7/README.md:equal installation links,Mobile/PC distinction,features,actual examples,help and separate-storage caveat. Promotion will replace root README and mirror it/images to Mobile only after approval;this correction does not publish.

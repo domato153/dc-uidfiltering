@@ -5,12 +5,12 @@
 - Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 toolbar adopted;stage2 PC reuse accepted by user. Stage3 site/index/README proposal is ready for review;stage4 official promotion remains separately approved.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `site-v7-proposal`;one next action `site-v7-proposal-review`.
-- Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,centering,late-padding protection and original scroll/resume.
-- Source state: Source checkpoint base HEAD `ce69502a3034cb1338939ca4a648b7d9a6006df6` on `codex/ui-port-boundary`. Read fresh Git/checkpoint receipt for actual commit/push/CI disposition.
-- Candidate fingerprint: `40f51cde23f8b14687c781c5b28703943d3ab2248e594ee28febfefd812f1fe8`
-- Current stage receipt: `verification/receipts/2026-11-05-inline-header-site-v7.json` SHA-256 `93d0315b3f88277ee3efb3f16b46f5436e9343e640396522a237a9a1ce3ddf3b`.
-- Current artifact: Mobile3.5.5 108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589 guard/root/dist;PC1.9.9 ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91 root/dist unchanged. No bump/publication.
-- Current scoped checks:four inline-category, four header/palette/scroll and two suspended-render recovery contexts pass;release/architecture checks pass. Site1440/980/390 image/tab/keyboard/anchor/equal-install/no-overflow checks pass. Both visual pairs show intended differences,manually reviewed;no user approval follows automatically.
+- Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,late-padding protection and original scroll/resume. Final list GNB correction fits wrapped links and bypasses only the verified important zero-margin conflict;article/write stay unchanged.
+- Source state: Source checkpoint base HEAD `eec1667460d66f7ec55c9e5f898ff6592678f585` on `codex/ui-port-boundary`. Read fresh Git/checkpoint receipt for actual commit/push/CI disposition.
+- Candidate fingerprint: `6e6c4d3b1bc2e896c81d2493e35cb43494ee2401f56172f94080cae44db8ecb0`
+- Current stage receipt: `verification/receipts/2026-11-05-list-gnb-center.json` SHA-256 `fd5dd94bd0888dd096488e83bef0ca2eff04f9bec8d1f8aee2feb0f49b9da3b4`.
+- Current artifact: Mobile3.5.5 80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3 guard/root/dist;PC1.9.9 ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91 root/dist unchanged. No bump/publication.
+- Current scoped checks:four affected header/palette/scroll contexts pass with new GNB center/clearance assertions;historical palette/reset/door owner checks pass. Actual article GNB geometry/style unchanged. Three affected real captures updated;other route/PC/site-layout evidence retains prior exact bindings,not a fresh full-runtime certification.
 - Reviewable proposal: `design-prototypes/site-v7`;local viewer/site-v7 on existing10067 review server. README draft,generated composition reference and seven actual public examples included. Root index/style/README and official refs remain untouched.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`,artifacts/site-v7-2026-11-04 and artifacts/site-v7-visual-2026-11-05. Captures are unmodified anonymous public site content with source injection,not fixtures,generated examples or installed-extension/device proof.
 - Accepted baseline: Adopted actual memo/current v7;latest user restores inline services/categories. Prior PC common-code port is accepted;site composition is a proposal,not approval.
@@ -19,7 +19,7 @@
 - Pending live checks: Actual installed-PC use and exact Mobile OS/discard remain unqualified;known installed-Chrome/Tampermonkey route is supported. Site appearance and stage4 approval pending.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"108930C864B2E3EFB541B3105EA80ECF6E97C592CEAA7E19C79EB210A81BE589"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
+{"schemaVersion":1,"mobile":{"sha256":"80EC1567EB0D5D0DCDB0C56143EAC32C6E4298DCD780AFD003071042894DB3E3"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

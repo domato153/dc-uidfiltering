@@ -73,7 +73,12 @@
         ${selectors.list} > li > a[data-dcuf-header-gnb-role="current-link"],
         ${selectors.list} > li > a:is(:hover, :focus-visible) { background: transparent; border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }
         ${selectors.darkList} > li > a[data-dcuf-header-gnb-role="current-link"] { color: var(--dcuf-theme-accent-ink); }
-        :where([data-dcuf-list-header]) ${selectors.root} { margin-block-start: 8px; }
+        /* The early native reset owns important zero margins. In the compact
+           list row, restore its intended inset and fit wrapped links inside it. */
+        @media (min-width: 900px) {
+            :where([data-dcuf-list-header]) ${selectors.root} { margin-block-start: 8px !important; }
+            :where([data-dcuf-list-header]) ${selectors.list} > li > a { min-height: 24px; box-sizing: border-box; }
+        }
         @media (max-width: 899px) { ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; } ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; } }
 
 `

@@ -722,3 +722,8 @@ Read handlers before opening unknown controls:bigcon may issue automatically;sta
 ## List disclosure rollback and real distribution examples —2026-11-05
 
 User rejected added exploration/category drawers because they emptied the list header. Restore the pre-a3090b4 inline paths only;do not restore the whole old header and lose accepted glass,row spacing,late DCMOD specificity or ready recovery. Native overflow and direction-reveal controller remain. For site examples use unmodified actual public DOM/content with exact artifact identities;generated mocks/fixtures/text replacement are not real-site examples. Source injection is not installed-extension/device certification. Stage3 site prototype and stage4 official publication remain separate.
+
+
+## Compact header wrapped GNB vertical clearance —2026-11-05
+
+List GNB center repair2026-11-05:the64px list first row contains a60px wrapped GNB while its normal8px top margin loses to the verified early important zero-margin reset. Existing GNB presenter now scopes an important8px inset and24px border-box links to list context at>=900px;two rows fit48px centered at36 with4px clearance against the8..64 plate. Other routes and<900px stress retain existing rules. Positive GNB center/clearance was missing from the previous global chrome assertion;include it with wrapped navigation,not only logo/search/recent. Actual article GNB style/geometry is identical to control. Only list/palette/menu example images were recaptured;unchanged article/write/PC captures retain original receipt/runtime bindings.
