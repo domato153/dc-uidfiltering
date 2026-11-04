@@ -167,7 +167,7 @@
             ${selectors.root} [data-dcuf-gallery-page-head-role="settings-layer"] { max-height: min(360px,40dvh); overflow: auto; }
         }
 
-        :where([data-dcuf-list-header]) ${selectors.root} { align-items: center; --dcuf-gallery-head-padding: 13px 14px; margin: 0 auto; border: 0; background: transparent; }
+        :where([data-dcuf-list-header]) ${selectors.root} { align-items: center; --dcuf-gallery-head-padding: 19px 14px 13px; margin: 0 auto; border: 0; background: transparent; }
         :where([data-dcuf-list-header]) ${selectors.left} { align-items: center; gap: 10px; }
         :where([data-dcuf-list-header]) ${selectors.left} > h2 { font: 730 24px/1.3 system-ui,sans-serif; letter-spacing: -.6px; }
         @media (max-width: 759px) { :where([data-dcuf-list-header]) ${selectors.root} { --dcuf-gallery-head-padding: 12px 14px; } }

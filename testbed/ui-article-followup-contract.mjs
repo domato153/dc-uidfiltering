@@ -76,6 +76,9 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    await p.locator('[data-dcuf-gallery-more-toggle]').waitFor();await paint(p);
    await p.locator('[data-dcuf-header-drawer-part="carrier"]').waitFor({state:'attached'});
    assert.equal(await p.locator('[data-dcuf-header-drawer-part="carrier"]').evaluate(n=>getComputedStyle(n).marginBottom),'0px','Empty native door carrier cannot split the unified header plate');
+   // The fixture inserted native parts after boot; measure only after their
+   // existing owner projection has settled,as the ordinary resize path does.
+   await p.evaluate(()=>window.dispatchEvent(new Event('resize')));await paint(p);
    const frame=await p.evaluate(()=>{const layout=document.querySelector('[data-dcuf-header-layout]'),s=getComputedStyle(layout,'::before'),gallery=document.querySelector('[data-dcuf-gallery-page-head-role="root"]'),toolbar=document.querySelector('[data-dcuf-surface="list-toolbar"]');return{bottom:layout.getBoundingClientRect().top+parseFloat(s.marginTop)+parseFloat(s.height),toolbarBottom:toolbar.getBoundingClientRect().bottom,galleryBorder:getComputedStyle(gallery).borderLeftWidth,toolbarBorder:getComputedStyle(toolbar).borderLeftWidth}});
    assert.ok(Math.abs(frame.bottom-frame.toolbarBottom)<2,'One header frame spans all three tiers: '+JSON.stringify(frame));assert.equal(frame.galleryBorder,'0px');assert.equal(frame.toolbarBorder,'0px');
    const destinations=await p.locator('.gnb_list > li > a').evaluateAll(ns=>ns.map(n=>n.getAttribute('href')));
