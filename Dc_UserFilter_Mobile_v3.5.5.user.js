@@ -2817,6 +2817,24 @@ const __dcufSettingsPresenter = (() => {
                 backdrop-filter: none;
             }
             [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="top"],[data-dcuf-scroll="measuring"]) { padding: 6px 12px; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+            /* Glass stays on a paint plane so native popup containing blocks
+               and every toolbar/control rectangle remain unchanged. */
+            :where([data-dcuf-list-header]) [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="top"],[data-dcuf-scroll="measuring"])::before {
+                --dcuf-toolbar-glass-tint: var(--dcuf-theme-accent-soft);
+                content: "";
+                position: absolute;
+                inset: 0;
+                z-index: -1;
+                pointer-events: none;
+                border-radius: 0 0 15px 15px;
+                background: var(--dcuf-b1-sheen), linear-gradient(180deg,transparent,color-mix(in srgb,var(--dcuf-toolbar-glass-tint) 36%,transparent) 24%,color-mix(in srgb,var(--dcuf-toolbar-glass-tint) 64%,transparent) 62%,color-mix(in srgb,var(--dcuf-toolbar-glass-tint) 82%,transparent));
+                backdrop-filter: var(--dcuf-b1-structural-filter,blur(12px) saturate(1.1));
+            }
+            /* User refinement: strengthen light only; retain the earlier dark face. */
+            :where(.dc-filter-dark-mode) [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="top"],[data-dcuf-scroll="measuring"])::before {
+                background: var(--dcuf-b1-sheen),color-mix(in srgb,var(--dcuf-theme-accent-soft) 62%,transparent);
+                mask-image: linear-gradient(180deg,transparent,#0006 24%,#000c 62%,#000);
+            }
             /* Once the adapter is ready, grid replaces the host's float clearfix. */
             [data-dcuf-surface="list-toolbar"][data-dcuf-state="ready"]::after { content: none; display: none; }
             [data-dcuf-surface="list-toolbar"][data-dcuf-scroll]:not([data-dcuf-scroll="measuring"]) {
@@ -24176,6 +24194,17 @@ init() {
             const bootController = window.__dcufBootController;
             if (!this._bootRollbackRegistered && typeof bootController?.registerRollback === 'function') {
                 this._bootRollbackRegistered = true;
+                const reconnectHeaderPresentation = () => {
+                    const options = { runtimeCoordinator: this.getRuntimeCoordinator() };
+                    __dcufHeaderShellHostAdapter.connect(document, options);
+                    __dcufGalleryPageHeadHostAdapter.connect(document, options);
+                    __dcufHeaderGnbHostAdapter.connect(document, options);
+                    __dcufHeaderRecentVisitHostAdapter.connect(document, options);
+                };
+                // Suspended frames can let the deadline roll presentation back
+                // after filterReady was set. The later ready transition must
+                // restore its owners even when markFilterReady does not rerun.
+                bootController.onReady(reconnectHeaderPresentation);
                 bootController.registerRollback((reason) => {
                     this.rollbackInitialListTransactions(reason);
                     __dcufArticleHostAdapter.dispose(document);
@@ -24191,18 +24220,7 @@ init() {
                     this._nativeFormHeaderConnected = false;
                 });
                 bootController.registerRecovery(() => {
-                    __dcufHeaderShellHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
-                    __dcufGalleryPageHeadHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
-                    __dcufHeaderGnbHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
-                    __dcufHeaderRecentVisitHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
+                    reconnectHeaderPresentation();
                     this.ensureKnownListRuntimes(document, 'boot-recovery');
                     if (this.isViewPage()) {
                         __dcufArticleHostAdapter.refresh(document);

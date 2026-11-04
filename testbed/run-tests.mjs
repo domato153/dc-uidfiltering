@@ -38,7 +38,7 @@ import { runOwnedGlassContract } from './ui-b1-owned-glass-contract.mjs';
 import { runOwnedConditionalContract } from './ui-b1-owned-conditional-contract.mjs';
 import { runOwnedInputContract } from './ui-b1-owned-input-contract.mjs';
 import {runShortcutFeedbackContract,runPageFeedbackContract,runBadgeFeedbackContract,runPreviewFeedbackContract} from './ui-user-feedback-contract.mjs';
-import {runArticleFollowupContract,runHeaderFollowupContract,runAuthorPlacementFollowup,runFabMaterialFollowup} from './ui-article-followup-contract.mjs';
+import {runArticleFollowupContract,runHeaderFollowupContract,runHeaderResumeContract,runAuthorPlacementFollowup,runFabMaterialFollowup} from './ui-article-followup-contract.mjs';
 import {runPreviewSanitizerContract,runPreviewNativeMovieContract} from './ui-preview-media-contract.mjs';
 import {runCategoryPickerContract} from './ui-category-picker-contract.mjs';
 import { runLoginEntryContract } from './ui-b1-login-contract.mjs';
@@ -85,6 +85,7 @@ test('User feedback: shortcut capture and actual launcher', 'functional', async(
 test('User feedback: full-width pages category arrow and glass menu', 'functional', async()=>runPageFeedbackContract({browser,server}), ['mobile']);
 test('Article followup: native reply geometry title metadata and sticker density', 'functional', async()=>runArticleFollowupContract({browser,server}), ['mobile']);
 test('Header followup: exploration utilities anchored categories and scroll reuse', 'functional', async()=>runHeaderFollowupContract({browser,server}), ['mobile']);
+test('Header resume: suspended rendering restores rolled-back header owners before ready', 'boot', async()=>runHeaderResumeContract({browser,server}), ['mobile']);
 test('Author followup: first-frame material and actual containing-block placement', 'functional', async()=>runAuthorPlacementFollowup({browser,server}), ['mobile']);
 test('FAB followup: common paired material and fourteen palettes in both themes', 'functional', async()=>runFabMaterialFollowup({browser,server}), ['mobile']);
 test('Preview media: native body lazy images and safe direct controls', 'functional', async()=>runPreviewSanitizerContract({browser,server}), ['mobile']);

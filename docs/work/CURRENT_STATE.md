@@ -2,22 +2,22 @@
 
 ## Current execution
 
-- Active plan: Grouped repairs implemented as a review candidate. New single-frame header is list-page-top only;existing floating inline toolbar and non-list upper chrome retained. ARTICLE_COMMENT_POPUP_REPAIRS.md and NEXT own review.
+- Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 only:Mobile toolbar finishing and header/canvas resume repair. PC port,site/docs proposal and approved official promotion are later separate units.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
-- Accepted visual preference: Adopted list header and centered rows retained. User-reported post-load regression is an external DCMOD-prefixed important padding conflict;current repair protects only existing list-row padding. Actual memo/current bright-dark detail remains.
-- Source state: Source checkpoint base HEAD `77851b67e6c4df9f05ac7ce68d9c816495077e0e` on `codex/ui-port-boundary`;list-only late external padding repair locally verified. Prior checkpoint CI passed. Preserve unrelated debug.log.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/header-load-regression-2026-11-04 holds the frozen control,exact external-rule replay,raw selected logs and public before/current captures;viewer under artifacts/b1-detail-2026-10-23/header-load-regression.
-- Candidate fingerprint: `0c0d1defa23b5f8b3f97d7b63767b75ac7e94c18b0cdd485d4a37811595382b2`
-- Last current audit: UNKNOWN: formal upper admission/user actual use remain open. Current4-context regression passes;42 normal differential pairs agree but inherited two positive guards fail on both sides. No full qualification claim.
-- Current stage receipt: `verification/receipts/2026-11-04-header-late-padding.json` SHA-256 `C4AD3764633494B73EC44E621CF84F16AE4A7CAD85F1C960070F5E81B7636F86`;prior receipts retain historical scopes.
-- Accepted baseline: Actual adopted memo/current bright-dark v7 rules retained. Grouped folder/editor child finish and full-page review are now recorded locally;unobserved native permission/server/plugin/device branches remain distinct.
-- Current artifact: Mobile3.5.5 A9E641771A2FE805CCBED3F38F1BADACD5FF22ABB95B6B7D5CE45A2584F19748 guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged. No version bump or publication.
-- Blockers: No implementation/authorization hold in the bounded repair. Actual-extension recheck has an options-page environment failure;user actual-use confirmation and exact-path checkpoint remain separate.
-- Pending live checks: Final repaired runtime plus complete external DCMOD in user environment remains unconfirmed. Current actual-TM installation attempt stopped at empty public options page;prior supported actual-extension route is retained. Public source captures replay the exact external CSS,not its whole package. Real submission/exact phone separate.
+- Accepted visual preference: Existing soft continuous face;increase tint in LIGHT only. DARK retains earlier face. White-center/bright-bottom-band trial NOT ADOPTED. Actual memo/current bright-dark controls remain detail authority.
+- Source state: Source checkpoint base HEAD `0e1edb1158ea2c3c3005872e98438c169fa4cdd9` on `codex/ui-port-boundary`;stage1 locally verified pending exact-path checkpoint. No version bump or publication.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/toolbar-glass-2026-11-04 holds frozen controls,selected logs,normal/backing images and comparison. Viewer at artifacts/b1-detail-2026-10-23/toolbar-glass.
+- Candidate fingerprint: `dedddeaf5b54051e6be44b5b8b2da59ac987314b427a7e5cdf375b82be637c76`
+- Last current audit: UNKNOWN:formal admission and user actual-use remain open. Scoped header4,resume2 and4 adjacent checks pass;negative pre-recovery control reproduces all-zero owners/styles. Light inactive-label contrast remains below4.5;no accessibility certification.
+- Current stage receipt: `verification/receipts/2026-11-04-toolbar-glass-header-resume.json` SHA-256 `565D09E4C9BB1E182A2854594D6F35E3C5363861BC68018D5FD43EC4CD631EE3`;prior receipts retain historical scopes.
+- Accepted baseline: Adopted memo/v7 and list-only shared plate retained. Late DCMOD important-padding protection retained. Current ready-hook restoration also restores the whole-page canvas via existing layout ownership.
+- Current artifact: Mobile3.5.5 2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged.
+- Blockers: No bounded implementation hold. Current source-injected checks do not establish actual installed-extension or exact OS/device behavior. Stage1 review remains before separate PC stage.
+- Pending live checks: User environment:final tint preference and background-tab return stability with complete external extensions. Known actual-Chrome/Tampermonkey route remains supported;earlier options-page failure is local environment history,not a global blocker.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"A9E641771A2FE805CCBED3F38F1BADACD5FF22ABB95B6B7D5CE45A2584F19748"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
+{"schemaVersion":1,"mobile":{"sha256":"2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

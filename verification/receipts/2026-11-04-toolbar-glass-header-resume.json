@@ -1,0 +1,215 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "scope": "Stage1 only:list-top toolbar backing and Mobile ready recovery of header plus shared canvas",
+  "baseCommit": "0e1edb1158ea2c3c3005872e98438c169fa4cdd9",
+  "mobileSha256": "2c14f66fb22c8155ec266f9e1c91bc4a9ab1a31ac230a6b559106880c880b62b",
+  "pcSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+  "controlSha256": "a9e641771a2fe805ccbed3f38f1badacd5ff22abb95b6b7d5ce45a2584f19748",
+  "preRecoveryControlSha256": "978779c79b06894e8925620224cb4ae949dd569157dc8b41904a09e254a65e14",
+  "change": {
+    "paint": "Light only:palette accent-soft alpha fade on existing noninteractive pseudo. No new border,geometry,controls or scroll owner. Dark restores the earlier soft masked face;rejected white-center/bottom-band trial not adopted.",
+    "recovery": "Existing Mobile UI boot onReady reconnects the same four header adapters before ready event. Existing recovery callback reuses that closure. No shared bootstrap/PC/filter/storage/network changes or new listener/observer/polling.",
+    "canvas": "Native dcwrap contains header and page content;losing its header-layout projection also removes the page canvas. Same ready reconnect restores both."
+  },
+  "userObservedFailure": {
+    "boot": "ready",
+    "listContext": false,
+    "headerStyles": [
+      false,
+      false,
+      false,
+      false
+    ],
+    "headerResources": "All four activeRoots/mutationSubscribers zero;recent timers/frames/listeners zero",
+    "classification": "Matches deterministic delayed-render rollback. Exact real OS scheduling sequence remains unconfirmed."
+  },
+  "selectedTests": {
+    "header": {
+      "status": "PASS",
+      "contexts": 4,
+      "coverage": "Palette14 preview/cancel and save/cancel;native menus,focus,category anchoring,late DCMOD padding,down/up/down;top-only plane;light/dark mask contract"
+    },
+    "resume": {
+      "status": "PASS",
+      "contexts": 2,
+      "coverage": "Actual degraded rollback after filterReady,then ready;four owners/styles/listContext and whole-page canvas restored;native exploration;repeated visible/ready idempotency;settled recovery and header timers/frames"
+    },
+    "negativeControl": {
+      "status": "EXPECTED_FAIL",
+      "coverage": "Immediate pre-recovery runtime reproduces ready with all four styles/owners0 under same suspended rendering test"
+    },
+    "adjacent": {
+      "status": "PASS",
+      "tests": 4,
+      "coverage": "Pending storage,rejected read,list preparation rollback and non-list form header reuse"
+    },
+    "static": {
+      "status": "PASS",
+      "coverage": "UI boundaries43 files;live architecture9 surfaces;no registry ownership change"
+    },
+    "logs": {
+      "settled-header": {
+        "path": "artifacts/toolbar-glass-2026-11-04/settled-header.log",
+        "sha256": "cfacef3ec8459e8bf2c3626e48bb74a97838adf49fedeb804b3be1ffb0d0d839"
+      },
+      "settled-resume": {
+        "path": "artifacts/toolbar-glass-2026-11-04/settled-resume.log",
+        "sha256": "a8b78d7a3216393336c79eb03bf2040b03b508e6e9570c2d9e199d3cf069fd96"
+      },
+      "resume-control": {
+        "path": "artifacts/toolbar-glass-2026-11-04/resume-control.log",
+        "sha256": "511b6864a9679a8cd10ac73058767bc6cd135f8b18d4d4fbd67ba62527ebad96"
+      },
+      "boot-pending-storage": {
+        "path": "artifacts/toolbar-glass-2026-11-04/boot-pending-storage.log",
+        "sha256": "0728dc50e0f229ef036910af048150f7a4df0f4f996d72ab9ee1bb508fa65c38"
+      },
+      "boot-rejected-storage": {
+        "path": "artifacts/toolbar-glass-2026-11-04/boot-rejected-storage.log",
+        "sha256": "1ac4a573ada0c946f01cf08ea916cb4cc6c829171a0db7e25e7a816961f20ff2"
+      },
+      "boot-list-rollback": {
+        "path": "artifacts/toolbar-glass-2026-11-04/boot-list-rollback.log",
+        "sha256": "82944da351364f52b129be19f35a25562bf07f86927f5e92add9643fec62f657"
+      },
+      "form-header": {
+        "path": "artifacts/toolbar-glass-2026-11-04/form-header.log",
+        "sha256": "855f8cd3e94622ccb89e47ef8c5c482856f400de2600d92600fb6416c17dff59"
+      },
+      "viewer-check": {
+        "path": "artifacts/toolbar-glass-2026-11-04/viewer-check.log",
+        "sha256": "5869a3ac2810048d6684ed8ec2c42bac3367f9d2e4532d1bd3da8fb0f20ebb3b"
+      }
+    }
+  },
+  "visual": {
+    "status": "REVIEWED_INTENDED_MATERIAL_DIFFERENCE_USER_APPROVAL_PENDING",
+    "provenance": "Public GET/HEAD source-injected Chrome156.0.8078.80,fresh contexts. A9 baseline and current loaded from separate explicit runtime files;capture-helper top metadata globally binds candidate,so these side bindings take precedence.",
+    "beforeRuntimeSha256": "a9e641771a2fe805ccbed3f38f1badacd5ff22abb95b6b7d5ce45a2584f19748",
+    "afterRuntimeSha256": "2c14f66fb22c8155ec266f9e1c91bc4a9ab1a31ac230a6b559106880c880b62b",
+    "geometry": "Capture driver asserts exact toolbar,visible native-control,logo/search/gallery-row rectangles equal in4 states",
+    "normalStates": [
+      {
+        "mode": "before",
+        "kind": "major",
+        "width": 1630,
+        "height": 900,
+        "dark": false,
+        "contrasts": [
+          5.556877171442111,
+          4.496151610725541,
+          4.496151610725541
+        ]
+      },
+      {
+        "mode": "before",
+        "kind": "minor",
+        "width": 1158,
+        "height": 900,
+        "dark": false,
+        "contrasts": [
+          5.5467950651929705,
+          4.490885613024663,
+          4.490885613024663
+        ]
+      },
+      {
+        "mode": "before",
+        "kind": "minor",
+        "width": 980,
+        "height": 2306,
+        "dark": true,
+        "contrasts": [
+          6.01804939972501,
+          7.329763759693573,
+          7.329763759693573
+        ]
+      },
+      {
+        "mode": "before",
+        "kind": "mini",
+        "width": 390,
+        "height": 760,
+        "dark": false,
+        "contrasts": [
+          5.53036883153617,
+          4.474703320347939,
+          4.474703320347939
+        ]
+      },
+      {
+        "mode": "after",
+        "kind": "major",
+        "width": 1630,
+        "height": 900,
+        "dark": false,
+        "contrasts": [
+          5.358669969481443,
+          4.3280616513166015,
+          4.3280616513166015
+        ]
+      },
+      {
+        "mode": "after",
+        "kind": "minor",
+        "width": 1158,
+        "height": 900,
+        "dark": false,
+        "contrasts": [
+          5.349131672833927,
+          4.3280616513166015,
+          4.3280616513166015
+        ]
+      },
+      {
+        "mode": "after",
+        "kind": "minor",
+        "width": 980,
+        "height": 2306,
+        "dark": true,
+        "contrasts": [
+          4.998022921316372,
+          6.197842970535444,
+          6.197842970535444
+        ]
+      },
+      {
+        "mode": "after",
+        "kind": "mini",
+        "width": 390,
+        "height": 760,
+        "dark": false,
+        "contrasts": [
+          5.368262258206729,
+          4.30818729863685,
+          4.30818729863685
+        ]
+      }
+    ],
+    "darkRetained": {
+      "earlierRuntimeSha256": "e69aa54b867f5a76ed4dc5d21094706e371202368288839725ffa892ae9e12e8",
+      "screenshotSha256": "a9325657e771809719bd8237f9833f34935922fec29d747e918b8a626a1b3ee8",
+      "result": "Byte-identical980x194 dark screenshot to earlier soft-face trial"
+    },
+    "engine": {
+      "path": "artifacts/toolbar-glass-2026-11-04/visual-light-only-report/review.json",
+      "sha256": "27ea0717a9ce27c39303a1a44826d98d7c6022f4393ea08a10fabff8efcab1a4",
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "note": "5 pixel-threshold passes and1 difference are not visual approval;all4 normal images inspected at readable size. Light intended stronger tint;dark unchanged. Neutral backing is synthetic probe only."
+    },
+    "material": "Light neutral backing visibly diffuses through alpha-fade plane. Earlier same-mask/no-mask/no-filter diagnostic isolates mask interference in observed Chrome. Dark retained face is not claimed as newly proven optical blur.",
+    "contrastLimitation": "Light inactive labels already measured4.47–4.50 before and now4.31–4.33 after stronger tint;no WCAG AA PASS claimed. Text change excluded by user scope. Selected label light>=5.34 and dark>=4.99 in sampled sky palette. No all-palette contrast claim.",
+    "viewer": "/toolbar-glass/index.html",
+    "reviewScript": "artifacts/b1-detail-2026-10-23/toolbar-glass/review.user.js",
+    "reviewSha256": "5848cc757d59e111b534de9af198c82115bdfe8fc56f2dfcaeac2a55a62c83db"
+  },
+  "omissions": [
+    "No full product/PC suite:Mobile-only owners changed;PC artifact unchanged.",
+    "No unrelated128-child recapture,submission/account/network writes or new dependency.",
+    "Actual installed-extension/complete DCMOD/exact phone/OS-tab scheduling remain unqualified.",
+    "No bfcache claim:repair targets initial ready/deadline transition,not persisted pageshow.",
+    "Formal header architecture admission remains UNKNOWN."
+  ],
+  "next": "Stage1 appearance/actual-use review. Stage2 PC port is separate;site proposal and approved official publication are later separate stages."
+}

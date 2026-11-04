@@ -30,6 +30,49 @@ export function mountNativeFollowupShape() {
  window.__followupNative=[...reply.querySelectorAll('*'),...header.querySelectorAll('*')].map(node=>({node,parent:node.parentNode}));
 }
 const paint=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+export async function runHeaderResumeContract({browser,server}) {
+ const records=[];
+ for(const viewport of [{width:1630,height:900},{width:980,height:2306}]){
+  const e=await createTestPage(browser,server.baseUrl,{viewport,storage:{[storageKeys.threshold]:0},boot:{criticalDeadlineMs:700,absoluteDeadlineMs:3000,revealTimeoutMs:2500}}),p=e.page;
+  try{
+   // Live DCInside wraps header and page content in the same dcwrap. The old
+   // generic fixture placed its header outside that wrapper and missed canvas loss.
+   await p.route(url=>url.origin===server.baseUrl&&/\/board\/lists$/.test(url.pathname),async route=>{const response=await route.fetch();let html=await response.text();const wrapper='<div id="top" class="dcwrap width1160 list_wrap">';assert.ok(html.includes(wrapper));html=html.replace(wrapper,'').replace(/(<body[^>]*>)/,'$1'+wrapper);await route.fulfill({response,body:html})});
+   // Background tabs can suspend frames while wall-clock boot deadlines keep
+   // advancing. Hold only rendering callbacks,then resume the original ones.
+   await e.context.addInitScript(()=>{
+    const request=window.requestAnimationFrame,cancel=window.cancelAnimationFrame,pending=new Map();let next=-1,released=false;
+    window.requestAnimationFrame=fn=>{if(released)return request.call(window,fn);const id=next--;pending.set(id,fn);return id};
+    window.cancelAnimationFrame=id=>{if(id<0)pending.delete(id);else cancel.call(window,id)};
+    window.__resumeHeaderFrames=()=>{released=true;window.requestAnimationFrame=request;window.cancelAnimationFrame=cancel;for(const fn of pending.values())request.call(window,fn);pending.clear()};
+   });
+   await e.goto('/mgallery/board/lists?id=test',{waitForReady:false});
+   await p.locator('[data-dcuf-header-shell-role="root"]').waitFor({state:'attached'});
+   const canvas=()=>p.locator('#top').evaluate(n=>{const s=getComputedStyle(n);return{marked:n.hasAttribute('data-dcuf-header-layout'),containsContent:!!n.querySelector('#container'),background:s.backgroundColor+'|'+s.backgroundImage}});
+   const originalCanvas=await canvas();assert.equal(originalCanvas.marked,true);assert.equal(originalCanvas.containsContent,true);
+   await p.waitForFunction(()=>__dcufBootController.state==='degraded',null,{polling:20,timeout:5000});
+   const lost=await p.evaluate(()=>({filterReady:__dcufBootController.filterReady,roots:__dcufHeaderShellHostAdapter.snapshot().activeRoots,style:!!document.getElementById('dcuf-header-shell-style')}));
+   assert.equal(lost.filterReady,true,'Local filtering completed before the delayed visual deadline');assert.equal(lost.roots,0,'The existing rollback actually ran');assert.equal(lost.style,false);
+   const lostCanvas=await canvas();assert.notEqual(lostCanvas.background,originalCanvas.background,'The same rollback reproduces the page-wide washed-out canvas');
+   await p.evaluate(()=>__resumeHeaderFrames());
+   await p.waitForFunction(()=>__dcufBootController.state==='ready',null,{polling:20,timeout:8000});await paint(p);
+   await p.waitForFunction(()=>window.__dcufRevealDebug?.recovery?.active===false&&__dcufHeaderRecentVisitHostAdapter.snapshotResources().timers===0&&__dcufHeaderRecentVisitHostAdapter.snapshotResources().animationFrames===0,null,{polling:20,timeout:6000});
+   const recovered=await p.evaluate(()=>({events:__dcufBootProbe.events().map(e=>e.type),resources:[__dcufHeaderShellHostAdapter,__dcufGalleryPageHeadHostAdapter,__dcufHeaderGnbHostAdapter,__dcufHeaderRecentVisitHostAdapter].map(a=>a.snapshotResources()),styles:['dcuf-header-shell-style','dcuf-gallery-page-head-style','dcuf-header-gnb-style','dcuf-header-recent-visit-style'].map(id=>document.querySelectorAll('#'+id).length),listContext:document.body.hasAttribute('data-dcuf-list-header')}));
+   assert.deepEqual(recovered.events,['degraded','ready']);
+   assert.ok(recovered.resources.every(r=>r.activeRoots>0&&r.mutationSubscribers===1),'Ready after suspended rendering restores all four header owners: '+JSON.stringify(recovered));
+   assert.deepEqual(recovered.styles,[1,1,1,1]);assert.equal(recovered.listContext,true);
+   assert.deepEqual(await canvas(),originalCanvas,'Ready restores the shared whole-page canvas,not only header geometry');
+   await p.evaluate(()=>document.getElementById('dcuf-testbed-controls')?.remove());
+   await p.locator('[data-dcuf-explore-toggle]').click();assert.equal(await p.locator('.gnb_list').isVisible(),true);await p.keyboard.press('Escape');
+   for(let i=0;i<2;i++)await p.evaluate(async()=>{let visibility='hidden';Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>visibility});document.dispatchEvent(new Event('visibilitychange'));visibility='visible';document.dispatchEvent(new Event('visibilitychange'));await window.__dcufFilterModule?._visibilityRecoveryPromise;delete document.visibilityState;__dcufBootController.markReady('repeat-ready');});
+   await paint(p);
+   const repeated=await p.evaluate(()=>[__dcufHeaderShellHostAdapter,__dcufGalleryPageHeadHostAdapter,__dcufHeaderGnbHostAdapter,__dcufHeaderRecentVisitHostAdapter].map(a=>a.snapshotResources()));
+   assert.deepEqual(repeated,recovered.resources,'Repeated visible/ready transitions do not duplicate header listeners/subscribers');
+   records.push({viewport,lost,recovered,originalCanvas,lostCanvas});
+  }finally{await e.close()}
+ }
+ return records;
+}
 export async function runArticleFollowupContract({browser,server,onCapture}) {
  const records=[];
  for(const state of[{width:1630,height:900},{width:980,height:2306,dark:true},{width:390,height:760}]){
@@ -79,6 +122,23 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    // The fixture inserted native parts after boot; measure only after their
    // existing owner projection has settled,as the ordinary resize path does.
    await p.evaluate(()=>window.dispatchEvent(new Event('resize')));await paint(p);
+   const glass=p.locator('[data-dcuf-surface="list-toolbar"]');
+   const backing=()=>glass.evaluate(n=>{const s=getComputedStyle(n,'::before'),r=getComputedStyle(n);return{content:s.content,background:s.backgroundColor+'|'+s.backgroundImage,blur:s.backdropFilter,mask:s.maskImage,pointer:s.pointerEvents,border:s.borderTopWidth,shadow:s.boxShadow,rootBlur:r.backdropFilter}});
+   const firstBacking=await backing();
+   assert.equal(firstBacking.content,'""','List-top toolbar has its owned glass backing');
+   assert.equal(firstBacking.pointer,'none','Glass paint cannot intercept input');
+   assert.ok(firstBacking.blur.includes('blur(')&&firstBacking.background.includes('linear-gradient'),'Glass uses the existing blur plus a soft vertical surface fade');
+   if(state.dark)assert.ok(firstBacking.mask.includes('linear-gradient'),'Dark retains its earlier soft masked face');
+   else assert.equal(firstBacking.mask,'none','Light tint uses an alpha fade without masking away its backdrop blur');
+   assert.equal(firstBacking.border,'0px');assert.equal(firstBacking.shadow,'none','No new rule/rim or outlined shadow');assert.equal(firstBacking.rootBlur,'none','Native popup ancestors acquire no new filter');
+   const paletteFaces=[];
+   for(const id of ['blue','purple','green','orange','mono','indigo','sky','cyan','teal','lime','amber','red','rose','pink']){
+    await p.evaluate(()=>__dcufTestbedGM.invokeMenu('UI 색상 설정'));const panel=p.locator('#dcuf-palette-panel');await panel.locator('[data-palette-id="'+id+'"]').click();await paint(p);paletteFaces.push((await backing()).background);await panel.locator('[data-dcuf-palette-action="cancel"]').click();await panel.waitFor({state:'detached'});await paint(p);assert.deepEqual(await backing(),firstBacking,'Palette cancel restores toolbar material');
+   }
+   assert.equal(new Set(paletteFaces).size,14,'All14 actual palette previews reach the glass tint');
+   await p.evaluate(()=>__dcufTestbedGM.invokeMenu('UI 색상 설정'));let palette=p.locator('#dcuf-palette-panel');await palette.locator('[data-palette-id="orange"]').click();await paint(p);const orangePreview=await backing();await palette.locator('[data-dcuf-palette-action="save"]').click();await palette.waitFor({state:'detached'});await paint(p);assert.deepEqual(await backing(),orangePreview,'Saved tint matches its actual palette preview');
+   await p.evaluate(()=>__dcufTestbedGM.invokeMenu('UI 색상 설정'));palette=p.locator('#dcuf-palette-panel');await palette.locator('[data-palette-id="purple"]').click();await palette.locator('[data-dcuf-palette-action="cancel"]').click();await palette.waitFor({state:'detached'});await paint(p);assert.deepEqual(await backing(),orangePreview,'Cancel returns to the saved tint');
+   await p.evaluate(()=>__dcufTestbedGM.invokeMenu('UI 색상 설정'));palette=p.locator('#dcuf-palette-panel');await palette.locator('[data-palette-id="teal"]').click();await palette.locator('[data-dcuf-palette-action="save"]').click();await palette.waitFor({state:'detached'});await paint(p);assert.deepEqual(await backing(),firstBacking);
    const galleryBefore=await p.locator('[data-dcuf-gallery-page-head-role="root"]').evaluateAll(ns=>ns.map(n=>({padding:getComputedStyle(n).padding,box:n.getBoundingClientRect().toJSON()})));
    // User2026-11-04: a later DCMOD stylesheet supplies this exact important
    // longhand. It must not undo the list-only owner after the first good paint.
@@ -126,6 +186,7 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    assert.equal(await toolbar.getAttribute('data-dcuf-scroll'),'hidden','Existing down-scroll behavior');
    for(const y of [650,600,550]){await p.evaluate(y=>scrollTo(0,y),y);await paint(p)}
    assert.equal(await toolbar.getAttribute('data-dcuf-scroll'),'shown','Existing up-scroll reappears');
+   assert.equal(await toolbar.evaluate(n=>getComputedStyle(n,'::before').content),'none','Floating toolbar retains its original independent surface');
    assert.equal(await invoker.isVisible(),false,'Reappearing toolbar keeps its original category strip');
    assert.equal(await p.locator('[data-dcuf-role="category-list"]').isVisible(),true);
    assert.equal(await picker.getAttribute('popover'),null,'The floating toolbar uses original inline controls');

@@ -2263,6 +2263,17 @@
             const bootController = window.__dcufBootController;
             if (!this._bootRollbackRegistered && typeof bootController?.registerRollback === 'function') {
                 this._bootRollbackRegistered = true;
+                const reconnectHeaderPresentation = () => {
+                    const options = { runtimeCoordinator: this.getRuntimeCoordinator() };
+                    __dcufHeaderShellHostAdapter.connect(document, options);
+                    __dcufGalleryPageHeadHostAdapter.connect(document, options);
+                    __dcufHeaderGnbHostAdapter.connect(document, options);
+                    __dcufHeaderRecentVisitHostAdapter.connect(document, options);
+                };
+                // Suspended frames can let the deadline roll presentation back
+                // after filterReady was set. The later ready transition must
+                // restore its owners even when markFilterReady does not rerun.
+                bootController.onReady(reconnectHeaderPresentation);
                 bootController.registerRollback((reason) => {
                     this.rollbackInitialListTransactions(reason);
                     __dcufArticleHostAdapter.dispose(document);
@@ -2278,18 +2289,7 @@
                     this._nativeFormHeaderConnected = false;
                 });
                 bootController.registerRecovery(() => {
-                    __dcufHeaderShellHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
-                    __dcufGalleryPageHeadHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
-                    __dcufHeaderGnbHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
-                    __dcufHeaderRecentVisitHostAdapter.connect(document, {
-                        runtimeCoordinator: this.getRuntimeCoordinator(),
-                    });
+                    reconnectHeaderPresentation();
                     this.ensureKnownListRuntimes(document, 'boot-recovery');
                     if (this.isViewPage()) {
                         __dcufArticleHostAdapter.refresh(document);
