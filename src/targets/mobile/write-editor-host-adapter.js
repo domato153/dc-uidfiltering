@@ -275,16 +275,21 @@
                 const edgePadding = 10;
                 const layerGap = 6;
                 const maxWidth = Math.max(1, viewportWidth - (edgePadding * 2));
-                const maxHeight = Math.max(1, viewportHeight - (edgePadding * 2));
+                const rowDropdown = isDropdown && Boolean(anchor.closest('[data-dcuf-editor-toolbar-row]'));
+                const maxHeight = Math.max(1, Math.min(viewportHeight - (edgePadding * 2), rowDropdown ? viewportHeight / 2 : Infinity));
                 const width = isDropdown ? Math.min(layerRect.width, maxWidth) : layerRect.width;
-                const height = isDropdown ? Math.min(layerRect.height, maxHeight) : layerRect.height;
                 const left = Math.max(
                     viewportLeft + edgePadding,
                     Math.min(viewportRight - width - edgePadding, anchorRect.left),
                 );
                 const below = Math.max(0, viewportBottom - anchorRect.bottom - edgePadding - layerGap);
                 const above = Math.max(0, anchorRect.top - viewportTop - edgePadding - layerGap);
-                const openAbove = height > below && above > below;
+                // A row-local menu stays beside its visible trigger and scrolls
+                // internally, rather than covering the whole narrow viewport.
+                const openAbove = rowDropdown ? below < 80 && above > below
+                    : (isDropdown ? Math.min(layerRect.height, maxHeight) : layerRect.height) > below && above > below;
+                const availableHeight = rowDropdown ? Math.max(1, Math.min(maxHeight, openAbove ? above : below)) : maxHeight;
+                const height = isDropdown ? Math.min(layerRect.height, availableHeight) : layerRect.height;
                 const preferredTop = openAbove
                     ? anchorRect.top - height - layerGap
                     : anchorRect.bottom + layerGap;
@@ -295,7 +300,7 @@
                 const positionedLeft = isDropdown ? left / localCoordinateScale : left;
                 const positionedTop = isDropdown ? top / localCoordinateScale : top;
                 const localMaxWidth = isDropdown ? maxWidth / localCoordinateScale : maxWidth;
-                const localMaxHeight = isDropdown ? maxHeight / localCoordinateScale : maxHeight;
+                const localMaxHeight = isDropdown ? availableHeight / localCoordinateScale : maxHeight;
                 setStyleProperty(layer, POSITION_PROPERTIES[0], `${positionedLeft.toFixed(3)}px`);
                 setStyleProperty(layer, POSITION_PROPERTIES[1], `${positionedTop.toFixed(3)}px`);
                 setStyleProperty(layer, POSITION_PROPERTIES[2], `${Math.floor(localMaxWidth)}px`);
@@ -600,7 +605,7 @@
             if (window.visualViewport) listen(window.visualViewport, 'resize', syncDesktopSiteMobileWriteMode, { passive: true });
             bindHeadtextRuntime();
             bindFontMenus();
-            const editorToolbarSelector = '.note-toolbar, .note-toolbar-media';
+            const editorToolbarSelector = '[data-dcuf-editor-toolbar-row], .note-toolbar, .note-toolbar-media';
             listen(activeForm, 'pointerdown', (event) => {
                 if (event.pointerType === 'touch' || event.button !== 0) return;
                 if (!(event.target instanceof Element) || event.target.closest('.note-dropdown-menu, .pop_wrap, input, textarea, select')) return;

@@ -732,3 +732,8 @@ List GNB center repair2026-11-05:the64px list first row contains a60px wrapped G
 ## Distribution examples must expose the actual open feature —2026-11-05
 
 A wide Mobile screenshot plus max-height clipping removed the open bottom menu from the showcase. Use the adopted portrait layout,check the full image and its visible parent geometry,and require the named native popup to be open with positive bounds before capturing it. Show Mobile in a phone shape and PC on the native desktop host. Core 글댓합 settings is primary for both targets;management alone cannot represent filtering. A readable detail crop may accompany the full unmodified actual screenshot. Keep screenshot layout/export fidelity separate from real-device qualification.
+
+
+## Independent writer strips —2026-11-05
+
+Latest writer direction:two independent horizontal strips(media through HTML,fonts through links),not the discarded single combined strip. Existing native controls/handlers stay;only direct group containers are reversibly projected by the existing native-form owner. Original group order/parents restore on dispose;drag/native touch and popup positioning reuse the existing write-editor owner. Do not reapply native-break wrap/order exceptions. Real desktop-site-mobile writer scales local48px rows to about114px in a980px PNG;use rect/offset scale rather than mistaking that for wrapped geometry. Row-local menus prefer available space below and scroll internally;the failed high-z trial was discarded. Keep the legacy password grid/dense-color oracle failure separate;it reproduces on80EC control.

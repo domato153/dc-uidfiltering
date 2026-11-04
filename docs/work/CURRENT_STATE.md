@@ -5,12 +5,12 @@
 - Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 toolbar adopted;stage2 PC reuse accepted by user. Stage3 site/index/README proposal is ready for review;stage4 official promotion remains separately approved.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `site-v7-proposal`;one next action `site-v7-proposal-review`.
-- Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,late-padding protection and original scroll/resume. Final list GNB correction fits wrapped links and bypasses only the verified important zero-margin conflict;article/write stay unchanged.
-- Source state: Source checkpoint base HEAD `4969beba593c62cb41f57983ed95b11aa1e1c78d` on `codex/ui-port-boundary`. Read fresh Git/checkpoint receipt for actual commit/push/CI disposition.
-- Candidate fingerprint: `121fd55ad6eb4c13e8fe0be42250513bba377789378a3f6c9622edcbe1e1bf52`
-- Current stage receipt: `verification/receipts/2026-11-05-phone-core-filter-showcase.json` SHA-256 `4de4710a7a5ec5856b4d97b2c8f6687a9b27ddefa1f742167e1fb75b51ead4f1`.
-- Current artifact: Mobile3.5.5 80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3 guard/root/dist;PC1.9.9 ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91 root/dist unchanged. No bump/publication.
-- Current scoped checks:site1440/980/390 x7 tabs pass full portrait/no crop,decoded images,actual Mobile filter detail,PC filter primary,keyboard and no horizontal overflow. Product runtime unchanged;prior4969 header/owner evidence retains its exact binding. No product suite rerun.
+- Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,late-padding protection and original scroll/resume. Final list GNB correction fits wrapped links and bypasses only the verified important zero-margin conflict;article/write upper headers stay unchanged. Writer now has two independent media/HTML and font/link scroll rows.
+- Source state: Source checkpoint base HEAD `4dbe897cdd3d2c1c5641cd86cfa3dfa512f6333b` on `codex/ui-port-boundary`. Read fresh Git/checkpoint receipt for actual commit/push/CI disposition.
+- Candidate fingerprint: `33c8dcdda2c7ca934da6c5c2e638a09ae69d20f5c036fce2eda38e82e0061406`
+- Current stage receipt: `verification/receipts/2026-11-05-writer-two-scroll-rows.json` SHA-256 `6f7fa0b53b28a1040e1d67220168ad4355e6c1b39760a122cf193ef6769d48f2`.
+- Current artifact: Mobile3.5.5 6f95c1444073a871ca73e5eeb98f7cf691a36685194eab76bd0900b2394bc943 guard/root/dist;PC1.9.9 ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91 root/dist unchanged. No bump/publication.
+- Current scoped checks:writer5-context independent mouse/trusted-touch/native-input/popup/dispose/clone checks pass;existing6-kind editor-menu contract and2 fresh-context behavior pairs pass. Actual writer/font menu observed and writer screenshot replaced. Prior site layout/other images retain exact bindings. One unrelated legacy password style oracle fails identically on control and candidate;not a pass.
 - Reviewable proposal: `design-prototypes/site-v7`;local/site-v7 on10067. Mobile now uses full980x2306 portrait images;Mobile and PC core filter settings are visible,management separate. Actual popup detail and README draft updated. Root index/style/README and official refs remain untouched.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`,artifacts/site-v7-2026-11-04 and artifacts/site-v7-visual-2026-11-05. Captures are unmodified anonymous public site content with source injection,not fixtures,generated examples or installed-extension/device proof.
 - Accepted baseline: Adopted actual memo/current v7;latest user restores inline services/categories. Prior PC common-code port is accepted;site composition is a proposal,not approval.
@@ -19,7 +19,7 @@
 - Pending live checks: Actual installed-PC use and exact Mobile OS/discard remain unqualified;known installed-Chrome/Tampermonkey route is supported. Site appearance and stage4 approval pending.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"80EC1567EB0D5D0DCDB0C56143EAC32C6E4298DCD780AFD003071042894DB3E3"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
+{"schemaVersion":1,"mobile":{"sha256":"6F95C1444073A871CA73E5EEB98F7CF691A36685194EAB76BD0900B2394BC943"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

@@ -7808,7 +7808,7 @@ const __dcufSettingsPresenter = (() => {
             flex: 0 0 auto !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-toolbar-scroll="horizontal"] {
-            flex-wrap: var(--dcuf-write-toolbar-wrap, nowrap) !important;
+            flex-wrap: nowrap !important;
             overflow-x: auto !important;
             overflow-y: hidden !important;
             overscroll-behavior-inline: contain;
@@ -8038,22 +8038,39 @@ const __dcufSettingsPresenter = (() => {
             background: var(--dcuf-control-secondary-bg) !important;
             box-shadow: var(--dcuf-control-shadow) !important;
         }
-        /* Writer v7 uses the original native break; narrow stress may wrap
-           extra rows rather than hide tools. Existing overflow/drag stays usable. */
+        /* Keep two compact independent strips, reusing the existing mouse
+           drag/native touch path and native popup nodes. */
         [data-dcuf-native-form-role="editor-toolbar-break"][data-dcuf-native-form-state="write-editor"] {
-            flex: 0 0 100%;
-            width: 100% !important;
-            height: 0;
-            min-height: 0;
-            margin: 0 !important;
-            padding: 0;
-            border: 0 !important;
-            order: 2;
+            display: none !important;
         }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) { --dcuf-write-toolbar-wrap: wrap; }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-toolbar-group="media"] { order: 0; }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-toolbar-group="format"] { order: 3; }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-role="editor-html-toggle-group"] { --dcuf-write-html-order: 1; }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has(> [data-dcuf-editor-toolbar-row]) {
+            flex-direction: column;
+            padding: 0 !important;
+            gap: 0 !important;
+            overflow: visible !important;
+        }
+        [data-dcuf-native-form-role="editor-toolbar-row"][data-dcuf-native-form-state="write-editor"] {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+            min-width: 0;
+            min-height: 48px;
+            padding: 5px;
+            box-sizing: border-box;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-inline: contain;
+            touch-action: pan-x pinch-zoom;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+            user-select: none;
+        }
+        [data-dcuf-native-form-role="editor-toolbar-row"] > [data-dcuf-native-form-toolbar-item="1"] { flex: 0 0 auto; }
+        [data-dcuf-native-form-role="editor-toolbar-row"]::-webkit-scrollbar { display: none; }
+        [data-dcuf-native-form-role="editor-toolbar-row"][data-dcuf-native-form-toolbar-state="dragging"] { cursor: grabbing; }
         [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:not([data-dcuf-native-form-toolbar-control~="danger"]):hover,
         [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:not([data-dcuf-native-form-toolbar-control~="danger"]):focus-visible {
             --dcuf-write-tool-bg: var(--dcuf-v7-primary-bg);
@@ -8726,6 +8743,7 @@ const __dcufSettingsPresenter = (() => {
         const presentationStyles = new Map();
         const pendingPresentationListeners = new Map();
         const requestedPresentationKeys = new Set();
+        const toolbarRows = new Map();
         let activeForm = null;
         let activeKind = 'pending';
         let activeRoute = 'other';
@@ -8783,6 +8801,7 @@ const __dcufSettingsPresenter = (() => {
         };
 
         const restoreAll = () => {
+            Array.from(toolbarRows.keys()).forEach(restoreToolbarRows);
             restoreWhere(() => true);
             activeForm = null;
             activeKind = 'pending';
@@ -8793,6 +8812,46 @@ const __dcufSettingsPresenter = (() => {
             restoreWhere((element) => element !== form
                 && element !== document.body
                 && element !== document.documentElement);
+        };
+
+        // A native toolbar has one empty break between media/HTML and format
+        // groups. Independent scroll offsets require two local row containers.
+        // Only direct groups move; native controls/callbacks remain untouched.
+        const restoreToolbarRows = (toolbar) => {
+            const state = toolbarRows.get(toolbar);
+            if (!state) return;
+            [...state.originals].reverse().forEach(({node, next}) => {
+                if (state.rows.includes(node.parentElement)) toolbar.insertBefore(node, next?.parentNode === toolbar ? next : null);
+            });
+            state.rows.forEach(row => { row.replaceWith(...row.childNodes); });
+            toolbarRows.delete(toolbar);
+        };
+        const projectToolbarRows = (toolbar, stateName) => {
+            let state = toolbarRows.get(toolbar);
+            const separator = toolbar.querySelector(':scope > .note-break');
+            if (state && (state.separator !== separator || state.rows.some(row => row.parentElement !== toolbar))) {
+                restoreToolbarRows(toolbar);
+                state = null;
+            }
+            if (!separator) return;
+            if (!state) {
+                // Recover a site-cloned projection before adopting its native groups.
+                toolbar.querySelectorAll(':scope > [data-dcuf-editor-toolbar-row]').forEach(row => row.replaceWith(...row.childNodes));
+                const media = document.createElement('div'), format = document.createElement('div');
+                media.setAttribute('data-dcuf-editor-toolbar-row', 'media');
+                format.setAttribute('data-dcuf-editor-toolbar-row', 'format');
+                toolbar.insertBefore(media, toolbar.firstChild);
+                separator.after(format);
+                state = {separator, rows: [media, format], originals: []};
+                toolbarRows.set(toolbar, state);
+            }
+            Array.from(toolbar.children).filter(node => node !== separator
+                && !state.rows.includes(node) && node.matches('.note-btn-group, .note-mybutton, button, input, select, label')).forEach(node => {
+                state.originals.push({node, next: node.nextSibling});
+                const beforeBreak = Boolean(node.compareDocumentPosition(separator) & Node.DOCUMENT_POSITION_FOLLOWING);
+                state.rows[beforeBreak || node.querySelector('#chk_html') ? 0 : 1].append(node);
+            });
+            state.rows.forEach(row => markNativeContext(row, 'editor-toolbar-row', stateName));
         };
 
         const pageType = () => {
@@ -9165,6 +9224,8 @@ const __dcufSettingsPresenter = (() => {
                 markNativeContext(writeEditorStatusbar, 'editor-statusbar', nativeContextState);
                 setNativeContextAttribute(writeEditorFrame, 'data-dcuf-native-form-editor-mode', writeEditorMode);
                 writeEditorToolbars.forEach((toolbar) => {
+                    for (const previous of toolbarRows.keys()) if (!form.contains(previous)) restoreToolbarRows(previous);
+                    projectToolbarRows(toolbar, nativeContextState);
                     const toolbarKinds = [
                         toolbar.matches('.note-toolbar') ? 'primary' : '',
                         toolbar.matches('.note-toolbar-media') ? 'media' : '',
@@ -9183,7 +9244,7 @@ const __dcufSettingsPresenter = (() => {
                         const rowBreak = group.matches('.note-break');
                         markNativeContext(group, htmlToggleGroup ? 'editor-html-toggle-group' : rowBreak ? 'editor-toolbar-break' : 'editor-toolbar-group', nativeContextState);
                         setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-group', group.matches('.note-mybutton') ? 'media' : 'format');
-                        if (group.parentElement === toolbar) setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-item', '1');
+                        if (group.parentElement === toolbar || group.parentElement?.hasAttribute('data-dcuf-editor-toolbar-row')) setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-item', '1');
                     });
 
                     toolbar.querySelectorAll('.write-html-toggle, label:has(#chk_html)').forEach((label) => {
@@ -10604,16 +10665,21 @@ const __dcufSettingsPresenter = (() => {
                 const edgePadding = 10;
                 const layerGap = 6;
                 const maxWidth = Math.max(1, viewportWidth - (edgePadding * 2));
-                const maxHeight = Math.max(1, viewportHeight - (edgePadding * 2));
+                const rowDropdown = isDropdown && Boolean(anchor.closest('[data-dcuf-editor-toolbar-row]'));
+                const maxHeight = Math.max(1, Math.min(viewportHeight - (edgePadding * 2), rowDropdown ? viewportHeight / 2 : Infinity));
                 const width = isDropdown ? Math.min(layerRect.width, maxWidth) : layerRect.width;
-                const height = isDropdown ? Math.min(layerRect.height, maxHeight) : layerRect.height;
                 const left = Math.max(
                     viewportLeft + edgePadding,
                     Math.min(viewportRight - width - edgePadding, anchorRect.left),
                 );
                 const below = Math.max(0, viewportBottom - anchorRect.bottom - edgePadding - layerGap);
                 const above = Math.max(0, anchorRect.top - viewportTop - edgePadding - layerGap);
-                const openAbove = height > below && above > below;
+                // A row-local menu stays beside its visible trigger and scrolls
+                // internally, rather than covering the whole narrow viewport.
+                const openAbove = rowDropdown ? below < 80 && above > below
+                    : (isDropdown ? Math.min(layerRect.height, maxHeight) : layerRect.height) > below && above > below;
+                const availableHeight = rowDropdown ? Math.max(1, Math.min(maxHeight, openAbove ? above : below)) : maxHeight;
+                const height = isDropdown ? Math.min(layerRect.height, availableHeight) : layerRect.height;
                 const preferredTop = openAbove
                     ? anchorRect.top - height - layerGap
                     : anchorRect.bottom + layerGap;
@@ -10624,7 +10690,7 @@ const __dcufSettingsPresenter = (() => {
                 const positionedLeft = isDropdown ? left / localCoordinateScale : left;
                 const positionedTop = isDropdown ? top / localCoordinateScale : top;
                 const localMaxWidth = isDropdown ? maxWidth / localCoordinateScale : maxWidth;
-                const localMaxHeight = isDropdown ? maxHeight / localCoordinateScale : maxHeight;
+                const localMaxHeight = isDropdown ? availableHeight / localCoordinateScale : maxHeight;
                 setStyleProperty(layer, POSITION_PROPERTIES[0], `${positionedLeft.toFixed(3)}px`);
                 setStyleProperty(layer, POSITION_PROPERTIES[1], `${positionedTop.toFixed(3)}px`);
                 setStyleProperty(layer, POSITION_PROPERTIES[2], `${Math.floor(localMaxWidth)}px`);
@@ -10929,7 +10995,7 @@ const __dcufSettingsPresenter = (() => {
             if (window.visualViewport) listen(window.visualViewport, 'resize', syncDesktopSiteMobileWriteMode, { passive: true });
             bindHeadtextRuntime();
             bindFontMenus();
-            const editorToolbarSelector = '.note-toolbar, .note-toolbar-media';
+            const editorToolbarSelector = '[data-dcuf-editor-toolbar-row], .note-toolbar, .note-toolbar-media';
             listen(activeForm, 'pointerdown', (event) => {
                 if (event.pointerType === 'touch' || event.button !== 0) return;
                 if (!(event.target instanceof Element) || event.target.closest('.note-dropdown-menu, .pop_wrap, input, textarea, select')) return;

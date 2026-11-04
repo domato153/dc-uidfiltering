@@ -980,7 +980,7 @@
             flex: 0 0 auto !important;
         }
         [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"][data-dcuf-native-form-toolbar-scroll="horizontal"] {
-            flex-wrap: var(--dcuf-write-toolbar-wrap, nowrap) !important;
+            flex-wrap: nowrap !important;
             overflow-x: auto !important;
             overflow-y: hidden !important;
             overscroll-behavior-inline: contain;
@@ -1210,22 +1210,39 @@
             background: var(--dcuf-control-secondary-bg) !important;
             box-shadow: var(--dcuf-control-shadow) !important;
         }
-        /* Writer v7 uses the original native break; narrow stress may wrap
-           extra rows rather than hide tools. Existing overflow/drag stays usable. */
+        /* Keep two compact independent strips, reusing the existing mouse
+           drag/native touch path and native popup nodes. */
         [data-dcuf-native-form-role="editor-toolbar-break"][data-dcuf-native-form-state="write-editor"] {
-            flex: 0 0 100%;
-            width: 100% !important;
-            height: 0;
-            min-height: 0;
-            margin: 0 !important;
-            padding: 0;
-            border: 0 !important;
-            order: 2;
+            display: none !important;
         }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) { --dcuf-write-toolbar-wrap: wrap; }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-toolbar-group="media"] { order: 0; }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-toolbar-group="format"] { order: 3; }
-        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has([data-dcuf-native-form-role="editor-toolbar-break"]) [data-dcuf-native-form-role="editor-html-toggle-group"] { --dcuf-write-html-order: 1; }
+        [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="editor-toolbar"][data-dcuf-native-form-state="write-editor"]:has(> [data-dcuf-editor-toolbar-row]) {
+            flex-direction: column;
+            padding: 0 !important;
+            gap: 0 !important;
+            overflow: visible !important;
+        }
+        [data-dcuf-native-form-role="editor-toolbar-row"][data-dcuf-native-form-state="write-editor"] {
+            display: flex;
+            flex-wrap: nowrap;
+            align-items: center;
+            gap: 5px;
+            width: 100%;
+            min-width: 0;
+            min-height: 48px;
+            padding: 5px;
+            box-sizing: border-box;
+            overflow-x: auto;
+            overflow-y: hidden;
+            overscroll-behavior-inline: contain;
+            touch-action: pan-x pinch-zoom;
+            scrollbar-width: none;
+            -webkit-overflow-scrolling: touch;
+            cursor: grab;
+            user-select: none;
+        }
+        [data-dcuf-native-form-role="editor-toolbar-row"] > [data-dcuf-native-form-toolbar-item="1"] { flex: 0 0 auto; }
+        [data-dcuf-native-form-role="editor-toolbar-row"]::-webkit-scrollbar { display: none; }
+        [data-dcuf-native-form-role="editor-toolbar-row"][data-dcuf-native-form-toolbar-state="dragging"] { cursor: grabbing; }
         [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:not([data-dcuf-native-form-toolbar-control~="danger"]):hover,
         [data-dcuf-native-form-toolbar-control~="ordinary"][data-dcuf-native-form-state="write-editor"]:not([data-dcuf-native-form-toolbar-control~="danger"]):focus-visible {
             --dcuf-write-tool-bg: var(--dcuf-v7-primary-bg);

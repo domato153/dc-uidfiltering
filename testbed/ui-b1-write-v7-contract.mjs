@@ -13,7 +13,7 @@ export async function mountWriterV7(browser,server,s) {
  if(s.dark)await e.page.evaluate(()=>{const marker=document.createElement('style');marker.id='css-darkmode';marker.textContent='html{color-scheme:dark}';document.head.append(marker);document.body.classList.add('dc-filter-dark-mode');document.documentElement.classList.add('darkmode')});
  return e;
 }
-const hit=async l=>{await l.scrollIntoViewIfNeeded({timeout:2500});return l.evaluate(n=>{const b=n.getBoundingClientRect(),t=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return b.width>0&&b.height>0&&(n===t||n.contains(t))})};
+const hit=async l=>{await l.scrollIntoViewIfNeeded({timeout:2500});const r=await l.evaluate(n=>{const b=n.getBoundingClientRect(),t=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return{ok:b.width>0&&b.height>0&&(n===t||n.contains(t)),box:b.toJSON(),hit:t?.outerHTML.slice(0,180),viewport:[innerWidth,innerHeight],scrollY,font:document.querySelector('.note-fontname button')?.getBoundingClientRect().toJSON(),ancestors:(()=>{const a=[];for(let e=n.parentElement;e&&a.length<7;e=e.parentElement)a.push({class:e.className,overflow:getComputedStyle(e).overflow,scrollTop:e.scrollTop,position:getComputedStyle(e).position,z:getComputedStyle(e).zIndex,transform:getComputedStyle(e).transform,filter:getComputedStyle(e).backdropFilter});return a})()}});assert.ok(r.ok,JSON.stringify(r));return true};
 export async function runWriterV7Contract({browser,server}) {
  const records=[];
  for(const s of [{width:1440,height:1100},{width:980,height:2306,minor:true},{width:980,height:900,minor:true,dark:true},{width:980,height:900,modify:true},{width:390,height:700,dark:true}]) {
@@ -41,8 +41,25 @@ export async function runWriterV7Contract({browser,server}) {
    assert.equal(await p.locator('#subject').evaluate(n=>getComputedStyle(n).paddingRight),'12px','Nickname action reserve does not leak to other fields');
    const tb=await tip.boundingBox(),nb=await p.locator('#gall_nick_name').boundingBox();assert.ok(tb.y+tb.height<=nb.y+1,'Help does not cover native field');
    await p.locator(R('nickname-help-close')).click();assert.equal(await tip.isVisible(),false);await p.waitForFunction(()=>getComputedStyle(document.querySelector('[data-dcuf-native-form-role="fields"]')).paddingTop==='0px',null,{timeout:2500});
-   const toolbar=p.locator('.note-toolbar').first(),rows=await toolbar.evaluate(n=>{const ns=[...n.querySelectorAll(':scope > .note-mybutton button')],font=n.querySelector('.note-fontname button');return{media:ns.map(n=>n.getBoundingClientRect().toJSON()),font:font.getBoundingClientRect().toJSON(),frame:getComputedStyle(n).backdropFilter}});
-   if(s.width>=980)assert.ok(rows.font.y>=Math.max(...rows.media.map(r=>r.bottom)),'Native media and format are separate rows');
+   const toolbar=p.locator('.note-toolbar').first(),rows=await toolbar.evaluate(n=>{const media=n.querySelector('[data-dcuf-editor-toolbar-row="media"]'),format=n.querySelector('[data-dcuf-editor-toolbar-row="format"]');return{media:media.getBoundingClientRect().toJSON(),format:format.getBoundingClientRect().toJSON(),frame:getComputedStyle(n).backdropFilter}});
+   assert.ok(rows.format.y>=rows.media.bottom-1,'Media/HTML and font/link retain two separate rows');
+   const strips=toolbar.locator('[data-dcuf-editor-toolbar-row]');assert.equal(await strips.count(),2);
+   assert.equal(await p.locator('#chk_html').evaluate(n=>n.closest('[data-dcuf-editor-toolbar-row]').getAttribute('data-dcuf-editor-toolbar-row')),'media','HTML stays in the media row');
+   assert.equal(await p.locator('.note-fontname').first().evaluate(n=>n.closest('[data-dcuf-editor-toolbar-row]').getAttribute('data-dcuf-editor-toolbar-row')),'format','Fonts start the second row');
+   for(let index=0;index<2;index++){
+    const strip=strips.nth(index),geometry=await strip.evaluate(n=>({height:n.getBoundingClientRect().height,wrap:getComputedStyle(n).flexWrap,range:n.scrollWidth-n.clientWidth,centers:[...n.children].map(c=>{const b=c.getBoundingClientRect();return b.y+b.height/2})}));
+    assert.equal(geometry.wrap,'nowrap');assert.ok(geometry.height>=38&&geometry.height<=60,'Each row stays compact: '+JSON.stringify(geometry));assert.ok(Math.max(...geometry.centers)-Math.min(...geometry.centers)<=1,'Every group stays in its row');
+    if(geometry.range>0){
+     await strip.scrollIntoViewIfNeeded();await strips.evaluateAll(ns=>ns.forEach(n=>{n.scrollLeft=0}));await strip.evaluate(n=>{n.__dragClicks=0;n.addEventListener('click',()=>n.__dragClicks++)});
+     const box=await strip.boundingBox(),x=box.x+box.width-35,y=box.y+box.height/2;
+     await p.mouse.move(x,y);await p.mouse.down();await p.mouse.move(box.x+35,y,{steps:7});await p.mouse.up();
+     await p.waitForFunction(i=>document.querySelectorAll('[data-dcuf-editor-toolbar-row]')[i].scrollLeft>0,index);assert.equal(await strip.evaluate(n=>n.__dragClicks),0,'Row drag does not activate a tool');assert.equal(await strips.nth(1-index).evaluate(n=>n.scrollLeft),0,'The other row keeps its own scroll offset');
+     if(s.width===390){
+      await strips.evaluateAll(ns=>ns.forEach(n=>{n.scrollLeft=0}));await strip.evaluate(n=>n.addEventListener('pointerdown',e=>{if(e.pointerType==='touch')n.__trustedTouch=e.isTrusted},{once:true}));
+      const cdp=await p.context().newCDPSession(p);try{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:true,maxTouchPoints:1});await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});for(let i=1;i<=6;i++)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-i*(box.width-70)/6,y}]});await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});await p.waitForFunction(i=>document.querySelectorAll('[data-dcuf-editor-toolbar-row]')[i].scrollLeft>0,index);assert.equal(await strip.evaluate(n=>n.__trustedTouch),true,'Native trusted touch pans this row');assert.equal(await strips.nth(1-index).evaluate(n=>n.scrollLeft),0,'Touch does not scroll the other row');}finally{await cdp.send('Emulation.setTouchEmulationEnabled',{enabled:false});await cdp.detach()}
+     }
+    }
+   }
    assert.equal(rows.frame,'none','Fixed native menus have no new filtered ancestor');
    const ordinary=p.locator(R('editor-toolbar-control')).filter({visible:true}).first();assert.equal(await ordinary.evaluate(n=>getComputedStyle(n).boxShadow),'none','Small tools are unboxed at rest');
    await p.keyboard.press('Tab');await ordinary.focus();
@@ -63,6 +80,8 @@ export async function runWriterV7Contract({browser,server}) {
    const after=await p.locator('form#write,form[name=modify]').evaluate(f=>({action:f.action,method:f.method,hidden:[...f.querySelectorAll('input[type=hidden]')].map(n=>[n.name,n.value])}));assert.deepEqual(after,before);
    assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth-innerWidth)<=1);
    if(process.env.DCUF_WRITE_V7_CAPTURE_DIR){await fs.mkdir(process.env.DCUF_WRITE_V7_CAPTURE_DIR,{recursive:true});await p.keyboard.press('Escape');await p.evaluate(()=>window.scrollTo(0,0));await p.mouse.move(0,0);await p.screenshot({path:process.env.DCUF_WRITE_V7_CAPTURE_DIR+'/'+s.width+'-'+s.height+(s.minor?'-minor':s.modify?'-modify':'-major')+(s.dark?'-dark':'-light')+'.png',animations:'disabled'})}
+   const restoration=await p.evaluate(()=>{__dcufNativeFormHostAdapter.dispose();const restored=__v7ToolbarOriginals.every(o=>o.node.parentNode===o.parent&&o.node.nextSibling===o.next);const empty=document.querySelectorAll('[data-dcuf-editor-toolbar-row]').length===0;__dcufNativeFormHostAdapter.connect();return{restored,empty,rows:document.querySelectorAll('[data-dcuf-editor-toolbar-row]').length}});assert.deepEqual(restoration,{restored:true,empty:true,rows:2},'Disposal restores exact original group order/parents and reconnect is idempotent');
+   if(s.width===980&&s.height===2306){const recovery=await p.evaluate(()=>{const previous=document.querySelector('.note-toolbar'),copy=previous.cloneNode(true),before=__dcufWriteEditorHostAdapter.snapshotResources().listeners;previous.replaceWith(copy);__dcufNativeFormHostAdapter.refresh();__dcufWriteEditorHostAdapter.refresh();__dcufNativeFormHostAdapter.refresh();return{rows:copy.querySelectorAll('[data-dcuf-editor-toolbar-row]').length,nested:copy.querySelectorAll('[data-dcuf-editor-toolbar-row] [data-dcuf-editor-toolbar-row]').length,listeners:__dcufWriteEditorHostAdapter.snapshotResources().listeners,before}});assert.equal(recovery.rows,2);assert.equal(recovery.nested,0);assert.equal(recovery.listeners,recovery.before,'Cloned-toolbar recovery reuses existing form listeners');}
    assertNoRuntimeErrors(await getMetrics(p),e.consoleErrors);records.push(s);
    assert.equal(await p.evaluate(()=>document.body.classList.contains('dc-filter-dark-mode')),Boolean(s.dark),'Observed theme must match the tested state');
   }finally{await e.close()}

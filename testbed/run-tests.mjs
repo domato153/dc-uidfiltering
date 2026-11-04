@@ -9204,7 +9204,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
             '6EC32CBBB15A2856405A34E86A58372C2E6FB14D49A0A72DCC11FE184C61E9DF',
-            '1AA3EB2836E2C7879691FC5CBCB0C4CFEE598C12D8D3F49E507EB5202FF096E1'
+            '90389D1B12A7D4F3462BC9BA0F2418F3A0B367B4004FCE7023AD6E6F3841C1C2'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9389,7 +9389,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            '1AA3EB2836E2C7879691FC5CBCB0C4CFEE598C12D8D3F49E507EB5202FF096E1',
+            '90389D1B12A7D4F3462BC9BA0F2418F3A0B367B4004FCE7023AD6E6F3841C1C2',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);

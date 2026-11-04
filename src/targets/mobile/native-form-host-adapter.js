@@ -25,6 +25,7 @@
         const presentationStyles = new Map();
         const pendingPresentationListeners = new Map();
         const requestedPresentationKeys = new Set();
+        const toolbarRows = new Map();
         let activeForm = null;
         let activeKind = 'pending';
         let activeRoute = 'other';
@@ -82,6 +83,7 @@
         };
 
         const restoreAll = () => {
+            Array.from(toolbarRows.keys()).forEach(restoreToolbarRows);
             restoreWhere(() => true);
             activeForm = null;
             activeKind = 'pending';
@@ -92,6 +94,46 @@
             restoreWhere((element) => element !== form
                 && element !== document.body
                 && element !== document.documentElement);
+        };
+
+        // A native toolbar has one empty break between media/HTML and format
+        // groups. Independent scroll offsets require two local row containers.
+        // Only direct groups move; native controls/callbacks remain untouched.
+        const restoreToolbarRows = (toolbar) => {
+            const state = toolbarRows.get(toolbar);
+            if (!state) return;
+            [...state.originals].reverse().forEach(({node, next}) => {
+                if (state.rows.includes(node.parentElement)) toolbar.insertBefore(node, next?.parentNode === toolbar ? next : null);
+            });
+            state.rows.forEach(row => { row.replaceWith(...row.childNodes); });
+            toolbarRows.delete(toolbar);
+        };
+        const projectToolbarRows = (toolbar, stateName) => {
+            let state = toolbarRows.get(toolbar);
+            const separator = toolbar.querySelector(':scope > .note-break');
+            if (state && (state.separator !== separator || state.rows.some(row => row.parentElement !== toolbar))) {
+                restoreToolbarRows(toolbar);
+                state = null;
+            }
+            if (!separator) return;
+            if (!state) {
+                // Recover a site-cloned projection before adopting its native groups.
+                toolbar.querySelectorAll(':scope > [data-dcuf-editor-toolbar-row]').forEach(row => row.replaceWith(...row.childNodes));
+                const media = document.createElement('div'), format = document.createElement('div');
+                media.setAttribute('data-dcuf-editor-toolbar-row', 'media');
+                format.setAttribute('data-dcuf-editor-toolbar-row', 'format');
+                toolbar.insertBefore(media, toolbar.firstChild);
+                separator.after(format);
+                state = {separator, rows: [media, format], originals: []};
+                toolbarRows.set(toolbar, state);
+            }
+            Array.from(toolbar.children).filter(node => node !== separator
+                && !state.rows.includes(node) && node.matches('.note-btn-group, .note-mybutton, button, input, select, label')).forEach(node => {
+                state.originals.push({node, next: node.nextSibling});
+                const beforeBreak = Boolean(node.compareDocumentPosition(separator) & Node.DOCUMENT_POSITION_FOLLOWING);
+                state.rows[beforeBreak || node.querySelector('#chk_html') ? 0 : 1].append(node);
+            });
+            state.rows.forEach(row => markNativeContext(row, 'editor-toolbar-row', stateName));
         };
 
         const pageType = () => {
@@ -464,6 +506,8 @@
                 markNativeContext(writeEditorStatusbar, 'editor-statusbar', nativeContextState);
                 setNativeContextAttribute(writeEditorFrame, 'data-dcuf-native-form-editor-mode', writeEditorMode);
                 writeEditorToolbars.forEach((toolbar) => {
+                    for (const previous of toolbarRows.keys()) if (!form.contains(previous)) restoreToolbarRows(previous);
+                    projectToolbarRows(toolbar, nativeContextState);
                     const toolbarKinds = [
                         toolbar.matches('.note-toolbar') ? 'primary' : '',
                         toolbar.matches('.note-toolbar-media') ? 'media' : '',
@@ -482,7 +526,7 @@
                         const rowBreak = group.matches('.note-break');
                         markNativeContext(group, htmlToggleGroup ? 'editor-html-toggle-group' : rowBreak ? 'editor-toolbar-break' : 'editor-toolbar-group', nativeContextState);
                         setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-group', group.matches('.note-mybutton') ? 'media' : 'format');
-                        if (group.parentElement === toolbar) setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-item', '1');
+                        if (group.parentElement === toolbar || group.parentElement?.hasAttribute('data-dcuf-editor-toolbar-row')) setNativeContextAttribute(group, 'data-dcuf-native-form-toolbar-item', '1');
                     });
 
                     toolbar.querySelectorAll('.write-html-toggle, label:has(#chk_html)').forEach((label) => {

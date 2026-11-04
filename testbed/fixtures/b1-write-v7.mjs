@@ -31,5 +31,6 @@ export function writerV7Html(options={}) {
  window.__v7NickCalls=[];window.use_gall_nick_name=mode=>{__v7NickCalls.push(mode);const direct=mode==='N';const g=document.querySelector('#gall_nick_name'),n=document.querySelector('#name');g.style.display=direct?'none':'';n.style.display=direct?'':'none';document.querySelector('#btn_gall_nick_name_x').style.display=direct?'none':'';document.querySelector('#btn_gall_nick_name_y').style.display=direct?'':'none';n.parentElement.classList.toggle('nomem_nick',!direct)};
  window.close_gall_nick_tip=()=>{document.querySelector('#tip_nomem_nick').style.display='none';__v7NickCalls.push('close')};
  window.__v7NativeOriginals=[...document.querySelectorAll('form#write input,form[name=modify] input,.note-toolbar button,#tip_nomem_nick,.write_infobox')].map(node=>({node,parent:node.parentNode,onclick:node.getAttribute('onclick'),name:node.getAttribute('name')}));
+ window.__v7ToolbarOriginals=[...document.querySelectorAll('.note-toolbar > .note-btn-group')].map(node=>({node,parent:node.parentNode,next:node.nextSibling}));
  </script></body>`);
 }
