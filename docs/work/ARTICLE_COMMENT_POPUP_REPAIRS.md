@@ -1,5 +1,7 @@
 # Article, comment, popup and shared header follow-up
 
+Latest user steering2026-11-05:restore original inline global service navigation and native inline categories at list top. Remove the added exploration/category disclosures by recovering pre-a3090b4 code only;retain current unified plate,light/dark material,row spacing,late external-padding protection,ready recovery and existing floating scroll owner. Native overflow arrow/menu remains available. Other routes and PC host styling stay unchanged.
+
 Authorized 2026-11-03 after the diagnosis/proposal. This supersedes the preceding analysis-only hold. Preserve native nodes, parents, events, fields, destinations and saved settings. Existing adapters own projection/geometry; existing presenters own appearance. No release/version/account mutation.
 
 - Attach the article title and metadata into one quiet, pale header; align the body left without changing authored alignment.

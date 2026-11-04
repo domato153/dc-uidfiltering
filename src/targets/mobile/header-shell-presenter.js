@@ -199,7 +199,7 @@
 
         /* The compact plate is a list-page variant; other route chrome keeps
            its existing composition. The adapter marks the original parent. */
-        ${selectors.layout}[data-dcuf-list-header] { grid-template-columns: 142px 80px minmax(180px,1fr) 116px 156px; grid-template-rows: 64px; }
+        ${selectors.layout}[data-dcuf-list-header] { grid-template-columns: 142px minmax(180px,1fr) minmax(190px,1fr) 116px 156px; grid-template-rows: 64px; }
         ${selectors.layout}[data-dcuf-list-header]::before { align-self: start; box-sizing: border-box; height: var(--dcuf-list-header-height,56px); margin: 8px var(--dcuf-page-gutter,10px) 0; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(var(--dcuf-b1-line),var(--dcuf-b1-line)) 14px var(--dcuf-list-header-divider,55px)/calc(100% - 28px) 1px no-repeat,var(--dcuf-b1-glass); box-shadow: 0 8px 18px -16px color-mix(in srgb,var(--dcuf-theme-fg) 22%,transparent),inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: none; }
         :where([data-dcuf-list-header]) ${selectors.root} ${selectors.logo} > a + a { display: none; }
         :where([data-dcuf-list-header]) ${selectors.logo},

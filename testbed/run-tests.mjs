@@ -91,7 +91,7 @@ test('Author followup: first-frame material and actual containing-block placemen
 test('FAB followup: common paired material and fourteen palettes in both themes', 'functional', async()=>runFabMaterialFollowup({browser,server}), ['mobile']);
 test('Preview media: native body lazy images and safe direct controls', 'functional', async()=>runPreviewSanitizerContract({browser,server}), ['mobile']);
 test('Preview media: native movie acquisition and read-only fallback', 'functional', async()=>runPreviewNativeMovieContract({browser,server}), ['mobile']);
-test('Header category: compact native picker preserves every destination and scroll owner', 'functional', async()=>runCategoryPickerContract({browser,server}), ['mobile']);
+test('Header category: inline native destinations overflow and refresh', 'functional', async()=>runCategoryPickerContract({browser,server}), ['mobile']);
 test('User feedback: native badge sprites and image fallback', 'functional', async()=>runBadgeFeedbackContract({browser,server}), ['mobile']);
 test('User feedback: transmitting preview and borderless original link', 'functional', async()=>runPreviewFeedbackContract({browser,server}), ['mobile']);
 test('B1 native settings: six native interiors retain glass geometry and actions', 'functional', async()=>runNativeSettingsContract({browser,server}), ['mobile']);

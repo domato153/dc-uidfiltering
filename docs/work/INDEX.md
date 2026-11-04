@@ -10,6 +10,8 @@ Use this file in the exact active nested worktree supplied by the private prompt
 
 ## Retrieve only for the question
 
+Site/index/README/real screenshots/stage3:[SITE_V7_PROPOSAL.md](SITE_V7_PROPOSAL.md). Current proposal uses actual public specimens,equal Mobile/PC installs and restored inline service/category navigation. Official promotion is separately approved stage4;CURRENT/NEXT own the one review task.
+
 PC shared-code port/stage2/desktop filter UI: [PC_FILTER_V7_PORT.md](PC_FILTER_V7_PORT.md) and docs/pc-filter-port-rail.md. Mobile factory reused byte-for-byte,not a second PC UI implementation;native PC pages remain native. CURRENT/NEXT own result/review and separate site proposal/publication stages.
 
 Current user feedback repairs2026-11-03:[UI_USER_FEEDBACK_REPAIRS.md](UI_USER_FEEDBACK_REPAIRS.md) owns the grouped shortcut/category-arrow/native-badge/full-width-page/reply-input/FAB/preview repairs. Current source/runtime,scoped checks and next actual-use review remain in CURRENT/NEXT. Earlier1120px layout direction is superseded;the header stays full width.

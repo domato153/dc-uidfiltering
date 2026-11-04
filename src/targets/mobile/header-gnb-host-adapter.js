@@ -30,7 +30,6 @@
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
-        let menuSerial = 0;
         let activeCoordinator = null;
         let mutationUnsubscribe = null;
         let styleOwner = null;
@@ -60,16 +59,6 @@
         };
 
         const restoreRoles = (state) => {
-            if (state.explore) {
-                const {list, button, id, onToggle} = state.explore;
-                if (list.matches(':popover-open')) list.hidePopover();
-                list.removeEventListener('toggle', onToggle);
-                list.removeAttribute('popover');
-                list.removeAttribute('data-dcuf-explore-baseline');
-                if (id === null) list.removeAttribute('id'); else list.id = id;
-                button.remove();
-                state.explore = null;
-            }
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -78,17 +67,6 @@
         };
 
         const syncRoles = (state) => {
-            const nextList = state.root.querySelector('.gnb_list');
-            if (state.explore && (state.explore.list !== nextList || state.explore.button.parentNode !== nextList?.parentNode)) restoreRoles(state);
-            if (!state.explore) {
-                state.root.querySelectorAll('[data-dcuf-explore-toggle]').forEach(button=>button.remove());
-                state.root.querySelectorAll('.gnb_list[data-dcuf-explore-baseline]').forEach(list=>{
-                    const id=list.getAttribute('data-dcuf-explore-baseline');
-                    list.removeAttribute('popover');
-                    if(id)list.id=id;else list.removeAttribute('id');
-                    list.removeAttribute('data-dcuf-explore-baseline');
-                });
-            }
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
@@ -112,22 +90,6 @@
                 }
                 element.setAttribute(ROLE_ATTRIBUTE, role);
             });
-            const list = state.root.querySelector('.gnb_list');
-            if (list && !state.explore && /\/board\/lists\/?$/.test(location.pathname) && typeof list.showPopover === 'function' && !list.hasAttribute('popover')) {
-                const id = list.getAttribute('id');
-                list.setAttribute('data-dcuf-explore-baseline',id || '');
-                if (!id) list.id = `dcuf-explore-${++menuSerial}`;
-                list.setAttribute('popover', 'auto');
-                const button = document.createElement('button');
-                button.type = 'button'; button.textContent = '탐색';
-                button.setAttribute('data-dcuf-explore-toggle', '1');
-                button.setAttribute('popovertarget', list.id);
-                button.setAttribute('aria-expanded', 'false');
-                const onToggle = () => button.setAttribute('aria-expanded', String(list.matches(':popover-open')));
-                list.addEventListener('toggle', onToggle);
-                list.parentElement.insertBefore(button, list);
-                state.explore = {list, button, id, onToggle};
-            }
         };
 
         const disconnectRoot = (root) => {

@@ -2,22 +2,24 @@
 
 ## Current execution
 
-- Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 appearance adopted by user;stage2 PC common-code port implemented. Site/docs/screenshot proposal and approved official promotion remain separate stages3/4.
+- Active plan: Four separate stages in ARTICLE_COMMENT_POPUP_REPAIRS.md. Stage1 toolbar adopted;stage2 PC reuse accepted by user. Stage3 site/index/README proposal is ready for review;stage4 official promotion remains separately approved.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `pc-filter-port` bounded review. Formal Mobile header admission remains UNKNOWN;this does not certify whole UI/native permissions/device.
-- Accepted visual preference: Mobile soft toolbar face with stronger LIGHT tint,DARK earlier face. Actual memo/current v7 material is reused for PC owned UI;no independent PC design. White-center/bright-bottom-band remains rejected.
-- Source state: Source checkpoint base HEAD `a4f6f17fbabb9e667dd5f675251093db06079eeb` on `codex/ui-port-boundary`;stage2 bounded port locally verified. Exact checkpoint disposition is read fresh from Git/tools,not inferred from tests.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/pc-v7-port-2026-11-04 holds frozen controls,raw comparisons,selected logs and fixture/public captures. Viewer at artifacts/b1-detail-2026-10-23/pc-v7-port.
-- Candidate fingerprint: `5ff353332218a60dd70e638256532f2ab4e7b98c4eea6c431f6ede7a7b158259`
-- Last current audit: UNKNOWN:formal upper admission/actual extension remain open. PC source-linked material/palette/delete checks pass;2 raw native/filter/storage pairs agree and quick-block outcome comparison passes. Mobile bytes are identical.
-- Current stage receipt: `verification/receipts/2026-11-04-pc-v7-material-port.json` SHA-256 `DD4359C3FDE2FB50EB3AD8B8C15F67F71C972A4A49482C33E28E26D7FEC076F3`;prior receipts retain their scoped identities.
-- Accepted baseline: Shared existing filter/management/settings code and unchanged adopted material factory. PC receives material connection only;native PC pages remain native. Material component remains mixed;no accepted-registry promotion.
-- Current artifact: Mobile3.5.5 2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B guard/root/dist unchanged;PC1.9.9 CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91 guard copy/root/dist. No version bump or publication.
-- Blockers: No bounded port implementation hold. Source-injected public images and local tests do not establish actual-extension or user aesthetic approval. Do not import Mobile site styling or create another PC UI.
-- Pending live checks: Separate PC review install with other DCUF scripts disabled;actual extension/user preference unqualified. Prior Mobile exact OS-tab/background-return qualification remains open. Known installed-Chrome/Tampermonkey route remains supported.
+- Active stage: `site-v7-proposal`;one next action `site-v7-proposal-review`.
+- Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,centering,late-padding protection and original scroll/resume.
+- Source state: Source checkpoint base HEAD `ce69502a3034cb1338939ca4a648b7d9a6006df6` on `codex/ui-port-boundary`. Read fresh Git/checkpoint receipt for actual commit/push/CI disposition.
+- Candidate fingerprint: `40f51cde23f8b14687c781c5b28703943d3ab2248e594ee28febfefd812f1fe8`
+- Current stage receipt: `verification/receipts/2026-11-05-inline-header-site-v7.json` SHA-256 `93d0315b3f88277ee3efb3f16b46f5436e9343e640396522a237a9a1ce3ddf3b`.
+- Current artifact: Mobile3.5.5 108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589 guard/root/dist;PC1.9.9 ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91 root/dist unchanged. No bump/publication.
+- Current scoped checks:four inline-category, four header/palette/scroll and two suspended-render recovery contexts pass;release/architecture checks pass. Site1440/980/390 image/tab/keyboard/anchor/equal-install/no-overflow checks pass. Both visual pairs show intended differences,manually reviewed;no user approval follows automatically.
+- Reviewable proposal: `design-prototypes/site-v7`;local viewer/site-v7 on existing10067 review server. README draft,generated composition reference and seven actual public examples included. Root index/style/README and official refs remain untouched.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`,artifacts/site-v7-2026-11-04 and artifacts/site-v7-visual-2026-11-05. Captures are unmodified anonymous public site content with source injection,not fixtures,generated examples or installed-extension/device proof.
+- Accepted baseline: Adopted actual memo/current v7;latest user restores inline services/categories. Prior PC common-code port is accepted;site composition is a proposal,not approval.
+- Last current audit: UNKNOWN:formal upper admission,actual installed-PC use and exact Mobile OS/tab discard remain separate. No broad whole-UI/performance/accessibility certification. Prior PC receipt retains its exact artifact.
+- Blockers: No bounded implementation blocker;site proposal/user review and promotion approval pending. Do not infer official release from this checkpoint.
+- Pending live checks: Actual installed-PC use and exact Mobile OS/discard remain unqualified;known installed-Chrome/Tampermonkey route is supported. Site appearance and stage4 approval pending.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"2C14F66FB22C8155EC266F9E1C91BC4A9AB1A31AC230A6B559106880C880B62B"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
+{"schemaVersion":1,"mobile":{"sha256":"108930C864B2E3EFB541B3105EA80ECF6E97C592CEAA7E19C79EB210A81BE589"},"pc":{"sha256":"CE1B9DB0164B55C34B9CFE9AD82862ABCE4F2836B00801B99A7052BB4A136B91"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

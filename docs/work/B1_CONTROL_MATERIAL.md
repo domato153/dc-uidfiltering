@@ -6,6 +6,8 @@
 
 ### Latest user refinements —2026-11-03
 
+Latest user steering2026-11-05:restore original inline global service navigation and native inline categories at list top. Remove the added exploration/category disclosures by recovering pre-a3090b4 code only;retain current unified plate,light/dark material,row spacing,late external-padding protection,ready recovery and existing floating scroll owner. Native overflow arrow/menu remains available. Other routes and PC host styling stay unchanged.
+
 Page layout preserves the existing full-width header and expands list/article/comments/writer/page-level action bars to its shared gutters(10px desktop,8px below900px). A centered1120px page cap is superseded. Inner editing fields,authored media and floating dialogs keep role-specific sizes.
 
 The floating `menu` action uses the same pale primary/paired ink as the other current v7 controls;the earlier white-ink/dense-glass exception is superseded by user feedback2026-11-03. Retain compact label-relative padding,optical centering,saved scale and drag;Mobile hooks leave PC fallbacks unchanged.

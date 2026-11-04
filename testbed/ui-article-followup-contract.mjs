@@ -63,7 +63,7 @@ export async function runHeaderResumeContract({browser,server}) {
    assert.deepEqual(recovered.styles,[1,1,1,1]);assert.equal(recovered.listContext,true);
    assert.deepEqual(await canvas(),originalCanvas,'Ready restores the shared whole-page canvas,not only header geometry');
    await p.evaluate(()=>document.getElementById('dcuf-testbed-controls')?.remove());
-   await p.locator('[data-dcuf-explore-toggle]').click();assert.equal(await p.locator('.gnb_list').isVisible(),true);await p.keyboard.press('Escape');
+   assert.equal(await p.locator('[data-dcuf-explore-toggle]').count(),0);assert.equal(await p.locator('.gnb_list').isVisible(),true);
    for(let i=0;i<2;i++)await p.evaluate(async()=>{let visibility='hidden';Object.defineProperty(document,'visibilityState',{configurable:true,get:()=>visibility});document.dispatchEvent(new Event('visibilitychange'));visibility='visible';document.dispatchEvent(new Event('visibilitychange'));await window.__dcufFilterModule?._visibilityRecoveryPromise;delete document.visibilityState;__dcufBootController.markReady('repeat-ready');});
    await paint(p);
    const repeated=await p.evaluate(()=>[__dcufHeaderShellHostAdapter,__dcufGalleryPageHeadHostAdapter,__dcufHeaderGnbHostAdapter,__dcufHeaderRecentVisitHostAdapter].map(a=>a.snapshotResources()));
@@ -151,13 +151,12 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    }
    const frame=await p.evaluate(()=>{const layout=document.querySelector('[data-dcuf-header-layout]'),s=getComputedStyle(layout,'::before'),gallery=document.querySelector('[data-dcuf-gallery-page-head-role="root"]'),toolbar=document.querySelector('[data-dcuf-surface="list-toolbar"]');return{bottom:layout.getBoundingClientRect().top+parseFloat(s.marginTop)+parseFloat(s.height),toolbarBottom:toolbar.getBoundingClientRect().bottom,galleryBorder:getComputedStyle(gallery).borderLeftWidth,toolbarBorder:getComputedStyle(toolbar).borderLeftWidth}});
    assert.ok(Math.abs(frame.bottom-frame.toolbarBottom)<2,'One header frame spans all three tiers: '+JSON.stringify(frame));assert.equal(frame.galleryBorder,'0px');assert.equal(frame.toolbarBorder,'0px');
-   const chrome=await p.evaluate(()=>{const layout=document.querySelector('[data-dcuf-header-layout]'),box=layout.getBoundingClientRect(),height=parseFloat(getComputedStyle(layout).gridTemplateRows),top=box.top+parseFloat(getComputedStyle(layout,'::before').marginTop),center=(top+box.top+height)/2;return{center,searchCenter:innerWidth<900?box.top+height+24:center,items:['[data-dcuf-header-shell-role="logo"]','[data-dcuf-explore-toggle]','[data-dcuf-header-shell-role="links"]','[data-dcuf-header-shell-role="top-search"]','[data-dcuf-header-recent-visit-role="root"] > .btn_open'].map(selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect();return{selector,center:r.y+r.height/2,area:r.width*r.height}})}});
+   const chrome=await p.evaluate(()=>{const layout=document.querySelector('[data-dcuf-header-layout]'),box=layout.getBoundingClientRect(),height=parseFloat(getComputedStyle(layout).gridTemplateRows),top=box.top+parseFloat(getComputedStyle(layout,'::before').marginTop),center=(top+box.top+height)/2;return{center,searchCenter:innerWidth<900?box.top+height+24:center,items:['[data-dcuf-header-shell-role="logo"]','[data-dcuf-header-shell-role="links"]','[data-dcuf-header-shell-role="top-search"]','[data-dcuf-header-recent-visit-role="root"] > .btn_open'].map(selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect();return{selector,center:r.y+r.height/2,area:r.width*r.height}})}});
    for(const item of chrome.items){const expected=/top-search|recent-visit/.test(item.selector)?chrome.searchCenter:chrome.center;assert.ok(item.area>0&&Math.abs(item.center-expected)<=1,'Global header controls center within the visible plate: '+JSON.stringify({item,expected}));}
    const recent=p.locator('[data-dcuf-header-recent-visit-role="root"] > .btn_open');await recent.click();const history=p.locator('#visit_history_lyr');await history.waitFor({state:'visible'});const historyBox=await history.boundingBox();assert.ok(historyBox.width>0&&historyBox.height>0&&historyBox.x>=0&&historyBox.x+historyBox.width<=state.width+1,'Moved recent-visit control keeps its original popup visible and contained');await recent.click();
    const destinations=await p.locator('.gnb_list > li > a').evaluateAll(ns=>ns.map(n=>n.getAttribute('href')));
-   await p.locator('[data-dcuf-explore-toggle]').click();await p.locator('.gnb_list').waitFor({state:'visible'});
-   assert.ok((await p.locator('.gnb_list').boundingBox()).height>30);await p.keyboard.press('Escape');await paint(p);
-   assert.equal(await p.locator('[data-dcuf-explore-toggle]').getAttribute('aria-expanded'),'false');
+   assert.equal(await p.locator('[data-dcuf-explore-toggle]').count(),0);
+   for(const link of await p.locator('.gnb_list > li > a').all())assert.equal(await link.isVisible(),true,'Every native service destination remains inline');
    await p.locator('[data-dcuf-gallery-more-toggle]').click();
    const actions=p.locator('.page_head > .fr > [data-dcuf-gallery-more-index]');
    for(const n of await actions.all())assert.equal(await n.isVisible(),true);
@@ -171,14 +170,14 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    assert.ok(Math.abs(relation.y-more.y-more.height-8)<=2,'Related gallery starts below its visible More trigger: '+JSON.stringify({relation,more}));
    await p.evaluate(()=>document.querySelector('#relation_popup').remove());
    await p.evaluate(()=>{document.querySelector('.gnb_bar').replaceWith(document.querySelector('.gnb_bar').cloneNode(true));const right=document.querySelector('.page_head > .fr');right.replaceWith(right.cloneNode(true));});await paint(p);
-   await p.locator('[data-dcuf-explore-toggle]').click();await p.locator('.gnb_list').waitFor({state:'visible'});
-   assert.equal(await p.locator('[data-dcuf-explore-toggle]').count(),1);assert.deepEqual(await p.locator('.gnb_list > li > a').evaluateAll(ns=>ns.map(n=>n.getAttribute('href'))),destinations);
-   await p.keyboard.press('Escape');await p.locator('[data-dcuf-gallery-more-toggle]').click();assert.equal(await p.locator('[data-dcuf-gallery-more-toggle]').count(),1);await p.keyboard.press('Escape');
-   const invoker=p.locator('[data-dcuf-role="category-invoker"]');await invoker.click();
+   await p.locator('.gnb_list').waitFor({state:'visible'});
+   assert.equal(await p.locator('[data-dcuf-explore-toggle]').count(),0);assert.deepEqual(await p.locator('.gnb_list > li > a').evaluateAll(ns=>ns.map(n=>n.getAttribute('href'))),destinations);
+   await p.locator('[data-dcuf-gallery-more-toggle]').click();assert.equal(await p.locator('[data-dcuf-gallery-more-toggle]').count(),1);await p.keyboard.press('Escape');
+   const invoker=p.locator('[data-dcuf-role="category-invoker"]');assert.equal(await invoker.count(),0);
    const picker=p.locator('[data-dcuf-role="category-shell"]');await picker.waitFor({state:'visible'});
    const toggle=p.locator('[data-dcuf-role="category-toggle"]');await toggle.click();
    const menu=p.locator('[data-dcuf-role="category-popup"]');await menu.waitFor({state:'visible'});
-   const a=await toggle.boundingBox(),b=await menu.boundingBox(),outer=await picker.boundingBox();assert.ok(b.x>=outer.x&&b.x+b.width<=outer.x+outer.width,'Original overflow stays inside the anchored category picker');
+   const a=await toggle.boundingBox(),b=await menu.boundingBox();assert.ok(b.x>=-1&&b.x+b.width<=state.width+1&&Math.abs(b.y-a.y-a.height-8)<3,'Original overflow stays adjacent to its inline arrow');
    await onCapture?.(e,'category',state);await toggle.click();await p.keyboard.press('Escape');await p.locator('body').click({position:{x:2,y:Math.min(250,state.height-10)}});
    await p.evaluate(()=>{const tail=document.createElement('div');tail.style.height='4000px';document.body.append(tail);document.activeElement?.blur();});
    const toolbar=p.locator('[data-dcuf-surface="list-toolbar"]');
@@ -187,7 +186,7 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    for(const y of [650,600,550]){await p.evaluate(y=>scrollTo(0,y),y);await paint(p)}
    assert.equal(await toolbar.getAttribute('data-dcuf-scroll'),'shown','Existing up-scroll reappears');
    assert.equal(await toolbar.evaluate(n=>getComputedStyle(n,'::before').content),'none','Floating toolbar retains its original independent surface');
-   assert.equal(await invoker.isVisible(),false,'Reappearing toolbar keeps its original category strip');
+   assert.equal(await invoker.count(),0,'Reappearing toolbar keeps its original category strip');
    assert.equal(await p.locator('[data-dcuf-role="category-list"]').isVisible(),true);
    assert.equal(await picker.getAttribute('popover'),null,'The floating toolbar uses original inline controls');
    await onCapture?.(e,'scroll',state);

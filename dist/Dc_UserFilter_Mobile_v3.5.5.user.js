@@ -2965,56 +2965,6 @@ const __dcufSettingsPresenter = (() => {
                 border-block-start: 5px solid currentColor;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-toggle-icon"] { display: none; }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"] {
-                display: inline-flex; align-items: center; gap: 9px;
-                min-width: 0; max-width: 100%; min-height: 40px;
-                padding: 0 10px; border: 0; border-radius: 6px;
-                background: transparent; color: var(--dcuf-theme-fg-muted);
-                font: 500 13px/1.4 system-ui,sans-serif; cursor: pointer;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"]::after {
-                content: ''; flex: none; border-inline: 3px solid transparent;
-                border-top: 4px solid currentColor;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"][hidden] { display: none; }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"]:is(:hover,:focus-visible,[aria-expanded="true"]) {
-                background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink);
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover]:not(:popover-open) { display: none; }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover]:popover-open {
-                position: fixed; position-anchor: var(--dcuf-category-anchor);
-                inset: 180px auto auto 12px;
-                top: clamp(8px,calc(anchor(bottom) + 6px),calc(100dvh - min(420px,50dvh) - 12px));
-                left: clamp(12px,anchor(left),calc(100vw - min(340px,100vw - 24px) - 12px));
-                display: flex; flex-direction: column; align-items: stretch; gap: 4px;
-                width: min(340px,calc(100vw - 24px)); max-width: calc(100vw - 24px);
-                max-height: min(420px,50dvh);
-                margin: 0; padding: 8px; box-sizing: border-box; overflow: auto;
-                overscroll-behavior: contain; scrollbar-width: thin;
-                border: 1px solid var(--dcuf-b1-rim); border-radius: 12px;
-                background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating);
-                color: var(--dcuf-theme-fg); backdrop-filter: var(--dcuf-b1-floating-filter);
-                box-shadow: var(--dcuf-b1-shadow);
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] {
-                display: grid; grid-auto-flow: row; grid-auto-columns: auto;
-                height: auto; width: 100%; flex: none; overflow: visible;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li {
-                display: block; max-width: none; width: 100%; height: auto;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-toggle"] {
-                justify-content: flex-start; gap: 9px; width: 100%; min-height: 38px;
-                height: auto; padding: 8px 10px; border: 0; border-radius: 6px;
-                color: var(--dcuf-theme-fg-muted); font: 500 12px/1.5 system-ui,sans-serif;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-toggle"]::after { content: '더 많은 말머리'; }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-popup"] {
-                position: static; width: 100%; min-width: 0; max-width: none;
-                max-height: none; margin: 0; padding: 0; overflow: visible;
-                border: 0; border-radius: 0; background: transparent;
-                box-shadow: none; backdrop-filter: none;
-            }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-popup"] {
                 position: absolute;
                 z-index: 3;
@@ -3188,20 +3138,9 @@ const __dcufSettingsPresenter = (() => {
                 border-radius: 6px;
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="action"]:focus-visible,
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-invoker"]:focus-visible,
             [data-dcuf-surface="list-actions"] [data-dcuf-role="action"]:focus-visible {
                 outline: 2px solid var(--dcuf-theme-accent);
                 outline-offset: 2px;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li > a {
-                display: block; width: 100%; height: auto; min-height: 38px;
-                padding: 9px 10px; border: 0; border-radius: 6px;
-                color: var(--dcuf-theme-fg); font: 500 13px/1.5 system-ui,sans-serif;
-                text-align: start; white-space: normal; overflow-wrap: anywhere;
-            }
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li.on > a,
-            [data-dcuf-surface="list-toolbar"] [data-dcuf-role="category-shell"][popover] [data-dcuf-role="category-list"] > li > a:is(.on,:hover,:focus-visible) {
-                background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink);
             }
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-action"],
             [data-dcuf-surface="list-toolbar"] [data-dcuf-role="primary-group"] [data-dcuf-role="primary-action"],
@@ -3536,10 +3475,6 @@ const __dcufSettingsPresenter = (() => {
         ]);
         const controlTransactions = new WeakMap();
         const paginationListeners = new WeakMap();
-        const categoryPickers = new WeakMap();
-        const CATEGORY_BASELINE_ATTR = 'data-dcuf-category-baseline';
-        const CATEGORY_INVOKER_ATTR = 'data-dcuf-category-invoker';
-        let categorySerial = 0;
         const searchDrawerRoots = new Set();
         const searchRootsByOwner = new WeakMap();
         const ownerBySearchRoot = new WeakMap();
@@ -3571,7 +3506,6 @@ const __dcufSettingsPresenter = (() => {
             state.travel = 0;
             state.mode = state.lastY <= state.origin + state.height ? 'top' : 'shown';
             state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
-            syncCategoryPickerMode(state.owner, state.mode !== 'top');
             const layout = document.querySelector('[data-dcuf-header-layout]');
             if (layout && state.toolbar === document.querySelector('[data-dcuf-surface="list-toolbar"]')) {
                 if (!state.plateGeometry) state.plateGeometry = {node: layout, value: layout.style.getPropertyValue('--dcuf-list-header-height'), priority: layout.style.getPropertyPriority('--dcuf-list-header-height')};
@@ -3580,10 +3514,8 @@ const __dcufSettingsPresenter = (() => {
             }
         };
         const updatePopupHold = (state) => {
-            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-shell"][popover], [data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
-                .some(popup => popup.matches('[data-dcuf-role="category-shell"]')
-                    ? typeof popup.showPopover === 'function' && popup.matches(':popover-open')
-                    : !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
+            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
+                .some(popup => !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
                         && popup.getClientRects().length > 0 && getComputedStyle(popup).visibility !== 'hidden');
             state.toolbar.toggleAttribute('data-dcuf-popup-open', state.popupOpen);
         };
@@ -3619,7 +3551,6 @@ const __dcufSettingsPresenter = (() => {
                 // Commit both flow changes before measuring: a layout read with
                 // spacer AND toolbar in flow would trigger scroll anchoring.
                 if (state.toolbar.getAttribute('data-dcuf-scroll') !== state.mode) state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
-                if (!state.popupOpen) syncCategoryPickerMode(state.owner, floating);
                 if (floating) {
                     const rect = state.spacer.getBoundingClientRect();
                     const left = `${rect.left}px`, width = `${rect.width}px`;
@@ -3829,140 +3760,6 @@ const __dcufSettingsPresenter = (() => {
             if (!remember(root, element)) return;
             properties.forEach((property) => element.style.removeProperty(property));
             if (!element.getAttribute('style')?.trim()) element.removeAttribute('style');
-        };
-        const restoreCategoryBaseline = (shell, baseline) => {
-            if (baseline.id === null) shell.removeAttribute('id');
-            else shell.setAttribute('id', baseline.id);
-            if (baseline.popover === null) shell.removeAttribute('popover');
-            else shell.setAttribute('popover', baseline.popover);
-            if (baseline.anchor) shell.style.setProperty('--dcuf-category-anchor', baseline.anchor, baseline.anchorPriority);
-            else shell.style.removeProperty('--dcuf-category-anchor');
-            if (!baseline.hadStyle && !shell.style.length) shell.removeAttribute('style');
-            shell.removeAttribute(CATEGORY_BASELINE_ATTR);
-        };
-        const recoverCopiedCategoryBaseline = (shell) => {
-            const serialized = shell.getAttribute(CATEGORY_BASELINE_ATTR);
-            if (serialized === null) return;
-            let baseline;
-            try { baseline = JSON.parse(serialized); } catch (_) { return; }
-            if (!baseline || ![baseline.id, baseline.popover].every(value => value === null || typeof value === 'string')
-                || typeof baseline.anchor !== 'string' || typeof baseline.anchorPriority !== 'string'
-                || typeof baseline.hadStyle !== 'boolean') return;
-            restoreCategoryBaseline(shell, baseline);
-        };
-        const disconnectCategoryPicker = (owner) => {
-            const state = categoryPickers.get(owner);
-            if (!state) return;
-            categoryPickers.delete(owner);
-            if (state.dismissTimer) window.clearTimeout(state.dismissTimer);
-            state.shell.removeEventListener('toggle', state.onToggle);
-            state.shell.removeEventListener('click', state.onClick);
-            if (state.shell.matches(':popover-open')) state.shell.hidePopover();
-            restoreCategoryBaseline(state.shell, state.baseline);
-            state.button.remove();
-        };
-        const prepareCategoryPicker = (owner, categories, shell) => {
-            let state = categoryPickers.get(owner);
-            if (state && (state.shell !== shell || state.categories !== categories || state.button.parentElement !== categories)) {
-                disconnectCategoryPicker(owner);
-                state = null;
-            }
-            if (!(categories instanceof HTMLElement) || !(shell instanceof HTMLElement)) return;
-            // Native rerenders can copy injected attributes/buttons without the
-            // live state. Recover the native baseline before remember() runs.
-            categories.querySelectorAll(`:scope > [${CATEGORY_INVOKER_ATTR}]`).forEach(button => {
-                if (button !== state?.button) button.remove();
-            });
-            if (!state) recoverCopiedCategoryBaseline(shell);
-        };
-        const syncCategoryCaption = (state) => {
-            const selected = Array.from(state.shell.querySelectorAll(':scope > ul > li > a, :scope > .subject_morelist > ul > li > a'))
-                .find(link => link.matches('.on, [aria-selected="true"], [aria-current]:not([aria-current="false"])')
-                    || link.parentElement?.matches('.on, [aria-selected="true"]'));
-            const caption = selected?.textContent?.trim() || '말머리 전체';
-            if (state.button.textContent !== caption) state.button.textContent = caption;
-            state.button.setAttribute('aria-label', `말머리 선택: ${caption}`);
-            state.button.setAttribute('data-dcuf-role', 'category-invoker');
-        };
-        const connectCategoryPicker = (owner, categories, shell) => {
-            if (!(categories instanceof HTMLElement) || !(shell instanceof HTMLElement)) return;
-            if (!/\/board\/lists\/?$/.test(location.pathname)) return;
-            const previous = categoryPickers.get(owner);
-            if (previous) { syncCategoryCaption(previous); return; }
-            if (typeof shell.showPopover !== 'function' || typeof shell.hidePopover !== 'function'
-                || shell.hasAttribute('popover') || !(shell.querySelector(':scope > ul') instanceof HTMLElement)) return;
-            const baseline = {
-                id: shell.getAttribute('id'),
-                popover: shell.getAttribute('popover'),
-                anchor: shell.style.getPropertyValue('--dcuf-category-anchor'),
-                anchorPriority: shell.style.getPropertyPriority('--dcuf-category-anchor'),
-                hadStyle: shell.hasAttribute('style'),
-            };
-            let serial;
-            do { serial = ++categorySerial; } while (document.getElementById(`dcuf-category-${serial}`));
-            if (!shell.id || document.getElementById(shell.id) !== shell) shell.id = `dcuf-category-${serial}`;
-            const anchor = `--dcuf-category-${serial}`;
-            shell.setAttribute(CATEGORY_BASELINE_ATTR, JSON.stringify(baseline));
-            shell.setAttribute('popover', 'auto');
-            shell.style.setProperty('--dcuf-category-anchor', anchor);
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.setAttribute(CATEGORY_INVOKER_ATTR, '1');
-            button.setAttribute('popovertarget', shell.id);
-            button.setAttribute('aria-expanded', 'false');
-            button.style.setProperty('anchor-name', anchor);
-            const state = {categories, shell, button, baseline, dismissTimer: 0};
-            state.onToggle = () => {
-                button.setAttribute('aria-expanded', String(shell.matches(':popover-open')));
-                syncCategoryCaption(state);
-                scrollPopupPending = true;
-                scheduleScrollToolbars();
-            };
-            state.onClick = (event) => {
-                const action = event.target instanceof Element ? event.target.closest('a') : null;
-                if (!(action instanceof HTMLAnchorElement)
-                    || !Array.from(shell.querySelectorAll(':scope > ul > li > a, :scope > .subject_morelist > ul > li > a')).includes(action)) return;
-                // Native/delegated callbacks keep their event and default action.
-                // Dismiss only after the whole click dispatch has completed.
-                if (state.dismissTimer) window.clearTimeout(state.dismissTimer);
-                state.dismissTimer = window.setTimeout(() => {
-                    state.dismissTimer = 0;
-                    if (categoryPickers.get(owner) !== state) return;
-                    syncCategoryCaption(state);
-                    if (!shell.isConnected || !shell.matches(':popover-open')) return;
-                    const returnFocus = action === document.activeElement || action.contains(document.activeElement);
-                    shell.hidePopover();
-                    if (returnFocus && button.isConnected && (document.activeElement === action
-                        || document.activeElement === document.body || document.activeElement === button)) button.focus({preventScroll: true});
-                }, 0);
-            };
-            shell.addEventListener('toggle', state.onToggle);
-            shell.addEventListener('click', state.onClick);
-            categories.insertBefore(button, shell);
-            categoryPickers.set(owner, state);
-            syncCategoryCaption(state);
-        };
-        const syncCategoryPickerMode = (owner, floating) => {
-            const state = categoryPickers.get(owner);
-            if (!state || state.inline === floating) return;
-            state.inline = floating;
-            const returnFocus = !floating && state.shell.contains(document.activeElement);
-            // Reuse the original toolbar as it reappears on up-scroll. Only
-            // the page-top composition condenses categories into a disclosure.
-            if (floating) {
-                const overflow = state.shell.querySelector('[data-dcuf-role="category-popup"]');
-                // A closed top-layer picker may retain its native expanded
-                // overflow. Collapse through the original control before the
-                // inline strip returns, so no submenu appears without a click.
-                if (overflow && getComputedStyle(overflow).display !== 'none') state.shell.querySelector('[data-dcuf-role="category-toggle"]')?.click();
-                state.shell.removeAttribute('popover');
-            }
-            else state.shell.setAttribute('popover', 'auto');
-            state.button.hidden = floating;
-            if (returnFocus) state.button.focus({preventScroll: true});
-            if (floating && document.activeElement === state.button) {
-                (state.shell.querySelector('a.on,li.on > a') || state.shell.querySelector('a'))?.focus({preventScroll: true});
-            }
         };
         const setSearchDrawerDiagnostics = () => {
             const diagnostics = window.__dcufDiagnostics;
@@ -4177,7 +3974,6 @@ const __dcufSettingsPresenter = (() => {
                 const categories = toolbar.querySelector(':scope > .center_box');
                 const categoryShell = categories?.querySelector(':scope > .inner');
                 const categoryList = categoryShell?.querySelector(':scope > ul');
-                prepareCategoryPicker(listWrap, categories, categoryShell);
                 const rightBox = toolbar.querySelector(':scope > .right_box');
                 const outputArray = toolbar.querySelector('.output_array');
                 const pageSizeShell = toolbar.querySelector('.select_box.array_num');
@@ -4208,7 +4004,6 @@ const __dcufSettingsPresenter = (() => {
                     mark(listWrap, item, { role: 'category-popup-item' });
                     item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
                 });
-                connectCategoryPicker(listWrap, categories, categoryShell);
                 connectScrollToolbar(listWrap, toolbar);
             }
 
@@ -4283,7 +4078,6 @@ const __dcufSettingsPresenter = (() => {
         };
         const disconnectControls = (listWrap) => {
             if (!(listWrap instanceof HTMLElement)) return;
-            disconnectCategoryPicker(listWrap);
             disconnectScrollToolbar(listWrap);
             disconnectSearchDrawers(listWrap);
             disconnectPaginationNavigation(listWrap);
@@ -11531,7 +11325,7 @@ const __dcufSettingsPresenter = (() => {
 
         /* The compact plate is a list-page variant; other route chrome keeps
            its existing composition. The adapter marks the original parent. */
-        ${selectors.layout}[data-dcuf-list-header] { grid-template-columns: 142px 80px minmax(180px,1fr) 116px 156px; grid-template-rows: 64px; }
+        ${selectors.layout}[data-dcuf-list-header] { grid-template-columns: 142px minmax(180px,1fr) minmax(190px,1fr) 116px 156px; grid-template-rows: 64px; }
         ${selectors.layout}[data-dcuf-list-header]::before { align-self: start; box-sizing: border-box; height: var(--dcuf-list-header-height,56px); margin: 8px var(--dcuf-page-gutter,10px) 0; border: 1px solid var(--dcuf-b1-rim); border-radius: 15px; background: linear-gradient(var(--dcuf-b1-line),var(--dcuf-b1-line)) 14px var(--dcuf-list-header-divider,55px)/calc(100% - 28px) 1px no-repeat,var(--dcuf-b1-glass); box-shadow: 0 8px 18px -16px color-mix(in srgb,var(--dcuf-theme-fg) 22%,transparent),inset 0 1px 0 var(--dcuf-b1-rim); backdrop-filter: none; }
         :where([data-dcuf-list-header]) ${selectors.root} ${selectors.logo} > a + a { display: none; }
         :where([data-dcuf-list-header]) ${selectors.logo},
@@ -12615,19 +12409,8 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         ${selectors.list} > li > a[data-dcuf-header-gnb-role="current-link"],
         ${selectors.list} > li > a:is(:hover, :focus-visible) { background: transparent; border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }
         ${selectors.darkList} > li > a[data-dcuf-header-gnb-role="current-link"] { color: var(--dcuf-theme-accent-ink); }
-        ${selectors.root} [data-dcuf-explore-toggle] { anchor-name: --dcuf-explore; display: inline-flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 10px; border: 0; border-radius: 7px; background: transparent; color: var(--dcuf-theme-fg); font: 600 12px/1.4 system-ui,sans-serif; cursor: pointer; }
-        ${selectors.root} [data-dcuf-explore-toggle]::after { content: ''; border-inline: 3px solid transparent; border-top: 4px solid currentColor; }
-        ${selectors.root} [data-dcuf-explore-toggle]:is(:hover,:focus-visible,[aria-expanded="true"]) { background: var(--dcuf-control-selected-bg); color: var(--dcuf-theme-accent-ink); }
-        ${selectors.list}[popover]:not(:popover-open) { display: none; }
-        ${selectors.list}[popover]:popover-open { position: fixed; position-anchor: --dcuf-explore; inset: 64px auto auto 152px; top: calc(anchor(bottom) + 6px); left: clamp(12px,anchor(left),calc(100vw - 232px)); display: grid; grid-template-columns: 1fr 1fr; width: min(240px,calc(100vw - 24px)); max-height: calc(100dvh - 100px); overflow: auto; padding: 8px; margin: 0; gap: 2px; border: 1px solid var(--dcuf-b1-rim); border-radius: 12px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); backdrop-filter: var(--dcuf-b1-floating-filter); box-shadow: var(--dcuf-b1-shadow); box-sizing: border-box; }
-        ${selectors.list}[popover] > li > a { display: flex; min-height: 36px; padding: 0 10px; border: 0; border-radius: 6px; font-size: 12px; }
-        :where([data-dcuf-list-header]) ${selectors.root} [data-dcuf-explore-toggle] { margin-block-start: 8px; }
-        @media (max-width: 899px) {
-            ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; }
-            ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; }
-            :where([data-dcuf-list-header]) ${selectors.root} { grid-area: 1 / 2; padding: 0; }
-            :where([data-dcuf-list-header]) ${selectors.list}[popover] { gap: 2px; padding: 8px; }
-        }
+        :where([data-dcuf-list-header]) ${selectors.root} { margin-block-start: 8px; }
+        @media (max-width: 899px) { ${selectors.root} { grid-area: 3 / 1 / 4 / -1; padding: 0 22px 12px; } ${selectors.list} { gap: 0 16px; padding: 0 22px 12px; box-sizing: border-box; } }
 
 `
         });
@@ -12669,7 +12452,6 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         const STYLE_ID = 'dcuf-header-gnb-style';
         const SUBSCRIBER_KEY = 'header-gnb-style';
         const states = new Map();
-        let menuSerial = 0;
         let activeCoordinator = null;
         let mutationUnsubscribe = null;
         let styleOwner = null;
@@ -12699,16 +12481,6 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         };
 
         const restoreRoles = (state) => {
-            if (state.explore) {
-                const {list, button, id, onToggle} = state.explore;
-                if (list.matches(':popover-open')) list.hidePopover();
-                list.removeEventListener('toggle', onToggle);
-                list.removeAttribute('popover');
-                list.removeAttribute('data-dcuf-explore-baseline');
-                if (id === null) list.removeAttribute('id'); else list.id = id;
-                button.remove();
-                state.explore = null;
-            }
             state.baselines.forEach((original, element) => {
                 if (original === null) element.removeAttribute(ROLE_ATTRIBUTE);
                 else element.setAttribute(ROLE_ATTRIBUTE, original);
@@ -12717,17 +12489,6 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         };
 
         const syncRoles = (state) => {
-            const nextList = state.root.querySelector('.gnb_list');
-            if (state.explore && (state.explore.list !== nextList || state.explore.button.parentNode !== nextList?.parentNode)) restoreRoles(state);
-            if (!state.explore) {
-                state.root.querySelectorAll('[data-dcuf-explore-toggle]').forEach(button=>button.remove());
-                state.root.querySelectorAll('.gnb_list[data-dcuf-explore-baseline]').forEach(list=>{
-                    const id=list.getAttribute('data-dcuf-explore-baseline');
-                    list.removeAttribute('popover');
-                    if(id)list.id=id;else list.removeAttribute('id');
-                    list.removeAttribute('data-dcuf-explore-baseline');
-                });
-            }
             const desired = new Map([[state.root, 'root']]);
             state.root.querySelectorAll('nav.gnb').forEach((nav) => desired.set(nav, 'nav'));
             state.root.querySelectorAll('.gnb_list').forEach((list) => desired.set(list, 'list'));
@@ -12751,22 +12512,6 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 }
                 element.setAttribute(ROLE_ATTRIBUTE, role);
             });
-            const list = state.root.querySelector('.gnb_list');
-            if (list && !state.explore && /\/board\/lists\/?$/.test(location.pathname) && typeof list.showPopover === 'function' && !list.hasAttribute('popover')) {
-                const id = list.getAttribute('id');
-                list.setAttribute('data-dcuf-explore-baseline',id || '');
-                if (!id) list.id = `dcuf-explore-${++menuSerial}`;
-                list.setAttribute('popover', 'auto');
-                const button = document.createElement('button');
-                button.type = 'button'; button.textContent = '탐색';
-                button.setAttribute('data-dcuf-explore-toggle', '1');
-                button.setAttribute('popovertarget', list.id);
-                button.setAttribute('aria-expanded', 'false');
-                const onToggle = () => button.setAttribute('aria-expanded', String(list.matches(':popover-open')));
-                list.addEventListener('toggle', onToggle);
-                list.parentElement.insertBefore(button, list);
-                state.explore = {list, button, id, onToggle};
-            }
         };
 
         const disconnectRoot = (root) => {

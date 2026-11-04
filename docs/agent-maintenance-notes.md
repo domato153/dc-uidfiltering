@@ -717,3 +717,8 @@ Read handlers before opening unknown controls:bigcon may issue automatically;sta
 - Public media DOM varies by UA. Chrome native GIF/WebP surrogate may put original image URL in video.data-src and MP4 in child source;do not use that image URL as video.src. Restore only the verified native surrogate shape to canonical image;keep ordinary authored video/source.
 - Header redesign is list-top-only per latest user. A body route marker allows existing native sibling topology without reparenting;zero-specificity context does not replace necessary native scope specificity. Float/top transitions keep original categories and transfer focus symmetrically. Expanded category menus need viewport-based max-height;anchor() is for inset positioning.
 - Form-header20/12px assertions were stale under the accepted full-width10/8px gutter;frozen4C failed identically. Bind the current gutter contract,retain positive geometry/hit/native checks,and record this as oracle repair.
+
+
+## List disclosure rollback and real distribution examples —2026-11-05
+
+User rejected added exploration/category drawers because they emptied the list header. Restore the pre-a3090b4 inline paths only;do not restore the whole old header and lose accepted glass,row spacing,late DCMOD specificity or ready recovery. Native overflow and direction-reveal controller remain. For site examples use unmodified actual public DOM/content with exact artifact identities;generated mocks/fixtures/text replacement are not real-site examples. Source injection is not installed-extension/device certification. Stage3 site prototype and stage4 official publication remain separate.

@@ -12,10 +12,6 @@
         ]);
         const controlTransactions = new WeakMap();
         const paginationListeners = new WeakMap();
-        const categoryPickers = new WeakMap();
-        const CATEGORY_BASELINE_ATTR = 'data-dcuf-category-baseline';
-        const CATEGORY_INVOKER_ATTR = 'data-dcuf-category-invoker';
-        let categorySerial = 0;
         const searchDrawerRoots = new Set();
         const searchRootsByOwner = new WeakMap();
         const ownerBySearchRoot = new WeakMap();
@@ -47,7 +43,6 @@
             state.travel = 0;
             state.mode = state.lastY <= state.origin + state.height ? 'top' : 'shown';
             state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
-            syncCategoryPickerMode(state.owner, state.mode !== 'top');
             const layout = document.querySelector('[data-dcuf-header-layout]');
             if (layout && state.toolbar === document.querySelector('[data-dcuf-surface="list-toolbar"]')) {
                 if (!state.plateGeometry) state.plateGeometry = {node: layout, value: layout.style.getPropertyValue('--dcuf-list-header-height'), priority: layout.style.getPropertyPriority('--dcuf-list-header-height')};
@@ -56,10 +51,8 @@
             }
         };
         const updatePopupHold = (state) => {
-            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-shell"][popover], [data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
-                .some(popup => popup.matches('[data-dcuf-role="category-shell"]')
-                    ? typeof popup.showPopover === 'function' && popup.matches(':popover-open')
-                    : !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
+            state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
+                .some(popup => !(popup.matches('[data-dcuf-role="page-size-popup"]') && popup.parentElement?.querySelector('select'))
                         && popup.getClientRects().length > 0 && getComputedStyle(popup).visibility !== 'hidden');
             state.toolbar.toggleAttribute('data-dcuf-popup-open', state.popupOpen);
         };
@@ -95,7 +88,6 @@
                 // Commit both flow changes before measuring: a layout read with
                 // spacer AND toolbar in flow would trigger scroll anchoring.
                 if (state.toolbar.getAttribute('data-dcuf-scroll') !== state.mode) state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
-                if (!state.popupOpen) syncCategoryPickerMode(state.owner, floating);
                 if (floating) {
                     const rect = state.spacer.getBoundingClientRect();
                     const left = `${rect.left}px`, width = `${rect.width}px`;
@@ -305,140 +297,6 @@
             if (!remember(root, element)) return;
             properties.forEach((property) => element.style.removeProperty(property));
             if (!element.getAttribute('style')?.trim()) element.removeAttribute('style');
-        };
-        const restoreCategoryBaseline = (shell, baseline) => {
-            if (baseline.id === null) shell.removeAttribute('id');
-            else shell.setAttribute('id', baseline.id);
-            if (baseline.popover === null) shell.removeAttribute('popover');
-            else shell.setAttribute('popover', baseline.popover);
-            if (baseline.anchor) shell.style.setProperty('--dcuf-category-anchor', baseline.anchor, baseline.anchorPriority);
-            else shell.style.removeProperty('--dcuf-category-anchor');
-            if (!baseline.hadStyle && !shell.style.length) shell.removeAttribute('style');
-            shell.removeAttribute(CATEGORY_BASELINE_ATTR);
-        };
-        const recoverCopiedCategoryBaseline = (shell) => {
-            const serialized = shell.getAttribute(CATEGORY_BASELINE_ATTR);
-            if (serialized === null) return;
-            let baseline;
-            try { baseline = JSON.parse(serialized); } catch (_) { return; }
-            if (!baseline || ![baseline.id, baseline.popover].every(value => value === null || typeof value === 'string')
-                || typeof baseline.anchor !== 'string' || typeof baseline.anchorPriority !== 'string'
-                || typeof baseline.hadStyle !== 'boolean') return;
-            restoreCategoryBaseline(shell, baseline);
-        };
-        const disconnectCategoryPicker = (owner) => {
-            const state = categoryPickers.get(owner);
-            if (!state) return;
-            categoryPickers.delete(owner);
-            if (state.dismissTimer) window.clearTimeout(state.dismissTimer);
-            state.shell.removeEventListener('toggle', state.onToggle);
-            state.shell.removeEventListener('click', state.onClick);
-            if (state.shell.matches(':popover-open')) state.shell.hidePopover();
-            restoreCategoryBaseline(state.shell, state.baseline);
-            state.button.remove();
-        };
-        const prepareCategoryPicker = (owner, categories, shell) => {
-            let state = categoryPickers.get(owner);
-            if (state && (state.shell !== shell || state.categories !== categories || state.button.parentElement !== categories)) {
-                disconnectCategoryPicker(owner);
-                state = null;
-            }
-            if (!(categories instanceof HTMLElement) || !(shell instanceof HTMLElement)) return;
-            // Native rerenders can copy injected attributes/buttons without the
-            // live state. Recover the native baseline before remember() runs.
-            categories.querySelectorAll(`:scope > [${CATEGORY_INVOKER_ATTR}]`).forEach(button => {
-                if (button !== state?.button) button.remove();
-            });
-            if (!state) recoverCopiedCategoryBaseline(shell);
-        };
-        const syncCategoryCaption = (state) => {
-            const selected = Array.from(state.shell.querySelectorAll(':scope > ul > li > a, :scope > .subject_morelist > ul > li > a'))
-                .find(link => link.matches('.on, [aria-selected="true"], [aria-current]:not([aria-current="false"])')
-                    || link.parentElement?.matches('.on, [aria-selected="true"]'));
-            const caption = selected?.textContent?.trim() || '말머리 전체';
-            if (state.button.textContent !== caption) state.button.textContent = caption;
-            state.button.setAttribute('aria-label', `말머리 선택: ${caption}`);
-            state.button.setAttribute('data-dcuf-role', 'category-invoker');
-        };
-        const connectCategoryPicker = (owner, categories, shell) => {
-            if (!(categories instanceof HTMLElement) || !(shell instanceof HTMLElement)) return;
-            if (!/\/board\/lists\/?$/.test(location.pathname)) return;
-            const previous = categoryPickers.get(owner);
-            if (previous) { syncCategoryCaption(previous); return; }
-            if (typeof shell.showPopover !== 'function' || typeof shell.hidePopover !== 'function'
-                || shell.hasAttribute('popover') || !(shell.querySelector(':scope > ul') instanceof HTMLElement)) return;
-            const baseline = {
-                id: shell.getAttribute('id'),
-                popover: shell.getAttribute('popover'),
-                anchor: shell.style.getPropertyValue('--dcuf-category-anchor'),
-                anchorPriority: shell.style.getPropertyPriority('--dcuf-category-anchor'),
-                hadStyle: shell.hasAttribute('style'),
-            };
-            let serial;
-            do { serial = ++categorySerial; } while (document.getElementById(`dcuf-category-${serial}`));
-            if (!shell.id || document.getElementById(shell.id) !== shell) shell.id = `dcuf-category-${serial}`;
-            const anchor = `--dcuf-category-${serial}`;
-            shell.setAttribute(CATEGORY_BASELINE_ATTR, JSON.stringify(baseline));
-            shell.setAttribute('popover', 'auto');
-            shell.style.setProperty('--dcuf-category-anchor', anchor);
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.setAttribute(CATEGORY_INVOKER_ATTR, '1');
-            button.setAttribute('popovertarget', shell.id);
-            button.setAttribute('aria-expanded', 'false');
-            button.style.setProperty('anchor-name', anchor);
-            const state = {categories, shell, button, baseline, dismissTimer: 0};
-            state.onToggle = () => {
-                button.setAttribute('aria-expanded', String(shell.matches(':popover-open')));
-                syncCategoryCaption(state);
-                scrollPopupPending = true;
-                scheduleScrollToolbars();
-            };
-            state.onClick = (event) => {
-                const action = event.target instanceof Element ? event.target.closest('a') : null;
-                if (!(action instanceof HTMLAnchorElement)
-                    || !Array.from(shell.querySelectorAll(':scope > ul > li > a, :scope > .subject_morelist > ul > li > a')).includes(action)) return;
-                // Native/delegated callbacks keep their event and default action.
-                // Dismiss only after the whole click dispatch has completed.
-                if (state.dismissTimer) window.clearTimeout(state.dismissTimer);
-                state.dismissTimer = window.setTimeout(() => {
-                    state.dismissTimer = 0;
-                    if (categoryPickers.get(owner) !== state) return;
-                    syncCategoryCaption(state);
-                    if (!shell.isConnected || !shell.matches(':popover-open')) return;
-                    const returnFocus = action === document.activeElement || action.contains(document.activeElement);
-                    shell.hidePopover();
-                    if (returnFocus && button.isConnected && (document.activeElement === action
-                        || document.activeElement === document.body || document.activeElement === button)) button.focus({preventScroll: true});
-                }, 0);
-            };
-            shell.addEventListener('toggle', state.onToggle);
-            shell.addEventListener('click', state.onClick);
-            categories.insertBefore(button, shell);
-            categoryPickers.set(owner, state);
-            syncCategoryCaption(state);
-        };
-        const syncCategoryPickerMode = (owner, floating) => {
-            const state = categoryPickers.get(owner);
-            if (!state || state.inline === floating) return;
-            state.inline = floating;
-            const returnFocus = !floating && state.shell.contains(document.activeElement);
-            // Reuse the original toolbar as it reappears on up-scroll. Only
-            // the page-top composition condenses categories into a disclosure.
-            if (floating) {
-                const overflow = state.shell.querySelector('[data-dcuf-role="category-popup"]');
-                // A closed top-layer picker may retain its native expanded
-                // overflow. Collapse through the original control before the
-                // inline strip returns, so no submenu appears without a click.
-                if (overflow && getComputedStyle(overflow).display !== 'none') state.shell.querySelector('[data-dcuf-role="category-toggle"]')?.click();
-                state.shell.removeAttribute('popover');
-            }
-            else state.shell.setAttribute('popover', 'auto');
-            state.button.hidden = floating;
-            if (returnFocus) state.button.focus({preventScroll: true});
-            if (floating && document.activeElement === state.button) {
-                (state.shell.querySelector('a.on,li.on > a') || state.shell.querySelector('a'))?.focus({preventScroll: true});
-            }
         };
         const setSearchDrawerDiagnostics = () => {
             const diagnostics = window.__dcufDiagnostics;
@@ -653,7 +511,6 @@
                 const categories = toolbar.querySelector(':scope > .center_box');
                 const categoryShell = categories?.querySelector(':scope > .inner');
                 const categoryList = categoryShell?.querySelector(':scope > ul');
-                prepareCategoryPicker(listWrap, categories, categoryShell);
                 const rightBox = toolbar.querySelector(':scope > .right_box');
                 const outputArray = toolbar.querySelector('.output_array');
                 const pageSizeShell = toolbar.querySelector('.select_box.array_num');
@@ -684,7 +541,6 @@
                     mark(listWrap, item, { role: 'category-popup-item' });
                     item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
                 });
-                connectCategoryPicker(listWrap, categories, categoryShell);
                 connectScrollToolbar(listWrap, toolbar);
             }
 
@@ -759,7 +615,6 @@
         };
         const disconnectControls = (listWrap) => {
             if (!(listWrap instanceof HTMLElement)) return;
-            disconnectCategoryPicker(listWrap);
             disconnectScrollToolbar(listWrap);
             disconnectSearchDrawers(listWrap);
             disconnectPaginationNavigation(listWrap);
