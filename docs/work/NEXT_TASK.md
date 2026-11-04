@@ -4,7 +4,7 @@
 - Bounded slice: `site-v7-proposal-review`
 - Design reference region: Site composition only;actual adopted memo/current v7 governs material detail. Generated factual and product-image errors are excluded.
 - Objective: Review the site/index/README and real screenshot proposal before stage4.
-- Why next: PC common-code port is accepted;latest list navigation rollback is scoped and verified.
+- Why next: PC common-code port is accepted;list navigation is repaired. Latest preview now shows full portrait Mobile examples and actual core 글댓합 settings for both Mobile and PC;review these before promotion.
 - Scope: SITE_V7_PROPOSAL.md and design-prototypes/site-v7.
 - Expected transition: Concrete user revisions,or separately approved official promotion.
 - Stop/replan: No official refs/root page replacement,version bump or publication without approval. No test-gallery images.

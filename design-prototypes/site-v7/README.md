@@ -33,15 +33,23 @@
 
 ### 모바일 · 글 목록
 
-![모바일 글 목록](assets/mobile-list.png)
+<img src="assets/mobile-list.png" width="300" alt="휴대폰 세로 비율의 실제 모바일 글 목록">
 
 ### 모바일 · 본문과 글쓰기
 
-![모바일 글 내용](assets/mobile-article.png)
+<img src="assets/mobile-article.png" width="300" alt="휴대폰 세로 비율의 실제 글 내용">
 
-![모바일 글쓰기](assets/mobile-write.png)
+<img src="assets/mobile-write.png" width="300" alt="휴대폰 세로 비율의 실제 글쓰기">
 
-### PC · 자체 차단 관리
+### 핵심 기능 · 글댓합 필터 설정
+
+모바일에서는 휴대폰 세로 화면으로, PC에서는 원래 사이트 위에 열린 설정창으로 보여줍니다.
+
+<img src="assets/menu-detail.png" width="360" alt="실제로 열린 모바일 글댓합 필터 설정창 확대">
+
+![PC 글댓합 필터 설정](assets/pc-filter.png)
+
+### PC · 차단 유저 관리
 
 ![PC 차단 관리](assets/pc-management.png)
 

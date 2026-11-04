@@ -727,3 +727,8 @@ User rejected added exploration/category drawers because they emptied the list h
 ## Compact header wrapped GNB vertical clearance —2026-11-05
 
 List GNB center repair2026-11-05:the64px list first row contains a60px wrapped GNB while its normal8px top margin loses to the verified early important zero-margin reset. Existing GNB presenter now scopes an important8px inset and24px border-box links to list context at>=900px;two rows fit48px centered at36 with4px clearance against the8..64 plate. Other routes and<900px stress retain existing rules. Positive GNB center/clearance was missing from the previous global chrome assertion;include it with wrapped navigation,not only logo/search/recent. Actual article GNB style/geometry is identical to control. Only list/palette/menu example images were recaptured;unchanged article/write/PC captures retain original receipt/runtime bindings.
+
+
+## Distribution examples must expose the actual open feature —2026-11-05
+
+A wide Mobile screenshot plus max-height clipping removed the open bottom menu from the showcase. Use the adopted portrait layout,check the full image and its visible parent geometry,and require the named native popup to be open with positive bounds before capturing it. Show Mobile in a phone shape and PC on the native desktop host. Core 글댓합 settings is primary for both targets;management alone cannot represent filtering. A readable detail crop may accompany the full unmodified actual screenshot. Keep screenshot layout/export fidelity separate from real-device qualification.
