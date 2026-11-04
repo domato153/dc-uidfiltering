@@ -5,19 +5,19 @@
 - Active plan: Grouped repairs implemented as a review candidate. New single-frame header is list-page-top only;existing floating inline toolbar and non-list upper chrome retained. ARTICLE_COMMENT_POPUP_REPAIRS.md and NEXT own review.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `header-navigation` formal admission remains open. Scoped local UI implementation is not whole-UI/native permission/device or architecture promotion.
-- Accepted visual preference: User retained the current list-header design and requested first-row centering in the same manner as the second row. Current first-row refinement changes no adjacent row geometry. Actual memo/current bright-dark detail remains.
-- Source state: Source checkpoint base HEAD `6c13b07f8b91329b4583646857eea987beb1f090` on `codex/ui-port-boundary`;list-only first-row centering is locally verified. Previous checkpoint has successful CI. Preserve unrelated debug.log.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/article-followup-2026-11-03 holds control/current diagnostics and screenshots;comparison viewer under artifacts/b1-detail-2026-10-23/article-followup.
-- Candidate fingerprint: `d5c5b3701762873daea10438682fdfbe6e028db7007fa25420e86f661716b3e6`
-- Last current audit: UNKNOWN: formal upper admission and user aesthetics remain open. Scoped13 selected browser checks plus6 preview unit checks,header/frame/route reruns and public captures are recorded in the result receipt.
-- Current stage receipt: `verification/receipts/2026-11-04-header-top-center.json` SHA-256 `E3BB08CCC29493E02705E9A966B6A26A6E43B7C65809412EE859608B74E3DD66`;prior receipts retain their scopes.
+- Accepted visual preference: Adopted list header and centered rows retained. User-reported post-load regression is an external DCMOD-prefixed important padding conflict;current repair protects only existing list-row padding. Actual memo/current bright-dark detail remains.
+- Source state: Source checkpoint base HEAD `77851b67e6c4df9f05ac7ce68d9c816495077e0e` on `codex/ui-port-boundary`;list-only late external padding repair locally verified. Prior checkpoint CI passed. Preserve unrelated debug.log.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/header-load-regression-2026-11-04 holds the frozen control,exact external-rule replay,raw selected logs and public before/current captures;viewer under artifacts/b1-detail-2026-10-23/header-load-regression.
+- Candidate fingerprint: `0c0d1defa23b5f8b3f97d7b63767b75ac7e94c18b0cdd485d4a37811595382b2`
+- Last current audit: UNKNOWN: formal upper admission/user actual use remain open. Current4-context regression passes;42 normal differential pairs agree but inherited two positive guards fail on both sides. No full qualification claim.
+- Current stage receipt: `verification/receipts/2026-11-04-header-late-padding.json` SHA-256 `C4AD3764633494B73EC44E621CF84F16AE4A7CAD85F1C960070F5E81B7636F86`;prior receipts retain historical scopes.
 - Accepted baseline: Actual adopted memo/current bright-dark v7 rules retained. Grouped folder/editor child finish and full-page review are now recorded locally;unobserved native permission/server/plugin/device branches remain distinct.
-- Current artifact: Mobile3.5.5 B0ECB45D60477E30DABC389D3C34A8F5E3197E09879FD2ECDB87812DDC1AC918 guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged. No version bump or publication.
-- Blockers: No product/authorization hold in the bounded scope. User aesthetic review and exact-path working checkpoint remain separate.
-- Pending live checks: Public source-injected Chrome WebP957x477 decode/native1280x720 play and pause-on-close observed;final installed-extension use,real submission and exact phone remain separate.
+- Current artifact: Mobile3.5.5 A9E641771A2FE805CCBED3F38F1BADACD5FF22ABB95B6B7D5CE45A2584F19748 guard/root/dist;PC1.9.9 0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D unchanged. No version bump or publication.
+- Blockers: No implementation/authorization hold in the bounded repair. Actual-extension recheck has an options-page environment failure;user actual-use confirmation and exact-path checkpoint remain separate.
+- Pending live checks: Final repaired runtime plus complete external DCMOD in user environment remains unconfirmed. Current actual-TM installation attempt stopped at empty public options page;prior supported actual-extension route is retained. Public source captures replay the exact external CSS,not its whole package. Real submission/exact phone separate.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"B0ECB45D60477E30DABC389D3C34A8F5E3197E09879FD2ECDB87812DDC1AC918"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
+{"schemaVersion":1,"mobile":{"sha256":"A9E641771A2FE805CCBED3F38F1BADACD5FF22ABB95B6B7D5CE45A2584F19748"},"pc":{"sha256":"0D5F7D071F7A29ABA932F1ED52039D04647A10B3B5BAF98E62392305E50EDA4D"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

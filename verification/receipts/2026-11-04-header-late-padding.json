@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "scope": "List-top gallery-row padding protection against the exact late external important declaration",
+  "baseCommit": "77851b67e6c4df9f05ac7ce68d9c816495077e0e",
+  "mobileSha256": "a9e641771a2fe805ccbed3f38f1badacd5ff22abb95b6b7d5ce45a2584f19748",
+  "controlSha256": "b0ecb45d60477e30dabc389d3c34a8f5e3197e09879fd2ecdb87812ddc1ac918",
+  "userEvidence": {
+    "width": 1158,
+    "computedPadding": "4px 14px 13px",
+    "ownerVariable": "19px 14px 13px",
+    "role": "root",
+    "listContext": true,
+    "inlineStyle": null,
+    "winningLateRule": ".page_head { padding-top: 4px !important; }",
+    "sheetProvenance": "User diagnostic:unidentified inline stylesheet in HEAD,type text/css,beginning with DCMOD_DELETABLE/DCMOD_PULLUPLIST rules. One DCUF userscript enabled. Exact external package/version not verified."
+  },
+  "change": "Move the existing important padding declaration into a dedicated rule group with genuine list context. No new important declaration;no changed values;no stronger non-list rule;all other declarations and adapter/runtime code unchanged.",
+  "selectedTests": {
+    "latePaddingAndMenusScroll": {
+      "status": "PASS",
+      "contexts": [
+        {
+          "width": 1630,
+          "height": 900
+        },
+        {
+          "width": 1158,
+          "height": 900
+        },
+        {
+          "width": 980,
+          "height": 2306,
+          "dark": true
+        },
+        {
+          "width": 390,
+          "height": 760
+        }
+      ],
+      "controlStatus": "FAIL as expected:19px became4px",
+      "redLogSha256": "3a326d6192545fabe5060e1d2e1d2a4e28995e7aa8c441be5dea0971c053597e",
+      "candidateLogSha256": "c6906c8445655592e270eb248aa13c05789a9c3d24cfb8f43439360b956d539e"
+    },
+    "normalBehaviorDifferential": {
+      "status": "PARTIAL_NOT_PASS",
+      "observations": 42,
+      "pairedSemanticAndVisualDifferences": 0,
+      "rawFailures": [
+        {
+          "field": "positiveNativeActions"
+        },
+        {
+          "field": "positivePopup"
+        }
+      ],
+      "classification": "Inherited oracle applicability:both frozen control and candidate have zero native relation/guide/issue callback counts and hidden popup in this older runner after the adopted More grouping. Retain raw FAIL;do not weaken positive guards or call this full qualification. Current header followup independently exercises original-node More/recent/category and down/up/down behavior."
+    },
+    "static": [
+      "Header palette/reset/native-door ownership PASS",
+      "UI boundaries43 files PASS",
+      "Live architecture links9 surfaces PASS"
+    ]
+  },
+  "publicCaptures": [
+    {
+      "mode": "before",
+      "width": 1158,
+      "height": 900,
+      "dark": false,
+      "sha": "b0ecb45d60477e30dabc389d3c34a8f5e3197e09879fd2ecdb87812ddc1ac918",
+      "http": 200,
+      "provenance": "Public GET/HEAD with guarded-source harness;exact external CSS replay,not actual installed DCMOD.",
+      "initial": {
+        "padding": "19px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 1138,
+          "height": 64,
+          "top": 64,
+          "right": 1148,
+          "bottom": 128,
+          "left": 10
+        }
+      },
+      "collision": {
+        "padding": "4px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 1138,
+          "height": 49,
+          "top": 64,
+          "right": 1148,
+          "bottom": 113,
+          "left": 10
+        }
+      },
+      "image": "artifacts/header-load-regression-2026-11-04/before-minor-1158.png",
+      "imageSha256": "f958b2e6380c785993110fbfb915ebfbb2e76d7598bda42d72dee0892b027d7f"
+    },
+    {
+      "mode": "before",
+      "width": 980,
+      "height": 2306,
+      "dark": true,
+      "sha": "b0ecb45d60477e30dabc389d3c34a8f5e3197e09879fd2ecdb87812ddc1ac918",
+      "http": 200,
+      "provenance": "Public GET/HEAD with guarded-source harness;exact external CSS replay,not actual installed DCMOD.",
+      "initial": {
+        "padding": "19px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 960,
+          "height": 64,
+          "top": 64,
+          "right": 970,
+          "bottom": 128,
+          "left": 10
+        }
+      },
+      "collision": {
+        "padding": "4px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 960,
+          "height": 49,
+          "top": 64,
+          "right": 970,
+          "bottom": 113,
+          "left": 10
+        }
+      },
+      "image": "artifacts/header-load-regression-2026-11-04/before-minor-980.png",
+      "imageSha256": "73d8eb78443337ecd8ee8b376b86c0e8fcc5c019f859b6f395d90a51c03d3ef6"
+    },
+    {
+      "mode": "after",
+      "width": 1158,
+      "height": 900,
+      "dark": false,
+      "sha": "a9e641771a2fe805ccbed3f38f1badacd5ff22abb95b6b7d5ce45a2584f19748",
+      "http": 200,
+      "provenance": "Public GET/HEAD with guarded-source harness;exact external CSS replay,not actual installed DCMOD.",
+      "initial": {
+        "padding": "19px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 1138,
+          "height": 64,
+          "top": 64,
+          "right": 1148,
+          "bottom": 128,
+          "left": 10
+        }
+      },
+      "collision": {
+        "padding": "19px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 1138,
+          "height": 64,
+          "top": 64,
+          "right": 1148,
+          "bottom": 128,
+          "left": 10
+        }
+      },
+      "image": "artifacts/header-load-regression-2026-11-04/after-minor-1158.png",
+      "imageSha256": "f42f22321baa0f590d7e80634c5aefe985e6b62e845b801d2d213677efccdb50"
+    },
+    {
+      "mode": "after",
+      "width": 980,
+      "height": 2306,
+      "dark": true,
+      "sha": "a9e641771a2fe805ccbed3f38f1badacd5ff22abb95b6b7d5ce45a2584f19748",
+      "http": 200,
+      "provenance": "Public GET/HEAD with guarded-source harness;exact external CSS replay,not actual installed DCMOD.",
+      "initial": {
+        "padding": "19px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 960,
+          "height": 64,
+          "top": 64,
+          "right": 970,
+          "bottom": 128,
+          "left": 10
+        }
+      },
+      "collision": {
+        "padding": "19px 14px 13px",
+        "variable": "19px 14px 13px",
+        "box": {
+          "x": 10,
+          "y": 64,
+          "width": 960,
+          "height": 64,
+          "top": 64,
+          "right": 970,
+          "bottom": 128,
+          "left": 10
+        }
+      },
+      "image": "artifacts/header-load-regression-2026-11-04/after-minor-980.png",
+      "imageSha256": "27662c0c7061172cb8f8849b45f9897d64f1f9e13c32c2e47d0a1dc44d7e11f8"
+    }
+  ],
+  "visualComparison": {
+    "engine": "playwright@1.61.1",
+    "status": "DIFFERENCES_REQUIRE_REVIEW",
+    "manifestSha256": "76483247d8625e93f8d3e4220bac1d164b4fd0679a1f77bade32b8f2b490e926",
+    "reviewed": "Viewed readable1158 light before/after and980 dark current. Intended15px gallery-row restoration;first row unchanged;no seam or extra card. Pixel differences expected;not design/user approval.",
+    "productApproved": false
+  },
+  "actualExtension": {
+    "status": "UNKNOWN_FINAL_RUNTIME",
+    "priorUncontestedB0EC": "Fresh actual Chrome/Tampermonkey at1660 and1158 retained19px without the external style;not proof of DCMOD coexistence.",
+    "attempted": "Current pinned5.5.0 installation reached Allow User Scripts but its public options page remained empty. One bounded public reload also remained empty. No product assertion ran;not a global route-unavailable claim.",
+    "diagnostic": "artifacts/header-load-regression-2026-11-04/extension-candidate/actual.json",
+    "fullExternalExtension": "NOT_INSTALLED;only observed CSS replayed"
+  },
+  "impactSelection": "One presenter padding declaration plus direct regression. Conservative acceptance fallback was inspected,not executed as a full product suite. Source/adapter/native DOM/events/storage/network/scroll implementation and PC unchanged.",
+  "omitted": [
+    "Unaffected article/comment/editor/filter/storage and PC product suites",
+    "Full DCMOD integration",
+    "Final actual-extension live result",
+    "Exact physical phone"
+  ],
+  "userDisposition": "Actual-use confirmation pending after separate development script update"
+}

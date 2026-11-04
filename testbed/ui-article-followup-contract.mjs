@@ -62,7 +62,7 @@ export async function runArticleFollowupContract({browser,server,onCapture}) {
 
 export async function runHeaderFollowupContract({browser,server,onCapture}) {
  const records=[];
- for(const state of[{width:1630,height:900},{width:980,height:2306,dark:true},{width:390,height:760}]){
+ for(const state of[{width:1630,height:900},{width:1158,height:900},{width:980,height:2306,dark:true},{width:390,height:760}]){
   const e=await createTestPage(browser,server.baseUrl,{viewport:state,storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}}),p=e.page;
   try{
    await mountB1NativeFixture(e,server.baseUrl,{dark:state.dark});await p.evaluate(installLiveControlFixture);
@@ -79,6 +79,16 @@ export async function runHeaderFollowupContract({browser,server,onCapture}) {
    // The fixture inserted native parts after boot; measure only after their
    // existing owner projection has settled,as the ordinary resize path does.
    await p.evaluate(()=>window.dispatchEvent(new Event('resize')));await paint(p);
+   const galleryBefore=await p.locator('[data-dcuf-gallery-page-head-role="root"]').evaluateAll(ns=>ns.map(n=>({padding:getComputedStyle(n).padding,box:n.getBoundingClientRect().toJSON()})));
+   // User2026-11-04: a later DCMOD stylesheet supplies this exact important
+   // longhand. It must not undo the list-only owner after the first good paint.
+   await p.evaluate(()=>{const s=document.createElement('style');s.textContent='.page_head { padding-top: 4px !important; }';document.head.append(s)});await paint(p);
+   const galleryAfter=await p.locator('[data-dcuf-gallery-page-head-role="root"]').evaluateAll(ns=>ns.map(n=>({padding:getComputedStyle(n).padding,box:n.getBoundingClientRect().toJSON()})));
+   assert.ok(galleryBefore.length>0,'A rendered gallery header is required');
+   for(let i=0;i<galleryBefore.length;i++){
+    assert.equal(galleryAfter[i].padding,galleryBefore[i].padding,'Late external important padding cannot revert the adopted gallery-row spacing');
+    assert.deepEqual(galleryAfter[i].box,galleryBefore[i].box,'Late external padding cannot shift gallery-row geometry');
+   }
    const frame=await p.evaluate(()=>{const layout=document.querySelector('[data-dcuf-header-layout]'),s=getComputedStyle(layout,'::before'),gallery=document.querySelector('[data-dcuf-gallery-page-head-role="root"]'),toolbar=document.querySelector('[data-dcuf-surface="list-toolbar"]');return{bottom:layout.getBoundingClientRect().top+parseFloat(s.marginTop)+parseFloat(s.height),toolbarBottom:toolbar.getBoundingClientRect().bottom,galleryBorder:getComputedStyle(gallery).borderLeftWidth,toolbarBorder:getComputedStyle(toolbar).borderLeftWidth}});
    assert.ok(Math.abs(frame.bottom-frame.toolbarBottom)<2,'One header frame spans all three tiers: '+JSON.stringify(frame));assert.equal(frame.galleryBorder,'0px');assert.equal(frame.toolbarBorder,'0px');
    const chrome=await p.evaluate(()=>{const layout=document.querySelector('[data-dcuf-header-layout]'),box=layout.getBoundingClientRect(),height=parseFloat(getComputedStyle(layout).gridTemplateRows),top=box.top+parseFloat(getComputedStyle(layout,'::before').marginTop),center=(top+box.top+height)/2;return{center,searchCenter:innerWidth<900?box.top+height+24:center,items:['[data-dcuf-header-shell-role="logo"]','[data-dcuf-explore-toggle]','[data-dcuf-header-shell-role="links"]','[data-dcuf-header-shell-role="top-search"]','[data-dcuf-header-recent-visit-role="root"] > .btn_open'].map(selector=>{const n=document.querySelector(selector),r=n.getBoundingClientRect();return{selector,center:r.y+r.height/2,area:r.width*r.height}})}});

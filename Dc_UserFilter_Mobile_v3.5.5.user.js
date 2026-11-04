@@ -11974,12 +11974,17 @@ const __dcufSettingsPresenter = (() => {
             key: 'gallery-page-head',
             id: 'dcuf-gallery-page-head-style',
             css: `
+        /* List context protects the existing padding owner from later native
+           or DCMOD .page_head important longhands; other routes keep their weight. */
+        ${selectors.root},
+        [data-dcuf-list-header] ${selectors.root} {
+            padding: var(--dcuf-gallery-head-padding,16px 4px) !important;
+        }
         ${selectors.root} {
             display: grid;
             grid-template-columns: minmax(0, 1fr) auto;
             align-items: stretch;
             gap: 8px;
-            padding: var(--dcuf-gallery-head-padding,16px 4px) !important;
             margin: 0 auto 4px;
             box-sizing: border-box;
             width: calc(100% - 2 * var(--dcuf-page-gutter,10px));

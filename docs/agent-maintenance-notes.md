@@ -1,5 +1,9 @@
 # Agent Maintenance Notes
 
+## List heading: late external important padding —2026-11-04
+
+One enabled DCUF userscript does not exclude stylesheet injection by another extension. User evidence showed the correct role/list marker and `--dcuf-gallery-head-padding:19px 14px 13px`,but computed padding became4px14px13px. Matching rules identified a later `.page_head {padding-top:4px !important}` in a stylesheet beginning with DCMOD-prefixed rules. Fresh isolated Chrome/Tampermonkey without that external stylesheet could not reproduce it. Replay the exact longhand after owner readiness;the previous B0EC runtime fails with the same4px result. Scope only the existing gallery padding declaration to the actual list context so that non-list weight and every other declaration remain unchanged. Do not add inline corrections,observers or globally stronger header rules. The external product itself was not installed/certified;the observed rule is the regression input.
+
 ## User feedback: page width,shortcut and native sprites —2026-11-03
 
 Current result:docs/work/UI_USER_FEEDBACK_REPAIRS.md. The centered1120px cap is superseded by the user's full-width-header direction;shared10px desktop/8px narrow gutters belong to existing page presenters. The header layout bridge may contain the whole page:never cap it to resize only its visible pane. Retire the legacy view_bottom padding when a projected list owns that region;qualify native action bars outside the article as well as inside. Test wide desktop,not only980.
