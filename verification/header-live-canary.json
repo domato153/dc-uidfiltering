@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "scope": "anonymous desktop-UA header native actions; narrow/short/wide and native light/dark",
+  "control": {
+    "path": "artifacts/controls/header-gnb-6869.user.js",
+    "sha256": "6869B58682E7B4159785C1B7E1F5FD6E8CD597CA602AECAB71904A77B7C00CD5"
+  },
+  "candidatePath": "testbed/artifacts/runtime-under-test.user.js",
+  "routes": [
+    { "id": "major", "url": "https://gall.dcinside.com/board/lists/?id=programming" },
+    { "id": "minor", "url": "https://gall.dcinside.com/mgallery/board/lists/?id=aoegame" }
+  ],
+  "viewports": [
+    { "id": "narrow", "width": 390, "height": 900 },
+    { "id": "short", "width": 390, "height": 500 },
+    { "id": "medium", "width": 750, "height": 900 },
+    { "id": "wide", "width": 1280, "height": 900 }
+  ],
+  "themes": ["light", "dark"],
+  "unselected": ["article-header", "mini-gallery", "authenticated", "mobile-device", "all-palette-workflows", "relation-popup", "write-modify-delete", "PC-userscript"]
+}

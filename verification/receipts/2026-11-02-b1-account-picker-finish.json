@@ -1,0 +1,642 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_ACCOUNT_PICKER_GUEST_PASSWORD_FINISH",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "5cae755d17c08af92f3b54e581edbe031e824400",
+  "candidateFingerprint": "c4751334d7956e5523fc82290dcf2722c1bcf285a0b1d86af0bc4bb92ee1b0b8",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7",
+    "controlMobileSha256": "5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "b79969008152a7eb87e2859c3ac5c5580798fcb57c7a570548ce4a8f4004f603"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "bd864538b76b49f8b9cf7674a4e4319dc2dc0deba38faa9d78ca0c87a0cdf0d8"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "testbed/fixtures/b1-content.mjs",
+      "sha256": "03185a7df5ea88e841401b5653f4f7cfe7c3681c394aa4d542fcfae7386a27f2"
+    },
+    {
+      "path": "testbed/fixtures/b1-account-picker.mjs",
+      "sha256": "aa678eb3d5fd02f9fd03283d5f65e1a04b9b031ecf96b5ef10251006dc69a281"
+    },
+    {
+      "path": "testbed/ui-account-picker-contract.mjs",
+      "sha256": "a6ffdfb7484b4c8e7ce66213fed4ce46a807620705d253e557ff5547fa520a3a"
+    },
+    {
+      "path": "testbed/ui-dccon-live-shape-contract.mjs",
+      "sha256": "4dfdc4dd942f65ce4957b691c46b3090608b4ed358d676b5133cc58049fadae2"
+    },
+    {
+      "path": "testbed/ui-b1-content-contract.mjs",
+      "sha256": "44c26b02c45374facf5bcbaec7bbfb327ed0678a542b9fe3294aef5471aee6c0"
+    },
+    {
+      "path": "testbed/ui-popup-batch-v7-contract.mjs",
+      "sha256": "2e9aa30aa9aadbb60aae66f03a0585aead9ba55bd1d0191c178f79ece02dbd52"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "20f0f991f88ab8d461db5eb6877ffe271a983628617825126f5541ea36523eb6"
+    },
+    {
+      "path": "testbed/harness/live-site-browser.mjs",
+      "sha256": "864d895ebb90bfb45347b1ff08f227872f7a3839bab5bbd52385f25a060d1f80"
+    },
+    {
+      "path": "verification/live-site-canary.json",
+      "sha256": "f2d15b81de4c99879d336e7bc64ec26e4edcbc1119d838d0c7c55966cf3533dd"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "4d75bb20102f75bdbae1705d43e52758f93b114cc4edd454165b33addbc2aa9f"
+    },
+    {
+      "path": "docs/work/B1_ACCOUNT_PICKER_IMPLEMENTATION.md",
+      "sha256": "b302fc3e9bee6fd5bd9653d9b95556c32ba33d78a89ed6cdbf44ff32ea5dcf41"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/red.json",
+      "sha256": "0c549e0411eaf656e44f01011aae67a1a98947d00549c2744643c8b1f8fb9e45"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/live-close-rim-red.json",
+      "sha256": "33b8f890e821c8212e46fa68f2b2976ec8eb0692ed3af7c6c93f45a0f9236811"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/offline-final.json",
+      "sha256": "30574438fdc0c6fbb9c3b785b413f222ffe67312ab3b23cc7ccfd90cbc49434c"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/semantic-before.jsonl",
+      "sha256": "f8502ddad2f368f8ad8edde7054c4b9a5c059933212a9d3f5b464b67eeef2971"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/semantic-after.jsonl",
+      "sha256": "5e039c11296bfc434acc2ea329f86983db015af49b2766d76fd7850103801f36"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/palette.json",
+      "sha256": "2eb378eaddb48679b21656e57ffc518698a0bcec8a31cf03e3a7b717146b12ab"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/visual-manifest.json",
+      "sha256": "0f6f33a31844bcfe4444ec9a1a2aad3aa0b3214b95f26fb633e75a7e03264418"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/visual-final/review.json",
+      "sha256": "62d6d3e12e273cd75f42e1cb2e4ee5942ca604c0f805babd4b0c74487e70c809"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/release-verification.txt",
+      "sha256": "07fee0c4c98fff9f8d846c1c899373ded6b8ffae58c7aea8780b90f2d09e9871"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/impact-final.json",
+      "sha256": "915128a6ab165a1d38928b43229e108fa09bc874d346d8bb76dbbc990cf0e1ef"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/live-account-final-source/report.json",
+      "sha256": "35db22aac8574b5b07e86650fd7d3a931663d0cfc08022e21927f22a5b1090ee"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/live-password-final/report.json",
+      "sha256": "41226e295deed2cf26d12bd6218b25fa5df20df8c7faf36e8282a4cfd3f57b91"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/final-offline.mjs",
+      "sha256": "6214e46d3110b4399258d8c64e13267f7d5478ab9fe1ff502f3dd7ea7eac77aa"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/palette.mjs",
+      "sha256": "17e8384070bc311884d3de5df90983770902281d35a3d7e318e0d75f32efb1e5"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/live-account.mjs",
+      "sha256": "818dba98dff8faddab144604fa5caedbf54bafa62a2751f91e883bd3b32eaf98"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/live-password.mjs",
+      "sha256": "91069b5d9eb74522e981f10102ad1cb3b80ce950744ea8b6e33cd151ab28b8c5"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/capture-root.mjs",
+      "sha256": "1fd80d273e85b993d80e1338d3cca3b36b4cc6950f9e1e26ef12356f4733436b"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/prepare-review.mjs",
+      "sha256": "0e1bb07818e3b7772e5398ec854fa8265c1e56b294753304949004c1aa90f896"
+    }
+  ],
+  "images": [
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/980-900-light-account.png",
+      "sha256": "cd642013d3bdb8e35ea11bb9c7ed23ccdf3a207e1653e0e1d4c0feb4e00c483c"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/980-900-light-account.png",
+      "sha256": "af439d4113c479e00a0fc72deb1117d7cb37bddfccae2c7f697ed702b033961c"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/980-900-dark-account.png",
+      "sha256": "1a98f761ca0f9c7121777edb0c497847082e151e98de37680ac4667fa6fc32f4"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/980-900-dark-account.png",
+      "sha256": "dbb8618b30932b060cf3de3f6d810155189d284ce819eef185ac42306a2c3fb6"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/980-900-light-management.png",
+      "sha256": "43b5659a628fc0e0db6472127fd2937f772c344add284c2105fce1f611d4f2b8"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/980-900-light-management.png",
+      "sha256": "02ce35825b5371f516f1b4a3247e8ebf62c1353e4a00a7c27d93e80c47bed9ed"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/980-900-dark-management.png",
+      "sha256": "80e10b94eeb601b2952cc54b640531ec18fa6b1712679424d794d0b25f54e248"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/980-900-dark-management.png",
+      "sha256": "e5fdb0bcc713997727b9fa63f8aa9a320ad7015c8c9bbc6e781e0816136f0464"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/980-900-light-password.png",
+      "sha256": "86b1e854bff81be43602d2829f58726b19e404ee3503d19da761cccabc87bde3"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/980-900-light-password.png",
+      "sha256": "0f634cd4ade56122ed200976ef1fbab8f2ca0dc80042d95b8908ac74c11f2c41"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/980-900-dark-password.png",
+      "sha256": "a918c81c6985718f5e27378d16f20d98e4e8cfc81398a12c4716f38a4e87c84e"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/980-900-dark-password.png",
+      "sha256": "56f8562bbd567d2c7d42dba19a6f2bcfd944823ba93abe40f441a5676d63189f"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-before/390-560-dark-management.png",
+      "sha256": "a8b569618b292f9b51bfc17418683f18406f6df66a2e8437717bca57bec956aa"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/comparison-after/390-560-dark-management.png",
+      "sha256": "c22517de91cad60060db29f7ee3723e02a8f0c6b4c16b0faae9b8fa485f0ad1c"
+    },
+    {
+      "path": "artifacts/b1-account-picker-finish-2026-11-02/live-password-final/guest-password.png",
+      "sha256": "cef6379a2f2d4d58e562aa9fad00b20f2f10a45c5475ecabef1ccfac1e982b50"
+    },
+    {
+      "path": "docs/design/b1-account-management-light-2026-11-02.png",
+      "sha256": "02ce35825b5371f516f1b4a3247e8ebf62c1353e4a00a7c27d93e80c47bed9ed"
+    },
+    {
+      "path": "docs/design/b1-account-management-dark-2026-11-02.png",
+      "sha256": "e5fdb0bcc713997727b9fa63f8aa9a320ad7015c8c9bbc6e781e0816136f0464"
+    }
+  ],
+  "production": {
+    "sources": [
+      "src/targets/mobile/comment-host-adapter.js",
+      "src/targets/mobile/comment-presenter.js"
+    ],
+    "delta": "Existing adapter native-icon/password contextual parts;content-sized account toolbar;original management used/unused table local scrolling;compact paired password/quiet centered X and quiet management auxiliary border.",
+    "newImportantRules": 0,
+    "ledgerRefresh": false,
+    "unchanged": [
+      "Native DOM/parents/events/forms/permission/selection/media/checkbox/order/hidden/on/won/hover and original close",
+      "Storage/network/GM/filter/action/observer/portal/UiPort responsibilities",
+      "Common material formulas and14 palette definitions",
+      "PC/metadata/version/build topology/accepted architecture registry"
+    ],
+    "acceptedRegistryUnchanged": true
+  },
+  "checks": {
+    "offline": [
+      {
+        "name": "account-picker-password",
+        "status": "passed",
+        "observations": 5
+      },
+      {
+        "name": "anonymous-dccon",
+        "status": "passed",
+        "observations": 4
+      },
+      {
+        "name": "existing-content-textcon-image-comments",
+        "status": "passed",
+        "observations": 8
+      }
+    ],
+    "contexts": [
+      "980x900 light/dark",
+      "390x560 dark stress",
+      "980x420 light short",
+      "980x2306 light layout proxy"
+    ],
+    "semantic": {
+      "pairs": 5,
+      "differences": 0,
+      "basis": "Separate fresh frozen/candidate contexts;original identity/parents/handlers/callback/checkbox/order/hidden and dynamic password cycles. Paint/geometry intentionally separate.",
+      "frozenControlRed": [
+        {
+          "id": "980-900-light",
+          "issues": [
+            "Account toolbar actions must fit their reserved band and be hit-testable",
+            "Native favorite stays hidden at rest",
+            "Native favorite retains its contained sprite action on hover",
+            "Management table must not widen its picker",
+            "Original management select/option must be hit-testable",
+            "Unused/empty table remains within its picker",
+            "Original management select/option must be hit-testable",
+            "Management cancel stays a quiet auxiliary",
+            "Password field/confirm/X must be contained and reachable",
+            "Password confirm consumes paired v7 material",
+            "Password close is quiet with two centered crossing strokes"
+          ]
+        },
+        {
+          "id": "980-900-dark",
+          "issues": [
+            "Account toolbar actions must fit their reserved band and be hit-testable",
+            "Native favorite stays hidden at rest",
+            "Native favorite retains its contained sprite action on hover",
+            "Management table must not widen its picker",
+            "Original management select/option must be hit-testable",
+            "Unused/empty table remains within its picker",
+            "Original management select/option must be hit-testable",
+            "Management cancel stays a quiet auxiliary",
+            "Password field/confirm/X must be contained and reachable",
+            "Password confirm consumes paired v7 material",
+            "Password close is quiet with two centered crossing strokes"
+          ]
+        },
+        {
+          "id": "390-560-dark",
+          "issues": [
+            "Account toolbar actions must fit their reserved band and be hit-testable",
+            "Native favorite stays hidden at rest",
+            "Native favorite retains its contained sprite action on hover",
+            "Management table must not widen its picker",
+            "Original management select/option must be hit-testable",
+            "Unused/empty table remains within its picker",
+            "Original management select/option must be hit-testable",
+            "Management cancel stays a quiet auxiliary",
+            "Password field/confirm/X must be contained and reachable",
+            "Password confirm consumes paired v7 material",
+            "Password close is quiet with two centered crossing strokes"
+          ]
+        },
+        {
+          "id": "980-420-light",
+          "issues": [
+            "Account toolbar actions must fit their reserved band and be hit-testable",
+            "Native favorite stays hidden at rest",
+            "Native favorite retains its contained sprite action on hover",
+            "Management table must not widen its picker",
+            "Original management select/option must be hit-testable",
+            "Unused/empty table remains within its picker",
+            "Original management select/option must be hit-testable",
+            "Management cancel stays a quiet auxiliary",
+            "Password field/confirm/X must be contained and reachable",
+            "Password confirm consumes paired v7 material",
+            "Password close is quiet with two centered crossing strokes"
+          ]
+        },
+        {
+          "id": "980-2306-light",
+          "issues": [
+            "Account toolbar actions must fit their reserved band and be hit-testable",
+            "Native favorite stays hidden at rest",
+            "Native favorite retains its contained sprite action on hover",
+            "Management table must not widen its picker",
+            "Original management select/option must be hit-testable",
+            "Unused/empty table remains within its picker",
+            "Original management select/option must be hit-testable",
+            "Management cancel stays a quiet auxiliary",
+            "Password field/confirm/X must be contained and reachable",
+            "Password confirm consumes paired v7 material",
+            "Password close is quiet with two centered crossing strokes"
+          ]
+        }
+      ],
+      "candidateDiagnostics": 0
+    },
+    "palette": {
+      "colors": [
+        "blue",
+        "mono",
+        "rose"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "roles": [
+        "management-save",
+        "password-confirm"
+      ],
+      "samples": 12,
+      "cancelRestorations": 2,
+      "minRenderedLabelContrast": 6.316383639572022,
+      "all14FormulasUnchanged": true
+    },
+    "actualExtension": {
+      "browserVersion": "156.0.8078.76",
+      "executableSha256": "66885D764FA17C7A7C53E1F94148E46959C5EC21FA5BC3AC22143EB2A1F7731A",
+      "extensionVersion": "5.5.0",
+      "extensionSha256": "BCAEC082C439E11C4DF683F43D07E9AC3D4439251D72B91C5B452F977DAC15D5",
+      "windowMode": true,
+      "sourceInjection": false,
+      "gmShim": false,
+      "entry": "https://gall.dcinside.com/board/view/?id=comic_new6&no=6778319&exception_mode=recommend&page=1",
+      "auth": {
+        "originalForm": true,
+        "requests": 1,
+        "authenticated": true,
+        "campaign": "Proven ordinary next-time navigation only"
+      },
+      "account": {
+        "toolbarFullHits": true,
+        "rootOverflow": 0,
+        "packGap": 12,
+        "dragHandleHit": true,
+        "unusedColumnCount": 6,
+        "unusedOverflow": 0,
+        "packageStatePreserved": true,
+        "managementClosed": true,
+        "closed": true,
+        "reopened": true,
+        "reclosed": true
+      },
+      "guestPassword": {
+        "safeOrdinaryBranchVerified": true,
+        "inputEmpty": true,
+        "focus": true,
+        "closed": true,
+        "reopened": true,
+        "reclosed": true,
+        "submitted": false,
+        "controlsReachable": true
+      },
+      "postAllowlist": [
+        "Original sign /login/member_check once during account authentication",
+        "/dccon/lists",
+        "/dccon/setting",
+        "/board/comment/",
+        "/board/comment/getImageCommentByNos"
+      ],
+      "allOtherNonGetBlocked": true,
+      "accountOrContentMutation": false,
+      "cleanup": [
+        {
+          "chrome": true,
+          "profile": true,
+          "vendor": true
+        },
+        {
+          "chrome": true,
+          "profile": true,
+          "vendor": true
+        }
+      ],
+      "notGenericFullCanaryPass": true
+    },
+    "visual": {
+      "pairs": 7,
+      "referenceFidelity": "REVIEWED",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "pixelDifferences": 7,
+      "productApproved": false,
+      "assessment": [
+        {
+          "id": "980-900-light-account",
+          "referenceSha256": "cd642013d3bdb8e35ea11bb9c7ed23ccdf3a207e1653e0e1d4c0feb4e00c483c",
+          "candidateSha256": "af439d4113c479e00a0fc72deb1117d7cb37bddfccae2c7f697ed702b033961c",
+          "status": "REVIEWED",
+          "summary": "Toolbar groups fit before the pack strip;native favorites text stays hidden at rest;four media columns remain.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "Toolbar groups fit before the pack strip;native favorites text stays hidden at rest;four media columns remain.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        },
+        {
+          "id": "980-900-dark-account",
+          "referenceSha256": "1a98f761ca0f9c7121777edb0c497847082e151e98de37680ac4667fa6fc32f4",
+          "candidateSha256": "dbb8618b30932b060cf3de3f6d810155189d284ce819eef185ac42306a2c3fb6",
+          "status": "REVIEWED",
+          "summary": "Dark toolbar/readable tools and original hidden icon state retained;no dense new primary.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "Dark toolbar/readable tools and original hidden icon state retained;no dense new primary.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        },
+        {
+          "id": "980-900-light-management",
+          "referenceSha256": "43b5659a628fc0e0db6472127fd2937f772c344add284c2105fce1f611d4f2b8",
+          "candidateSha256": "02ce35825b5371f516f1b4a3247e8ebf62c1353e4a00a7c27d93e80c47bed9ed",
+          "status": "REVIEWED",
+          "summary": "Original table is locally scrollable with its checkbox and all columns;quiet rounded cancel and compact paired save.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "Original table is locally scrollable with its checkbox and all columns;quiet rounded cancel and compact paired save.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        },
+        {
+          "id": "980-900-dark-management",
+          "referenceSha256": "80e10b94eeb601b2952cc54b640531ec18fa6b1712679424d794d0b25f54e248",
+          "candidateSha256": "e5fdb0bcc713997727b9fa63f8aa9a320ad7015c8c9bbc6e781e0816136f0464",
+          "status": "REVIEWED",
+          "summary": "Dark reading table and pale paired save reuse current v7;quiet cancel no longer has the native square border.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "Dark reading table and pale paired save reuse current v7;quiet cancel no longer has the native square border.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        },
+        {
+          "id": "980-900-light-password",
+          "referenceSha256": "86b1e854bff81be43602d2829f58726b19e404ee3503d19da761cccabc87bde3",
+          "candidateSha256": "0f634cd4ade56122ed200976ef1fbab8f2ca0dc80042d95b8908ac74c11f2c41",
+          "status": "REVIEWED",
+          "summary": "Password input,confirm and centered quiet X fit one compact anchored row;native focus stays visible.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "Password input,confirm and centered quiet X fit one compact anchored row;native focus stays visible.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        },
+        {
+          "id": "980-900-dark-password",
+          "referenceSha256": "a918c81c6985718f5e27378d16f20d98e4e8cfc81398a12c4716f38a4e87c84e",
+          "candidateSha256": "56f8562bbd567d2c7d42dba19a6f2bcfd944823ba93abe40f441a5676d63189f",
+          "status": "REVIEWED",
+          "summary": "Dark password field stays readable;confirm is pale paired material and X remains quiet instead of native blue.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "Dark password field stays readable;confirm is pale paired material and X remains quiet instead of native blue.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        },
+        {
+          "id": "390-560-dark-management",
+          "referenceSha256": "a8b569618b292f9b51bfc17418683f18406f6df66a2e8437717bca57bec956aa",
+          "candidateSha256": "c22517de91cad60060db29f7ee3723e02a8f0c6b4c16b0faae9b8fa485f0ad1c",
+          "status": "REVIEWED",
+          "summary": "390 layout stress scrolls within the original management table;footer/quiet cancel and compact save stay reachable. Screenshot records a scrolled footer view.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Contained native toolbar/media/table/password,paired material,quiet compact utilities and preserved focus/hidden state",
+              "actual": "390 layout stress scrolls within the original management table;footer/quiet cancel and compact save stay reachable. Screenshot records a scrolled footer view.",
+              "action": "Retain existing-owner repair and original callbacks"
+            }
+          ]
+        }
+      ],
+      "finalActualGuestPasswordCaptured": true,
+      "finalActualAccountPixels": "UNKNOWN:root clip screenshots timed out;final account DOM/hits/scroll/cancel observed. Intermediate5258 account screenshots informed final border correction and are not relabelled as654FF895.",
+      "viewer": {
+        "url": "http://127.0.0.1:10067/account-finish/index.html?implementation=654FF895",
+        "userIabDecoded": [
+          [
+            980,
+            900
+          ],
+          [
+            280,
+            46
+          ]
+        ],
+        "oneImageAtATime": true
+      }
+    },
+    "static": {
+      "release": "passed Mobile3.5.5/current PC1.9.9",
+      "uiBoundaries": "43 active sources passed",
+      "architectureLinks": "9 surfaces passed;no accepted registry changes"
+    }
+  },
+  "review": {
+    "method": "Independent read-only source/test review and two final follow-ups;no reviewer browsers/tests",
+    "findingsAddressed": [
+      "Actual management DIV/LI/TD and hidden panes",
+      "Positive checkbox/drag reachability and explicit selection state",
+      "Password dynamic identity/focus and complete material tuple",
+      "Contextual password close paint/pseudo centers and management auxiliary border/radius"
+    ],
+    "result": "No remaining consequential finding"
+  },
+  "impact": {
+    "changedFiles": [
+      "docs/agent-maintenance-notes.md",
+      "docs/design/b1-account-management-dark-2026-11-02.png",
+      "docs/design/b1-account-management-light-2026-11-02.png",
+      "docs/ui-surface-contracts.md",
+      "docs/work/B1_ACCOUNT_PICKER_IMPLEMENTATION.md",
+      "docs/work/B1_ACCOUNT_UI_PREFLIGHT.md",
+      "docs/work/INDEX.md",
+      "docs/work/NEXT_TASK.md",
+      "docs/work/UI_REVIEW_CHECKLIST.md",
+      "src/targets/mobile/comment-host-adapter.js",
+      "src/targets/mobile/comment-presenter.js",
+      "testbed/fixtures/b1-account-picker.mjs",
+      "testbed/fixtures/b1-content.mjs",
+      "testbed/run-tests.mjs",
+      "testbed/ui-account-picker-contract.mjs"
+    ],
+    "automaticProfiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance"
+    ],
+    "unmappedFiles": [
+      "testbed/ui-account-picker-contract.mjs"
+    ],
+    "selected": "New5-context account contract plus directly affected anonymous4/content8;5 semantic pairs;selected palette;7 readable visual pairs;safe actual account/guest branches.",
+    "omitted": [
+      "Unchanged PC/filter/storage/boot/bfcache product suites",
+      "Whole editor/upload suite",
+      "Own/member/admin/image-comment permissions,private history/folders/detail/buy/errors/device acceptance"
+    ],
+    "routingLimit": "Broad automatic profile is diagnostic;actual changed consumers selected explicitly per user. Unmapped new contract is inspected,not claimed automatic full coverage."
+  },
+  "contrary": [
+    {
+      "kind": "FIXTURE",
+      "detail": "Overstrong .fr float hid original wide collision;guessed management button tags replaced with actual DIV/LI/TD and two pane anatomy."
+    },
+    {
+      "kind": "HARNESS",
+      "detail": "Hidden first synthetic comment initially blocked password selection;use first visible original comment. Frozen broken hit targets use explicitly recorded synthetic callback diagnostics only;candidate uses zero diagnostics."
+    },
+    {
+      "kind": "PRODUCT_VISUAL",
+      "detail": "Geometry/background checks missed native blue X and square management auxiliary border. Readable images exposed both;positive material/pseudo/border checks now reproduce and guard them."
+    },
+    {
+      "kind": "CAPTURE",
+      "detail": "Actual media locator capture timed out;bounded original-root CDP fallback worked on intermediate account and final password. Final account root images still timed out,so no final account pixel PASS."
+    },
+    {
+      "kind": "ENVIRONMENT",
+      "detail": "Sandbox browser cache absent;existing installed test browser used through authorized execution. No dependency installation."
+    }
+  ],
+  "limits": [
+    "Scoped acquired account/password finish,not whole UI/formal header admission",
+    "Unopened native folders/private history/detail/buy/editor/error/CAPTCHA/permission variants UNKNOWN",
+    "Actual live light wide;dark/stress/layout phone proxy synthetic",
+    "No real favorite/check/order/save/password input/confirm/delete/content/purchase/upload mutation",
+    "Image replies N/A;four uploads deferred;guidebook discussion after whole UI finish"
+  ],
+  "hashMode": "Canonical LF text;raw image/runtime bytes"
+}

@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "semantic-observation-v1",
+  "unknownFieldPolicy": "fail",
+  "missingFieldPolicy": "fail",
+  "warningPolicy": "preserve-and-fail-unclassified",
+  "fields": [
+    { "id": "applicability", "required": true, "normalization": "enum:applicable|not-applicable-with-reason", "family": "specification" },
+    { "id": "filterResult", "required": true, "normalization": "stable-json", "family": "differential" },
+    { "id": "storageTrace", "required": true, "normalization": "stable-json-preserve-order", "family": "differential" },
+    { "id": "networkTrace", "required": true, "normalization": "stable-json-preserve-order", "family": "differential" },
+    { "id": "hostNodeIdentity", "required": true, "normalization": "stable-symbolic-identity", "family": "host-contract" },
+    { "id": "hostNodeOrder", "required": true, "normalization": "stable-symbolic-order", "family": "host-contract" },
+    { "id": "nativeHandlers", "required": true, "normalization": "event-type-and-target", "family": "host-contract" },
+    { "id": "nativeForm", "required": true, "normalization": "method-action-field-name-type-value", "family": "host-contract" },
+    { "id": "submitTrace", "required": true, "normalization": "ordered-native-submit-events", "family": "metamorphic" },
+    { "id": "focus", "required": true, "normalization": "semantic-role", "family": "accessibility" },
+    { "id": "resources", "required": true, "normalization": "candidate-active-counts-must-not-exceed-control;cumulative-counts-raw-only", "family": "lifecycle" },
+    { "id": "geometry", "required": true, "normalization": "css-pixel-rects-with-declared-tolerance", "family": "geometry" },
+    { "id": "hitTest", "required": true, "normalization": "semantic-role-at-point", "family": "geometry" },
+    { "id": "accessibility", "required": true, "normalization": "role-name-state-focus-order", "family": "accessibility" },
+    { "id": "semanticStyle", "required": true, "normalization": "declared-material-role", "family": "visual-contract" },
+    { "id": "warnings", "required": true, "normalization": "ordered-code-and-first-line", "family": "diagnostics" }
+  ],
+  "geometryTolerances": {
+    "containmentPx": 1,
+    "anchorTrackingPx": 2,
+    "justification": "Immutable control and candidate exhibit platform subpixel quantization; exact rectangles remain in raw evidence."
+  }
+}

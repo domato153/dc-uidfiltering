@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-writer-proposal-material-refinement",
+  "status": "DRAFT_REFINED_USER_SELECTION_PENDING",
+  "sourceBaseHead": "2dfc830c5daa68c1d08fdf07b77aa6016344ca4e",
+  "candidateFingerprint": "660725c9c315e2f11052ee563006fd64c45155a318cb864a5d9a47be10bf07da",
+  "artifact": {
+    "mobileSha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "runtimeBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "productUiChanged": false,
+    "guardChanged": false,
+    "designOnly": true
+  },
+  "reference": {
+    "brief": "docs/design/b1-writer-material-v3-2026-10-26.md",
+    "images": [
+      {
+        "path": "docs/design/b1-writer-material-v3-2026-10-26.png",
+        "sha256": "2A2D8A964F79D9DB5BC8127856206E3C74CA6E8731B841EABD72B1A785BE310E",
+        "width": 1774,
+        "height": 887
+      },
+      {
+        "path": "docs/design/b1-adopted-list-action-light-2026-10-26.png",
+        "sha256": "0B64AC898EC9528C1B244282CA0775062163FDB70EE9D028BD79B826AA8310C6",
+        "width": 116,
+        "height": 72
+      },
+      {
+        "path": "docs/design/b1-adopted-list-action-dark-2026-10-26.png",
+        "sha256": "BB3803D09F8CCAF44811C85229464BD4A8217FA973011526EE0F6C9A45638C8C",
+        "width": 116,
+        "height": 72
+      }
+    ],
+    "priorRejectedDraft": "docs/design/b1-write-current-theme-2026-10-25.png",
+    "adoptedActionReceipt": "verification/receipts/2026-10-23-b1-button-reference-refinement.json",
+    "currentStyle": "Current adopted compact header plus actual list action; original/native/published controls retained"
+  },
+  "generation": {
+    "tool": "built-in image_gen",
+    "passes": 2,
+    "first": "Compact footer actions and exterior glass following actual list action.",
+    "second": "Reduce overbright cyan edge/glow while preserving substantial teal tint and glass depth.",
+    "prompts": "docs/design/b1-writer-material-v3-2026-10-26.prompt.txt"
+  },
+  "externalResearch": [
+    {
+      "url": "https://codepen.io/spajk23/pen/wvXzqQE",
+      "use": "Thin reflected edge/soft blur cues only",
+      "notAdopted": "Very low opacity, large pill, neon glow, hover tracking or imported code"
+    },
+    {
+      "url": "https://dribbble.com/shots/26567499--Glowing-Action-Button-Assign-Role",
+      "use": "Creator depth/edge example only",
+      "notAdopted": "Neon palette/glow and replacement visual system"
+    }
+  ],
+  "manualReview": {
+    "basis": "Full generated light/dark boards, actual adopted button crops and rendered viewer",
+    "observed": "V2 half-width solid gradient actions replaced by compact right-aligned group; final pass mutes rim/glow and retains teal/pearl/smoke weight. Editorial2x action strips permit detail inspection; paper stays calm.",
+    "limits": "A raster cannot prove actual transmission or functional fidelity. Actual adopted list action is painted, not backdrop-transmission evidence. User adoption remains pending."
+  },
+  "checks": {
+    "viewer": {
+      "pass": true,
+      "pageStatus": 200,
+      "drafts": [
+        {
+          "src": "current-theme-proposal-v2.png",
+          "width": 1774,
+          "height": 887
+        },
+        {
+          "src": "current-theme-proposal-v3.png",
+          "width": 1774,
+          "height": 887
+        }
+      ],
+      "inputs": [
+        {
+          "src": "source-current-light-v2.png",
+          "width": 980,
+          "height": 1100
+        },
+        {
+          "src": "source-current-dark-v2.png",
+          "width": 980,
+          "height": 1100
+        },
+        {
+          "src": "source-original-v2.png",
+          "width": 1280,
+          "height": 1300
+        },
+        {
+          "src": "source-published-v2.png",
+          "width": 980,
+          "height": 1100
+        }
+      ],
+      "images": [
+        {
+          "path": "docs/design/b1-writer-material-v3-2026-10-26.png",
+          "sha256": "2A2D8A964F79D9DB5BC8127856206E3C74CA6E8731B841EABD72B1A785BE310E",
+          "width": 1774,
+          "height": 887
+        },
+        {
+          "path": "docs/design/b1-adopted-list-action-light-2026-10-26.png",
+          "sha256": "0B64AC898EC9528C1B244282CA0775062163FDB70EE9D028BD79B826AA8310C6",
+          "width": 116,
+          "height": 72
+        },
+        {
+          "path": "docs/design/b1-adopted-list-action-dark-2026-10-26.png",
+          "sha256": "BB3803D09F8CCAF44811C85229464BD4A8217FA973011526EE0F6C9A45638C8C",
+          "width": 116,
+          "height": 72
+        }
+      ],
+      "jsErrors": [],
+      "scope": "Reference/viewer health; v3 is DRAFT and not product or user aesthetic approval."
+    },
+    "productSuite": "NOT_RERUN: runtime/fixtures unchanged; no source build.",
+    "checkpoint": "Publisher owns exact-tree validation and remote/CI record."
+  },
+  "limits": [
+    "V3 is a DRAFT, not accepted or implemented.",
+    "Current CE3 writer material remains NEEDS_WORK.",
+    "Keep real native controls/options/warnings/hidden fields and popup/input paths; raster text/icons/CAPTCHA are illustrative.",
+    "No new runtime observer, style owner, dependency, engine, actual-phone/account/extension or whole-UI qualification."
+  ],
+  "next": "b1-write-proposal-selection"
+}

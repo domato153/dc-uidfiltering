@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "kind": "ui-reuse-preparation",
+  "status": "SCOPED_UI_REUSE_PREPARATION_PASS",
+  "sourceBaseHead": "97fc1f2ee7efad7d90f4b66d780c0132215117aa",
+  "candidateFingerprint": "674ef8a01cd56c78c107d8e2541c6089bc8219ed441ef239a4d924ce15cdb91c",
+  "artifact": {
+    "mobileSha256": "62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A",
+    "controlMobileSha256": "AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "pcBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "visualDelta": false,
+    "nativeBehaviorDelta": false,
+    "sharedHeaderPolicyConsumers": 4,
+    "newBuildInputs": 0,
+    "newDependencies": 0,
+    "newObservers": 0,
+    "originalDomAndOwnersPreserved": true,
+    "acceptedRegistryChanged": false,
+    "overlayActive": true,
+    "popupLayoutTemplating": "DEFERRED; existing materials remain shared, real layout consumers differ",
+    "sourceCaptureHelper": "testbed/harness/ui-review-preparation.mjs"
+  },
+  "checks": {
+    "mobile": {
+      "passed": 150,
+      "failed": 0
+    },
+    "unit": {
+      "passed": 7,
+      "failed": 0,
+      "registeredInExistingGuidanceValidator": true
+    },
+    "generatedCss": {
+      "payloads": 13,
+      "byteIdenticalToControl": true
+    },
+    "nativeFormBehavior": {
+      "controlSha256": "AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB",
+      "candidateSha256": "62F1BAE62F3CDC5E2640B8331D603D86465DB7111B4379E11D249C395CE3C87A",
+      "observations": 25,
+      "differences": []
+    },
+    "headerComparison": {
+      "contexts": 4,
+      "domFormsCssSubscriberKeysEqual": true
+    },
+    "images": {
+      "pairs": 5,
+      "pixelStatus": "PIXEL_MATCH",
+      "fidelity": "NOT_REVIEWED",
+      "productApproved": false,
+      "purpose": "Preserve existing output and exercise preparation; default unreviewed is retained intentionally."
+    }
+  },
+  "routing": {
+    "selectedProfiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance"
+    ],
+    "qualification": "Bounded source/output preservation and helper preparation only. Whole acceptance/proof-runtime profiles and formal stage promotion are not certified by this unit."
+  },
+  "limits": [
+    "No measured elapsed-time improvement",
+    "Existing source guard and explicit page interactions still required; capture metadata alone cannot attest injected runtime",
+    "No new aesthetic/full-UI/device/extension/account approval",
+    "Broad popup-layout extraction remains deferred"
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/unit-final.log",
+      "sha256": "819CF837EB970F3B9A0B8F0D1149FAE016FE0F335CCBC0682E81B5D209325ADD"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/mobile-full.json",
+      "sha256": "EB76C5EA5864A66ADDB3EF1EC8113645E8CD46B8A39B8E3F440C85F64E6092C1"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/semantic-control.json",
+      "sha256": "36B83B877E30056E8C30FEDA21A01A2E83898A8F284D4776E91EB39C6A683E89"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/semantic-candidate.json",
+      "sha256": "3FF14899A24D3C2927CD97AC05E6C4DD1D49BD18C0C3C258899F531271F8AF9D"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/semantic-summary.json",
+      "sha256": "AA6701E474D395CDC219CFCC95422DCC8EEAF90BF0FBE28FFDDAEAD1188CD9C8"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/css-comparison.json",
+      "sha256": "64021615ABF78898EB8C66F606C572FE00937C7D6A23C3632B8BFF967D4CCF4E"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/comparison-summary.json",
+      "sha256": "33975DD46A466D5C0E2D8FB28C86C7F64C866D2CB9F47F2F8A4F1695748FDDCE"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/prepared/capture-metadata.json",
+      "sha256": "D468AF107C956615448392CC5B958871C3865ACBF2B712FE5FB43ECA725F2B80"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/prepared/comparison.json",
+      "sha256": "94D49CEC616B12E0D3D59DFD697583A8B5084B049EAEEA4E3A3E987B87B9F2D5"
+    },
+    {
+      "path": "artifacts/ui-reuse-prep-2026-10-25/visual/review.json",
+      "sha256": "3447BAFF69411C182292DD962C435EBF5146A7B37DC27AEAB3E5CFCC131AA8E2"
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-visual-diagnosis-and-comparator-transfer",
+  "status": "VISUAL_REVIEW_REJECTED",
+  "scope": "DIAGNOSTIC_AND_TEST_TOOLING_ONLY_NO_PRODUCT_FIX_OR_APPROVAL",
+  "sourceBaseHead": "0a9f727840a36e904e96a09776aec2b988d955ea",
+  "artifact": {
+    "mobileSha256": "945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "runtimeChanged": false
+  },
+  "engine": {
+    "package": "playwright",
+    "version": "1.61.1",
+    "core": "Native toMatchSnapshot PNG decoding/pixelmatch/HTML expected-actual-diff-slider; snapshot updates disabled"
+  },
+  "methodTransfer": {
+    "sameImage": "PASS",
+    "shiftedControl": "DETECTED",
+    "missingReference": "REJECTED",
+    "wrongViewport": "REJECTED",
+    "identicalCorruptPngs": "REJECTED",
+    "originalBaseline": "PRESERVED",
+    "scope": "Mechanism controls, not proof of autonomous visual judgement or complete VRT capture readiness"
+  },
+  "designComparison": {
+    "pairs": 6,
+    "pixelMatches": 0,
+    "pixelDifferences": 6,
+    "productApproved": false,
+    "limit": "Different content/native topology/browser149 vs155. Design mismatch requires disposition; pixel percentage is not an aesthetic score."
+  },
+  "observations": {
+    "galleryAfterRestart": "5/5 decoded with correct natural dimensions; original stopped server and prior user loading state are distinct",
+    "nativeReport": "Official report opened in in-app browser; expected/actual images both decoded980x900 and displayed at equal scale",
+    "freshLive": "Anonymous read-only Chrome155 barca. Native normal dark tab background#666/color#eee and recent15px sprite beat current presenter rules. Toolbar110px at980,258px at390. Visible390 tip clipping retained from prior screenshot; fresh tip was hidden after native dark-mode use."
+  },
+  "defects": [
+    "Native dark tab cascade absent from fixture",
+    "Recent sprite cascade absent from fixture",
+    "Visible native dark tip and clipping not exercised",
+    "Toolbar grouping differs/tall wrap allowed by broad geometry checks",
+    "Header/GNB/gallery composition not ported from preview",
+    "Native recent interior material not adapted",
+    "List metadata hierarchy differs from preview"
+  ],
+  "inputs": {
+    ".agents/skills/dcuf-ui-surface-maintainer/SKILL.md": "0b13aa02eb868114f8a133db6adc0e7e2ee34d88a77c644c6c20ba00b8b7c99a",
+    "tools/visual-review.mjs": "dbedb45fac68ffae988ba1bb04e3bfae86bb002cee14956ee6c739864c5220bb",
+    "testbed/test-visual-review.mjs": "d5dcb02cbe4da94e5c58a795f32ad457f0849f3bdfbb5d88e408164fac27168e",
+    "testbed/visual/playwright.config.mjs": "63186a19a9d1ea7f15bdbd87938b34032e372fe7582da471047d17ac22a75dcf",
+    "testbed/visual/image-review.spec.mjs": "d2813a88c864ef7880047d84ccdbec81ae24ef39c753fda71527b01110d3314e",
+    "verification/visual/b1-native-list.json": "d1e858b8358fcea03bfa6d215123681d00403c851d85442f5dc08777bcf6e3d9"
+  },
+  "localEvidence": {
+    "artifacts/ui-visual-review-2026-10-23/live-probe.json": "dd50fa40a0260e4704b1cffeaaea1cd9f7111f8a1e7d3d86b63db67a29808849",
+    "testbed/artifacts/visual-review-transfer-final.log": "396b05943d2517c999835c5155e10241be5ad5e5f4a007bc55c36d7db815420d",
+    "artifacts/ui-visual-review-2026-10-23/b1-settled/review.json": "e317062773a611c0b2a86eb59d40a32ebd3d665332ba81fbb8a4dd2d9030bd29"
+  },
+  "decision": "D-43",
+  "next": "Repair the complete diagnosed B1 header/list batch through existing owners, faithful fixtures and reference/current review; do not advance to article or seed a broken golden."
+}

@@ -1,0 +1,80 @@
+{
+  "schemaVersion": 1,
+  "kind": "pagination-alignment-followup",
+  "scope": "L-07_PAGINATION_ALIGNMENT_ONLY",
+  "status": "PASS",
+  "sourceBaseHead": "05fde1eeeb5a2a13d4fa6e2bd41a003c523d1b93",
+  "parent": {
+    "path": "verification/receipts/2026-10-21-ui-live-regression-repair.json",
+    "canonicalSha256": "f9b4374cfd5e786cb4475e9e0553b7be0d9557f90e2bd9df1f8a737fa15b28a5",
+    "artifact": "16773D66FFBF6F0EC85B991E507A93E61EABEBB9F4A3ADADC016EC054DF758AF"
+  },
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "08BCF754727BDE07B39DE4BEAF2D67B82F28718B17A1EDC7092106E560CF01CF",
+    "pcSha256": "C14D163F2757DB02117E3F93204B56B6AA22D464541729315A6B40C4128C7D37",
+    "pcChanged": false
+  },
+  "productionDelta": "One existing list-presenter declaration: flex-start to safe center. Fitting native page groups center; overflowing groups start-align for full scroll reachability. No adapter/function/DOM/setting/observer/priority change.",
+  "focusedValidation": {
+    "scenarioCount": 14,
+    "checkCount": 266,
+    "failures": 0,
+    "widths": [
+      1660,
+      980,
+      412,
+      390
+    ],
+    "themes": [
+      "light",
+      "dark"
+    ],
+    "routes": [
+      "major list",
+      "minor list",
+      "mini list",
+      "embedded article list"
+    ],
+    "redEvidence": {
+      "path": "artifacts/paging-center-2026-10-21/red.log",
+      "sha256": "FDDE55C431EA019772CB87D2AE28EF5B795A6C1BE25417756A1750E6C01BC9FF",
+      "failure": "Fitting page groups off center; both ends otherwise reachable"
+    },
+    "greenEvidence": {
+      "path": "artifacts/paging-center-2026-10-21/green.json",
+      "sha256": "398B5EF47D03F58560DCF93A351B8C11813BEBAD2ACA6B2C59A5E2C68D5B71B8"
+    }
+  },
+  "publicObservation": {
+    "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+    "width": 1660,
+    "mode": "Read-only Chrome / GM-shim; all POST blocked",
+    "alignment": "safe center",
+    "centerError": 0,
+    "overflow": false,
+    "screenshot": {
+      "path": "artifacts/paging-center-2026-10-21/public-centered.png",
+      "sha256": "5AE7807811EE74E2B5142CA8D60C1BB6D8429B064C6A3E5D426A2AE3F630587F"
+    },
+    "visionReviewed": true
+  },
+  "installer": {
+    "path": "artifacts/manual-install-2026-10-21/DC_UserFilter_Mobile_Draft_Test_PagingCentered_20261021.user.js",
+    "sha256": "6BE3B5D82F82356C6CCF8CCB44A9DE81825ED3F2428EFADC455E03F183901D61",
+    "metadataOnly": [
+      "name",
+      "namespace"
+    ],
+    "runtimeBodyEqual": true
+  },
+  "pilotControl": {
+    "path": "artifacts/header-replaceability-pilot-2026-10-21/control-08BC.user.js",
+    "sha256": "08BCF754727BDE07B39DE4BEAF2D67B82F28718B17A1EDC7092106E560CF01CF"
+  },
+  "limits": [
+    "Parent broad/full/actual-extension evidence remains bound to1677, not relabeled as a fresh08BC full run",
+    "This reversible one-declaration visual follow-up uses focused list coverage and exact-tree repository validation; no repeated whole product suite",
+    "Existing raw header palette FAIL and all phone/authenticated/whole-UI/Concept01 limits remain"
+  ]
+}

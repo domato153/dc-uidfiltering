@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_OWNED_PANELS_PREFLIGHT",
+  "status": "PREFLIGHT_READY_PRODUCT_NOT_IMPLEMENTED",
+  "sourceBaseHead": "d88cef8b66a497a50e8a1db236210b0fa6f5225b",
+  "candidateFingerprint": "aad3cf75e455b316e19b19508875a3de0e30e67a2a58fbad433a6abf480178d9",
+  "artifact": {
+    "mobileSha256": "4BEA35A6DDDC6618A19BEC61B5A93F6483512B6544D3240F695B07466BDE3860",
+    "pcSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+  },
+  "scope": {
+    "families": 12,
+    "currentThemeStates": 24,
+    "proposalThemeStates": 24,
+    "scriptOwnedOnly": true,
+    "productSourceChanged": false,
+    "architectureChanged": false,
+    "productApproved": false,
+    "pcSuite": "NOT_RERUN_UNCHANGED_RUNTIME",
+    "fullMobileSuite": "NOT_RERUN_DRAFT_ONLY"
+  },
+  "inputs": [
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "9DA5BE1FA1398A1F16BEF02646D835924AE7CF5AB0347CAE2C4BD5FCF68CD9BF"
+    },
+    {
+      "path": "src/targets/shared/filter-settings-host-adapter.js",
+      "sha256": "E46D129EE41B04DCF0C0D7DDEEC6AF57F3859196E092F5F123D6A84F6DBBF00C"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "B8EA15599A0BA2D7807DEE8F9C7DD3FCC6B0B31F21612C2FEFB29887718E9783"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7FFC936B838DF4CD34A2FF3C5C7B0C21A259848B8CC9161D766C57D98F8A6073"
+    },
+    {
+      "path": "src/targets/shared/theme-presenter.js",
+      "sha256": "045599DE82B3B06FB124E042FD6AF8BBA005B946715D123CCE72F7745C397389"
+    },
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "DF995F5A0F3E0D2D8192BD60B86C097B72C56D7592EDF57E213CFAC308107D62"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2AEE6D3534B3B158F888D0224E79CC48009078A0EEC1EE73873A10798A9B056A"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "1D61DD3F22EA3FCE8B68D7200FAC57D2E22F655A2A5CA5ABAD24ACAEE1F0F560"
+    },
+    {
+      "path": "docs/design/b1-owned-panels-proposal-2026-10-27.css",
+      "sha256": "1AEAAC89C35DB20E8762FAE8965CDD7FC3CDBCEC61AFCA8FEC3D1976375C5153"
+    }
+  ],
+  "reference": {
+    "light": {
+      "path": "docs/design/b1-owned-panels-target-light-2026-10-27.png",
+      "sha256": "851D614864C50D62D8C6DF75CAB0E14C9082E84C48180BBA15A2E4BC9171AAF5"
+    },
+    "dark": {
+      "path": "docs/design/b1-owned-panels-target-dark-2026-10-27.png",
+      "sha256": "6F98E964141E2A5CE9183122A889809443B151E0E171A59B3C9E59CA7EAFFAF8"
+    }
+  },
+  "observations": {
+    "browser": "156.0.8078.48",
+    "layoutContexts": 16,
+    "layouts": [
+      [
+        980,
+        900
+      ],
+      [
+        980,
+        2306
+      ]
+    ],
+    "phoneClassification": "LAYOUT_PROXY_NO_ACTUAL_SCALE_DPR_ENGINE_INPUT_QUALIFICATION",
+    "horizontalOverflow": 0,
+    "closeControls": 14,
+    "footerControls": 16,
+    "closeHitArea": 44,
+    "closeGlyph": 14,
+    "closeAndFooterHits": true,
+    "paletteBottomContexts": 4,
+    "paletteOptions": 14,
+    "transmission": "LIGHT_DARK_COLORED_BACKING_AND_REVERSED_BACKING_VISUALLY_OBSERVED",
+    "viewerStates": 24,
+    "viewerImagesDecoded": 48,
+    "viewerAspectFailures": 0
+  },
+  "visualComparison": {
+    "engine": "playwright@1.61.1",
+    "pairs": 6,
+    "pixelResult": "DIFFERENCES_REQUIRE_REVIEW",
+    "referenceFidelity": "NEEDS_WORK",
+    "productApproved": false,
+    "knownFinishGap": "Existing dark inactive switch thumb blends into track; fix Mobile thumb material during implementation, preserve PC fallback.",
+    "cssDetector": "NO_REGEX_MATCHES_ONLY; parsed-page contrast/tiny-text rules not run"
+  },
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-owned-panels-2026-10-27/proposal-audit.json",
+      "sha256": "2703D4D49DF143FD56930E70512F64A5DE28DDA15C3EC322A8B082238562B09A"
+    },
+    {
+      "path": "artifacts/b1-owned-panels-2026-10-27/proposal-inventory.json",
+      "sha256": "7624B337FE1728AAE65B61057297A87DE9B2060D4182C5A8746EFE907E77AE2A"
+    },
+    {
+      "path": "artifacts/b1-owned-panels-2026-10-27/comparison-final/review.json",
+      "sha256": "33EB69D491BC7FADC9630A3EE9735CF7F77DB7C7B2A9C4A26184FA28EC935E7E"
+    },
+    {
+      "path": "artifacts/b1-owned-panels-2026-10-27/viewer-checks.json",
+      "sha256": "46544E2C299C9A71D0E598B9D46ABA1C151D5099977504A11DA8611AA026CE44"
+    }
+  ],
+  "resources": {
+    "oneBrowserJobAtATime": true,
+    "availableMemoryStartGb": 10.45,
+    "startFloorGb": 4,
+    "unrelatedAppsTerminated": false
+  },
+  "limitations": [
+    "Fresh source-injected synthetic contexts, not current installed extension/live user storage/device/account evidence.",
+    "Current/published anatomy and derived draft are separate; draft images are not approved regression goldens.",
+    "Only named default/nested/scroll/empty/populated branches were observed. P4 all-child behavior, close/reopen, pending deletion, save/failure, PC fallback and drag/resize remain implementation coverage.",
+    "No real save/import/delete/clipboard/download/authentication/post/upload/AI operation.",
+    "Selection same-ID overlap was observed as an existing120ms leave transition, not established duplicate handlers."
+  ],
+  "nextTask": "b1-owned-panel-material"
+}

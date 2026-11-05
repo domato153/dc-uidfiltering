@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-05",
+  "scope": "List-only GNB alignment and affected real examples;README proposal retained",
+  "sourceBase": "eec1667460d66f7ec55c9e5f898ff6592678f585",
+  "mobileSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+  "pcSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+  "cause": "List GNB center repair2026-11-05:the64px list first row contains a60px wrapped GNB while its normal8px top margin loses to the verified early important zero-margin reset. Existing GNB presenter now scopes an important8px inset and24px border-box links to list context at>=900px;two rows fit48px centered at36 with4px clearance against the8..64 plate. Other routes and<900px stress retain existing rules. Positive GNB center/clearance was missing from the previous global chrome assertion;include it with wrapped navigation,not only logo/search/recent. Actual article GNB style/geometry is identical to control. Only list/palette/menu example images were recaptured;unchanged article/write/PC captures retain original receipt/runtime bindings.",
+  "geometry": {
+    "top": 12,
+    "bottom": 60,
+    "height": 48,
+    "center": 36,
+    "margin": "8px"
+  },
+  "checks": {
+    "red": "108930 fails positive inline GNB center:32 instead of36",
+    "green": "80EC passes Header followup4 contexts1630/1158/980-dark/390,including14 palettes,clearance/native menus/replacement/down-up-down",
+    "owner": "Palette/reset/door historical pairs and mutation rejection pass;only one current GNB CSS registration updated",
+    "actualArticleControl": "Fresh anonymous public article GNB measured style/geometry identical to108930 control",
+    "visual": "Same980x200 before/after crops manually inspected and compared through existing visual-review runner",
+    "omitted": "No full suite or bfcache:CSS-only list context;PC and article/write/source behavior unchanged"
+  },
+  "captures": [
+    {
+      "id": "mobile-list",
+      "path": "design-prototypes/site-v7/assets/mobile-list.png",
+      "sha256": "b97314103449dc5339bac25482d2e4ce27ef336ec9344e93b949fbf96bd26f41",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Unmodified public DOM/content,current source-injected Mobile;GET/HEAD only. No fixture or title/author replacement."
+    },
+    {
+      "id": "palette",
+      "path": "design-prototypes/site-v7/assets/palette.png",
+      "sha256": "7ec51a7c24c4ee4fcc725cd6150de515089045a3649841602c592be79bd7d159",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Unmodified public DOM/content,current source-injected Mobile;GET/HEAD only. No fixture or title/author replacement."
+    },
+    {
+      "id": "menu",
+      "path": "design-prototypes/site-v7/assets/menu.png",
+      "sha256": "c42dfa5059abcfc243e6590b6a678ee16f2fdbc7dfc38d5867fc95679cd3d07f",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Unmodified public DOM/content,current source-injected Mobile;GET/HEAD only. No fixture or title/author replacement."
+    },
+    {
+      "id": "mobile-article",
+      "path": "design-prototypes/site-v7/assets/mobile-article.png",
+      "sha256": "a342b44fb5c064554418211c061cba9ec6c8bfb3986fadd7554b3b6b3c48c1e7",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/view/?id=wutheringwaves&no=2377010&page=1",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification.",
+      "reuse": "Unchanged route/target;original runtime/image binding retained,not relabeled as current runtime."
+    },
+    {
+      "id": "mobile-write",
+      "path": "design-prototypes/site-v7/assets/mobile-write.png",
+      "sha256": "3d91c9b476b1e021a7359b87789dbf75f1d1ca7bb666d18a0523f53b0ad0e058",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/write/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification.",
+      "reuse": "Unchanged route/target;original runtime/image binding retained,not relabeled as current runtime."
+    },
+    {
+      "id": "pc-management",
+      "path": "design-prototypes/site-v7/assets/pc-management.png",
+      "sha256": "e223ca123855c31fa9b01b399b833b8c7160627d7f7e36d0d055d118e86bc61b",
+      "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification.",
+      "reuse": "Unchanged route/target;original runtime/image binding retained,not relabeled as current runtime."
+    },
+    {
+      "id": "pc-backup",
+      "path": "design-prototypes/site-v7/assets/pc-backup.png",
+      "sha256": "8cf693f9983213eaebecd7ced2b180b440f17071da239470567d21c79093653d",
+      "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification.",
+      "reuse": "Unchanged route/target;original runtime/image binding retained,not relabeled as current runtime."
+    }
+  ],
+  "publication": {
+    "rootIndexReadmeStylesChanged": false,
+    "officialRefsChanged": false,
+    "approved": false
+  },
+  "limits": [
+    "Installed extension/device not newly tested",
+    "Formal upper admission remains UNKNOWN",
+    "Site/README final review and official stage4 authority remain separate"
+  ]
+}

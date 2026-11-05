@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_LIST_V7_IMPLEMENTATION",
+  "status": "READY_SCOPED_IMPLEMENTATION_USER_AESTHETICS_PENDING",
+  "sourceBaseHead": "b1c3d2803d149936735818357377a967a93162c7",
+  "artifact": {
+    "mobileSha256": "79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "pcChanged": false,
+    "versionChanged": false,
+    "officialRelease": false
+  },
+  "reference": {
+    "path": "docs/design/b1-list-v7-proposal-v2-2026-10-29.png",
+    "sha256": "B93C94068842F8E87EB1283FC080AEF799E019ED9D41887A771D65B01838B90F",
+    "approvedByUser": false,
+    "materialDirection": "User-adopted rendered memo v7 tone"
+  },
+  "ownership": {
+    "changed": false,
+    "newPhase": false,
+    "newObserver": false,
+    "settingsShapeChanged": false,
+    "nativeTopologyPreserved": true
+  },
+  "finalChecks": {
+    "runtimeSha256": "79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC",
+    "listGeometryMaterial": {
+      "command": "node testbed/run-tests.mjs --filter 'B1 list v7: plain' --require-runtime-under-test",
+      "passed": 1,
+      "contexts": 5,
+      "normalFixedGutter": true,
+      "narrowRedBeforeFix": {
+        "runtime": "7B20E4DAEE736A0A2FAFAAC85B6DBF1A36FBA13F71A1FA23961E12C664BCAFAA",
+        "before": {
+          "x": 12,
+          "width": 366
+        },
+        "floating": {
+          "x": 20,
+          "width": 350
+        }
+      }
+    },
+    "differential": {
+      "path": "artifacts/b1-list-v7-2026-10-29/differential.json",
+      "sha256": "B7B9ED0C054A801255A9A8C2A751BA846730FCBEB960B5C363E73523ED946B93",
+      "listContexts": 4,
+      "memoPaletteThemeTuples": 28,
+      "pass": true
+    },
+    "public": {
+      "path": "artifacts/b1-list-v7-2026-10-29/final/report.json",
+      "sha256": "BD06854B810EB037A5D31C42357F735536A015E370301D13CEACE555AE4047A0",
+      "scope": "ANONYMOUS_GET_HEAD_GM_SHIM_NOT_EXTENSION",
+      "states": 4,
+      "http": 200,
+      "overflow": 0,
+      "allVisibleImagesDecoded": true
+    },
+    "releaseArtifacts": "PASS",
+    "liveArchitectureLinks": "PASS_NOT_LIVE_SITE"
+  },
+  "paintSettledScope": {
+    "runtime": {
+      "path": "artifacts/b1-list-v7-2026-10-29/paint-tested-5BD.user.js",
+      "sha256": "5BD877F6AE2A37E3E498AC99FC7FAA1AA9B4DB986E490BB360B74D070E87CEE6"
+    },
+    "runtimeSha256": "5BD877F6AE2A37E3E498AC99FC7FAA1AA9B4DB986E490BB360B74D070E87CEE6",
+    "actualPalettePreviewSaveCancel": {
+      "themes": 2,
+      "palettes": 14,
+      "independentRoles": [
+        "primaryFace",
+        "primaryInk",
+        "tabLine",
+        "tabInk",
+        "pageFace",
+        "pageInk",
+        "recentFace",
+        "recentInk"
+      ],
+      "pass": true
+    },
+    "renderedPrimaryAndPageContrast": {
+      "checks": 56,
+      "minRequired": 4.5,
+      "pass": true
+    },
+    "b1Product": {
+      "contexts": 8,
+      "pass": true
+    },
+    "nativeAuthor": {
+      "contexts": 9,
+      "pass": true
+    },
+    "pageHeadDifferential": {
+      "path": "artifacts/b1-list-v7-2026-10-29/header-differential.json",
+      "sha256": "F3DB9C4A4272A8CBBE7B573E5A9026C7CB7F2B1412C5B36646CE707D28112C3F",
+      "observations": 42,
+      "differences": 0
+    },
+    "reuseBoundary": "Only active scroll-spacer geometry changed after this settled paint/runtime. These passes retain5BD identity,not relabeled as final79DD;final geometry and semantics are separately checked."
+  },
+  "visual": {
+    "path": "artifacts/b1-list-v7-2026-10-29/visual-review-settled/review.json",
+    "sha256": "A49AD1987C4858D8144DEA279DF81B75742443EAA3D8A6BE2E394D26A1BF7021",
+    "manifest": {
+      "path": "artifacts/b1-list-v7-2026-10-29/visual-manifest.json",
+      "sha256": "9BF0A06AE47F179007CD59EEA731ED8617BE5BEB2A5AAF1892B0CDB7DC1EC7CA"
+    },
+    "result": "DIFFERENCES_REQUIRE_REVIEW",
+    "referenceFidelity": "UNVERIFIED",
+    "productApproved": false,
+    "manualReview": [
+      "whole light/dark",
+      "hover/rest toolbar",
+      "bottom controls and floating alignment",
+      "980 phone-layout proxy",
+      "390 stress"
+    ],
+    "intentionalDifferences": [
+      "Keep native menu omitted from raster",
+      "Single native title comment count;no fabricated column/header",
+      "1120px gutter and prefixed statistics preserve useful native density",
+      "Dynamic public content differs"
+    ]
+  },
+  "limitations": [
+    "User final aesthetic adoption pending",
+    "No physical-phone or actual-extension qualification in this slice",
+    "No account/authentication/live save/post/vote/report/upload",
+    "No routine full product,PC or bfcache rerun;PC bytes unchanged",
+    "Modified legacy broad preset oracle branches were not re-executed;actual changed palette roles use focused dialog coverage instead",
+    "C-07 image replies N/A;C-13 and four upload documents deferred"
+  ],
+  "next": "b1-article-comments-v7-preflight"
+}

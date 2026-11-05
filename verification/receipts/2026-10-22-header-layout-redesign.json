@@ -1,0 +1,148 @@
+{
+  "schemaVersion": 1,
+  "kind": "header-layout-redesign-trial",
+  "status": "PASS",
+  "scope": "BOUNDED_HEADER_COMPOSITION_AND_SELECTED_NATIVE_REGRESSIONS",
+  "sourceBaseHead": "c5faeaba876500a451362b9bf21cd28e4ed6a9ca",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "478EF59F10B9CF4F1B0E8F8DFB134242BB4967FD955A4EC0ABD1567E77D026C4",
+    "pcVersion": "1.9.9",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740"
+  },
+  "control": {
+    "mobileSha256": "39D560C2D52E9F11067525E649EE7F5D3DC3653216AD7020EED2971849647DBC",
+    "actualExtensionControl": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D"
+  },
+  "sourceLocality": {
+    "presentationOwners": 4,
+    "adapterPrerequisites": [
+      "Native dclogo plus dc_logo discovery",
+      "Reversible native selected-link projection/copy cleanup",
+      "Fourth immutable darkList selector input; no native predicate in presenter"
+    ],
+    "preserved": [
+      "Native node/parent/order/forms/handlers",
+      "Existing mutation subscriptions and disposal",
+      "Settings/storage/filter/network semantics",
+      "Build inputs and versions",
+      "Accepted registry"
+    ],
+    "nativePopupRepair": "Existing drawer presenter centers/constrains the original tip in narrow/short viewports, including popup-only state"
+  },
+  "verification": {
+    "mobile": {
+      "path": "artifacts/header-layout-2026-10-22/mobile-qualified.json",
+      "sha256": "0E9AD10C04D327F9C1308F4C66C4EDA5880903C6F8638AFC585D73618A46BF7D",
+      "passed": 144,
+      "failed": 0
+    },
+    "layout": {
+      "path": "testbed/artifacts/header-layout-redesign/report.json",
+      "sha256": "ABD85166FB7335219060CB65A2BAC29923B202A700CFA3173B67816B1340CD76",
+      "contexts": 8,
+      "checks": [
+        "Grid/rows/containment",
+        "Original search submit once",
+        "Native submenu pointer once",
+        "Native selected-class changes",
+        "Copied inactive marker cleanup",
+        "Original parents/handlers and disposal",
+        "Native dark CSS token selection"
+      ]
+    },
+    "scroll": {
+      "path": "testbed/artifacts/concept01-scroll-2026-10-22/report.json",
+      "sha256": "72A131B4F8B955C8CC55A89D8024C42BB17657C04EE9BA4950253E51E8F56BDB",
+      "contexts": 5
+    },
+    "actualExtension": {
+      "path": "testbed/artifacts/live-site-header-layout-qualified-retry-2026-10-22/report.json",
+      "sha256": "3B6727232A4145D24E086D78D9D7029628EAE55C79861451381B90D6781F29C7",
+      "candidatePassed": 4,
+      "controlPassed": 4,
+      "scope": "Installed Chrome155.0.8059.85 / official pinned Tampermonkey5.5.0 / public desktop startup only"
+    },
+    "publicVisual": {
+      "path": "artifacts/header-layout-2026-10-22/public-captures.json",
+      "sha256": "9CD112A074A36D882B4B960F1D1923A77ABF3EFDA11DA1699535B5B406928AC8",
+      "contexts": 10,
+      "mechanism": "Public GET in installed Chrome with isolated GM shim; distinct from actual-extension receipt",
+      "conditions": [
+        "980 light/native dark",
+        "1280 wide",
+        "980x2306 layout-height proxy",
+        "390 stress"
+      ],
+      "overflow": false
+    },
+    "historicalCss": {
+      "path": "testbed/artifacts/header-layout-cascade-qualified-retry.json",
+      "sha256": "18C952755C6BBF822B552518EA723F5D2E4734B69891B4E8CFEE188631E25066",
+      "projection": {
+        "scope": "HISTORICAL_CSS_ONLY_NOT_CURRENT_VISUAL_ACCEPTANCE",
+        "sourceSha256": "478EF59F10B9CF4F1B0E8F8DFB134242BB4967FD955A4EC0ABD1567E77D026C4",
+        "projectedSha256": "A11958C508F47057D23088E29CAC1A1248A13338EAC0B79E30F1952CD1D45FDB",
+        "registrationSha256": "F6217B647A4D8537C897DCA5C2F93B2FF6E70701B4570147B90CB346CAA45CB9"
+      },
+      "contexts": 8,
+      "currentVisualAcceptance": false,
+      "rawBoundary": "Current builders/slots/diagnostic/purity are checked raw; only historical CSS comparisons/negatives use inverse;4 builders/28 slots"
+    },
+    "static": [
+      "38 UI boundaries",
+      "Effective architecture links",
+      "Historical ownership/phase mutations with exact approved CSS inverse"
+    ],
+    "pc": {
+      "runtimeUnchanged": true,
+      "testsRerun": false,
+      "retainedPriorReceipt": "verification/receipts/2026-10-22-concept01-trial.json"
+    },
+    "independentReview": "Copied selection and projected-purity masking findings fixed; final read-only review found no remaining concrete blocker"
+  },
+  "visualScope": {
+    "selectedFamilies": [
+      "H-01/H-02/H-04/H-05/H-07/H-08",
+      "Adjacent L-01/L-04",
+      "Relevant X theme/width/height/replacement/focus/disposal states"
+    ],
+    "preview": "artifacts/ui-overview-2026-10-17/header-layout/index.html",
+    "manualInstall": {
+      "runtimeSha256": "478EF59F10B9CF4F1B0E8F8DFB134242BB4967FD955A4EC0ABD1567E77D026C4",
+      "installerSha256": "9A5BE0A74197AEDBC3F493C233AF71C413CD9E70D744FD383A991D0706D111B7",
+      "runtimeUnchangedAfterIdentityRestoration": true,
+      "preview": "artifacts/ui-overview-2026-10-17/header-layout/index.html",
+      "installer": "artifacts/ui-overview-2026-10-17/header-layout/DC_UserFilter_Mobile_Draft_Test_HeaderLayout_20261022.user.js"
+    },
+    "heightCost": "Public980 toolbar starts around290px before and396px after; no overall-height reduction claim",
+    "all128VisualChildrenApproved": false
+  },
+  "redEvidence": [
+    "3BC copied inactive selection marker2 instead of1",
+    "Native dark selected link yellow instead of theme ink",
+    "AD46 full140/144: two native tip containment failures and two obsolete visual expectations",
+    "Historical raw cascade expects pre-Concept01 colors; retained as historical CSS contract",
+    "Review caught projection before current-purity checks; raw structural checks restored"
+  ],
+  "limitations": [
+    "No raw header admission, mixed promotion, whole-UI completion or release",
+    "980x2306 is layout-height proxy; actual phone scale/engine/input remain unverified",
+    "Public dynamically populated/authenticated/content-write/all native popup children remain outside this bounded trial",
+    "Header workspace card is taller; visual preference remains reviewable"
+  ],
+  "nextTask": "concept01-child-visual-review",
+  "architectureTransitionAdmitted": false,
+  "discardedEvidence": [
+    {
+      "path": "testbed/artifacts/live-site-header-layout-qualified-2026-10-22/report.json",
+      "status": "UNAVAILABLE",
+      "reason": "Initial concurrent installed-Chrome DevToolsActivePort timeout; retained, not counted as PASS. Same-runtime isolated fresh retry is the qualified receipt."
+    },
+    {
+      "path": "testbed/artifacts/header-layout-cascade-qualified.failed-1792630633678.json",
+      "status": "FAIL",
+      "reason": "Concurrent historical smooth-scroll pointer-state observation; retained. Unchanged runtime/harness isolated retry passed all8 contexts; no assertion or product behavior changed for retry."
+    }
+  ]
+}

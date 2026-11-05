@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_NATIVE_SETTINGS_CHILDREN",
+  "status": "SCOPED_IMPLEMENTATION_VALIDATED",
+  "sourceBaseHead": "5b6f6af27755fa7436c494b0b603b1e1104f0cc3",
+  "candidateFingerprint": "c4eae11e40decd43aacbc2c2f2eccd6fe05a0d9326e63e7e9fda2ab34c131264",
+  "artifact": {
+    "mobileSha256": "6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "mobileVersion": "3.5.5",
+    "pcVersion": "1.9.9",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "scope": {
+    "ids": [
+      "H-10"
+    ],
+    "nativeRoots": [
+      "memo-management",
+      "native-block",
+      "head-tail",
+      "spoiler",
+      "trusted-sites",
+      "auto-image"
+    ],
+    "credentialsUsed": false,
+    "persistedWrites": false,
+    "actualExtension": false,
+    "wholeUiAcceptance": "UNKNOWN"
+  },
+  "validation": {
+    "direct": {
+      "runtimeSha256": "6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA",
+      "command": "node testbed/run-tests.mjs --filter 'B1 native settings:' --require-runtime-under-test",
+      "testsPassed": 1,
+      "mainStates": 30,
+      "contexts": 5,
+      "nested": [
+        "memo-picker",
+        "memo-backup",
+        "headtail-picker",
+        "auto-notice",
+        "auto-library"
+      ],
+      "proven": [
+        "original node/parent/handler identity",
+        "selected tabs/sort",
+        "native disabled fields and upload input retained",
+        "root and pane containment after tab switch",
+        "search input/action hit-testing",
+        "close/input/cancel/reopen paths",
+        "separate glass plane and no transformed root"
+      ]
+    },
+    "adjacent": {
+      "runtimeSha256": "E44CD83063677B7256BA80D1002F4D83BEB46DBE5369A74AEE4CA0E73148259B",
+      "testsPassed": 2,
+      "names": [
+        "B1 gallery search",
+        "B1 native author"
+      ],
+      "reuseBoundary": "Later edits only settings-role paint,emphasis and compact settings CSS;adjacent nonmatching predicates/adapter/post-main/runtime prefilter paths remain unchanged. Split scoped coverage,not a final-runtime full suite."
+    },
+    "public": {
+      "runtimeSha256": "6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA",
+      "rootsPassed": 6,
+      "mode": "anonymous source injection,not actual extension",
+      "readPostOnly": [
+        "/board/autozzal/get_setting",
+        "/board/autozzal/get_images"
+      ],
+      "backendSaveUpload": "NOT_RUN"
+    },
+    "visual": {
+      "runtimeSha256": "6BAAF92A44761A7D33326A7EE838639BFFE3BCD31DED8F33296FBC4F4036D0CA",
+      "pairs": 12,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "childCaptures": 10,
+      "viewerStates": 22,
+      "viewerAllDecoded": true,
+      "viewerHorizontalOverflow": 0,
+      "minimumSampledTitleContrast": 8.76787915882275
+    },
+    "sourceReview": "One independent bounded review plus follow-up;reported pane/search/sort/rim gaps repaired. Later paint refinements directly reviewed,not a second independent review.",
+    "omitted": [
+      "full product/PC/login/filter suites",
+      "formal header/raw/mixed promotion",
+      "actual account/permission/data-filled branches",
+      "native save/upload/backend failure",
+      "actual installed extension on this runtime",
+      "real phone scale/DPR/engine"
+    ]
+  },
+  "evidence": [
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/original.json",
+      "sha256": "8C07AA1C4AA64B2828CA7E636101207C44B42FEB73C65364AA7D7F1495F1248E",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/focused-final.json",
+      "sha256": "76F9CB88A925FEE5F24C46B286A16CE969B2B11CC3E70F9F5A4CE7417516254C",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/adjacent-gallery.json",
+      "sha256": "3E872C009E7EC93F6C9ECE59F500432007CAE1F983117481307AD700E841D5E4",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/adjacent-author.json",
+      "sha256": "2F94BF4BE4EB4A34ADA4C9001DBFA3253B6073F3D5DFAA6B8CF302123B26D160",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/public-current.json",
+      "sha256": "E740ACB509A91584A31E096BCF14B9898923F58FD2D85C3FEB854DE298BD28D4",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/current.json",
+      "sha256": "F2F6EE444FDD864FC2F18802D894A1D58023F7F06F63A3774C1344180CC00908",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/children.json",
+      "sha256": "EA834005B7EFC9742E17B6DD6974DE79CF97FA5ADC997899F245D674D2F5D06F",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/comparison.json",
+      "sha256": "A57C58FD50DCA839FCC6298DA91CFB2960F44EDE0CA28FAC990AD9E5922ED414",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/visual-settled/review.json",
+      "sha256": "46611715A6919719547956175E64A2E44F8B0E190B76DB9BD5656F59B079DA99",
+      "localOnly": true
+    },
+    {
+      "path": "artifacts/b1-native-settings-2026-10-29/detail-red.json",
+      "sha256": "3E275336BC3FE70D288073984000244D4EFC3AF6392F3E4061B2A38A72748AA1",
+      "localOnly": true
+    }
+  ]
+}

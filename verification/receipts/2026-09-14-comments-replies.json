@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "kind": "modernization-stage-assurance",
+  "stage": "comments-replies",
+  "status": "PASS",
+  "sourceHead": "b2818a1ab651b2992bf51f35f47ae3d6647808a4",
+  "candidateFingerprint": "73eeffc4d9d74164f113e6b18fb2cad05ab8ddb6c4934103df384aacc6eca2c2",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "360f0eae64aab82284eac492395bfa77605f66a6516e52a5d9192bd6b6b72584",
+    "architecturePlanSha256": "ff6a9675663abef45f5b5cbd101d4bf6c612384d3a3dc71a82ad791da9c78710",
+    "modernizationContractSha256": "fd4bee605feae5702589d09e4d35edddf4af19c5b9823631072eb244330e733f",
+    "gatesSha256": "82d88485cc833798f4ec74aaeccd3cfef17ae7660838bc68c0d800780b08ad5d",
+    "sourceInputsSha256": "108a1ffc9e60bdada30114a93ba7b40e2aacf90abf0693c4a659aec49c1a7ae5",
+    "harnessSha256": "76e9d244c5098f446b85ea67e748f4e00419e42d4a1a294e70b4fd4fff896324",
+    "fixturesSha256": "a5a39c51553eae1d7060f06310387d0f71e5f54712503028e15a81fa6b237856",
+    "toolchainSha256": "9c077234e2b0d40af938bb0e07f52164afea157664f1b040f512744355fe80f4",
+    "proofSystemSha256": "83b88563ed0c87c81859b360cc8f7435ebf04f0cdf28f2e4466df3a8e4bf2ae2",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "D329FDE667AB807BF1D543633995B7CC1B77E92B3547F41D60DB7DF78FED5242"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "1A7A00468F4DCFB57C7341063098B827743091FD7593BA3FBA86A17E282BDC33"
+    }
+  },
+  "evidence": [
+    {
+      "id": "mobile",
+      "path": "artifacts/comments-replies-mobile-results.json",
+      "sha256": "1ee111be130051cbda4d998fed968f861786772ccb283839b51926fe308e9861",
+      "applicability": "applicable"
+    },
+    {
+      "id": "host",
+      "path": "artifacts/comments-replies-host-results.json",
+      "sha256": "c5308724da40be9aa5c1774889def29d12498eedd5faa03128c1e82e50db934b",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pc",
+      "path": "artifacts/comments-replies-pc-results.json",
+      "sha256": "019d30a51b8fc515e39df13c99a3bff8320a1135e74fb91cf32e17424602d2ee",
+      "applicability": "applicable"
+    },
+    {
+      "id": "mobileDifferential",
+      "path": "artifacts/comments-replies-mobile-differential.json",
+      "sha256": "510b5e4e1bc2b44b8300d76ed7210e413f33956c08549fba6ba1ae88c29f7ea7",
+      "applicability": "applicable"
+    },
+    {
+      "id": "pcDifferential",
+      "path": "artifacts/comments-replies-pc-differential.json",
+      "sha256": "99d39a856bbe16183e64678c209b14fff31a7ed48f160d35b58a5d2893b08e1a",
+      "applicability": "applicable"
+    },
+    {
+      "id": "commentDifferential",
+      "path": "artifacts/comments-replies-comment-differential.json",
+      "sha256": "e4e9c2facd4e29bce568406eb3414368caf6f81d771203cecda0943d85aa96d1",
+      "applicability": "applicable"
+    },
+    {
+      "id": "proof",
+      "path": "artifacts/comments-replies-proof-audit.json",
+      "sha256": "d9ddac117ed64850623423037ec0125fecab1b25fb266bb47131e2727dd16083",
+      "applicability": "applicable"
+    }
+  ],
+  "results": {
+    "mobile": {
+      "passed": 99,
+      "failed": 0
+    },
+    "host": {
+      "passed": 11,
+      "failed": 0
+    },
+    "pc": {
+      "passed": 14,
+      "failed": 0
+    },
+    "semanticDifferences": 0,
+    "rawDifferencesPreserved": 64,
+    "rejectedMutations": 63,
+    "acceptedControls": 9
+  },
+  "liveCanary": "UNKNOWN"
+}

@@ -1,0 +1,562 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_DCCON_PUBLIC_LIVE_AND_PRESENTATION_FINISH",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "308cef3dae25dd0e7b5d25067949fad9fc23dfe1",
+  "candidateFingerprint": "a6429ffcd96cd07b231d55b4c734baff7287548d38c0fd566d9ecf172ccf0a42",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411",
+    "controlMobileSha256": "0A5583B6B8FAB3F52E8E3D4CC8F34E1CD836B79657676DA4D9053F5B63D27402",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "aba078b7e6ca9cc65c5b0895dd4f7264b7ced7eb5d02da612f5004bfee1d8087"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "d503103a319f8d68d851a045631ae30c676810bcb85aee7a82c1b08ba6864740"
+    },
+    {
+      "path": "testbed/fixtures/b1-content.mjs",
+      "sha256": "9e052f6338216a2c29d7e7637bb05d942ba62e45ea85f12f1e5e63e8994412c7"
+    },
+    {
+      "path": "testbed/ui-dccon-live-shape-contract.mjs",
+      "sha256": "4dfdc4dd942f65ce4957b691c46b3090608b4ed358d676b5133cc58049fadae2"
+    },
+    {
+      "path": "testbed/ui-b1-content-contract.mjs",
+      "sha256": "44c26b02c45374facf5bcbaec7bbfb327ed0678a542b9fe3294aef5471aee6c0"
+    },
+    {
+      "path": "testbed/ui-popup-batch-v7-contract.mjs",
+      "sha256": "2e9aa30aa9aadbb60aae66f03a0585aead9ba55bd1d0191c178f79ece02dbd52"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "1622eeca94714a559733b29e61f98b974cdd6297de2678ac1d688df9d4812f3c"
+    },
+    {
+      "path": "testbed/harness/live-site-browser.mjs",
+      "sha256": "864d895ebb90bfb45347b1ff08f227872f7a3839bab5bbd52385f25a060d1f80"
+    },
+    {
+      "path": "verification/live-site-canary.json",
+      "sha256": "f2d15b81de4c99879d336e7bc64ec26e4edcbc1119d838d0c7c55966cf3533dd"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "44182a1c50a21dbf4610f55e4b6706b994b4c0ff8050247ee1ef1fff4bd88a97"
+    },
+    {
+      "path": "docs/work/B1_DCCON_LIVE_FINISH.md",
+      "sha256": "d22cb4fc8b8837c1b12d0afff7b7f40cb5250ca9ec8004114bdbe561c4b2f6cd"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/red.json",
+      "sha256": "04f14989251d2cc3e0b0f8a5197f0aeda649171c6d834898abdb5dfbdba1a694"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/focused-real-blind-red.json",
+      "sha256": "0a26f6f3bab095f6af1cfac25c7ac68fd8b7d48589c6fc6b064668089d34c505"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/focused-first-cell-red.json",
+      "sha256": "09fbef969da57110c21fab8deb843a6e4b7346ed974abe791b78e3ddcd254bdc"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/offline.json",
+      "sha256": "2dac5d650ad0e6b1494ee2683f8fd28d581a5b3d6f62a0bdbf273e930c464bbd"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/semantic-before.jsonl",
+      "sha256": "6d48e2208fc9d615001937f860f9773c705d1684f327c296fb8054f09a55d273"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/semantic-after.jsonl",
+      "sha256": "6d48e2208fc9d615001937f860f9773c705d1684f327c296fb8054f09a55d273"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/palette.json",
+      "sha256": "dd8a91b91b352a452da8683ce43b9fe279a7e5bfb888834c9a94d88a123ebdd4"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/visual-reviewed/review.json",
+      "sha256": "ab568febc93d37f15370376ee147b90623aeedccf6043b462f88d8643b162252"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/visual-manifest-final.json",
+      "sha256": "51bd51ebce7d56e53c58225a9c88fa0bb93a2983d46505c8047452af4a321e2f"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/visual-final-four/review.json",
+      "sha256": "5703839bff776adf79ca8ef83e608369a2a2f661a5a7109615ebcbfc822a0e45"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/actual-visual-assessment.json",
+      "sha256": "f50f294b23f236d1e9d0d37fee6f435176b028a76d9653c50f3b37f91ffd7c68"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/release-verification.txt",
+      "sha256": "a706e1acaf9d1fca3394ca9c4743aaecb1da2efb14b51f61b1f4ea72ee9d6c31"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/impeccable.json",
+      "sha256": "37517e5f3dc66819f61f5a7bb8ace1921282415f10551d2defa5c3eb0985b570"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/impact-final.json",
+      "sha256": "ed8b966001909b66da1ba7abb7fb38e74acb387fec80a29e7851f7788993a6dd"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/live-settled/report.json",
+      "sha256": "fa911c59d158e1274d10304b82cb9541a44370cd9b73a2d4d885b9202d52d696"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/live-settled/candidate-headed-positive-live.json",
+      "sha256": "d1536eb5210bf9ca41586808b4658a3763f04372bb1873e801ca23569e1f2a9b"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/final-frame/report.json",
+      "sha256": "c973d7e9d6949dc1041da309ce1653bd76f9ffabb5366960f27d1ed3478182ce"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/final-frame/candidate-headed-cascade.json",
+      "sha256": "c538b1fc808c00d9922cc3709e800e384538a2ff08a58e9a09b34c838423be62"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/offline-closeout.mjs",
+      "sha256": "30c16005019f423a157b62fb6f09bac66c3744a341affc80d49693720c754ea0"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/palette.mjs",
+      "sha256": "a3c3888f1d3597f3741699d3d9c133011c90ab0849292ca725872cbcf02d111f"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/live-settled.mjs",
+      "sha256": "291ed17aaeb9044bee80eb266a3d9fa1513f7d96452628a42368aa10d58db4d8"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/live-details.mjs",
+      "sha256": "4e944bd85fd3a34ff2239a581e8647f90b93b2d8a14e1daa61a17574dea6e7cc"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/final-frame.mjs",
+      "sha256": "fa24fd31567b9d4f894aab782e306ed464aa69c699d8f3c6760d2b8da23fcce8"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/capture-final-cascade.mjs",
+      "sha256": "a95e5867fb59d507c5617d77e9259ad4d7c69df8ac494393e1355ba742cc5fc6"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/prepare-review.mjs",
+      "sha256": "0fd26741662be4d8cb340cbefdc8a5a05eebb3f485aea80cdff15a0b227275da"
+    }
+  ],
+  "images": [
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/comparison-before/980-900-light.png",
+      "sha256": "8a801d5582464688e2e661cf2159cb33487ed7ce5ec5ef3d7b0051c7d4f46694"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/comparison-after/980-900-light.png",
+      "sha256": "f0128fa2d51316e8d20057246f0f70e1d5ccc5157991ecc3c7a30a4fc3361036"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/comparison-before/980-900-dark.png",
+      "sha256": "94fa1665195c2c1f24e32e9ebc41fc7ef8e1e364aa34073cd018040268c2ec9a"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/comparison-after/980-900-dark.png",
+      "sha256": "6af0d02afae861e89f5b67039b60038795776545d5f5a850b9dcc5d91119b655"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/comparison-before/390-560-dark.png",
+      "sha256": "5c30d5bdea5d45786964577614e00967ac426ef603f33fc3a8b1222eb35f0065"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/comparison-after/390-560-dark.png",
+      "sha256": "3429db5bbb5b932a5245ffefb6c26f39f7ea4142d6032c289699e4e0afa72f05"
+    },
+    {
+      "path": "artifacts/b1-v7-dccon-live-2026-11-01/candidate-headed-dccon.png",
+      "sha256": "be2b5fc088a65aab3421f9de7c58dc3f5aaaa3a6c17ae050675500bcf3930485"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/live-settled/candidate-headed-base-detail.png",
+      "sha256": "7ee195932aee78bbfaea66af74c1fe862710de244e240ec6e935fe3d4bf2e83a"
+    },
+    {
+      "path": "artifacts/b1-dccon-live-finish-2026-11-02/live-settled/candidate-headed-popular-detail.png",
+      "sha256": "3e764c1ccb9da85e4516facce872c75396887830e362ca47c41dafadd79614c3"
+    },
+    {
+      "path": "docs/design/b1-dccon-live-light-2026-11-02.png",
+      "sha256": "f0128fa2d51316e8d20057246f0f70e1d5ccc5157991ecc3c7a30a4fc3361036"
+    },
+    {
+      "path": "docs/design/b1-dccon-live-dark-2026-11-02.png",
+      "sha256": "6af0d02afae861e89f5b67039b60038795776545d5f5a850b9dcc5d91119b655"
+    }
+  ],
+  "nativeBaseline": {
+    "path": "artifacts/b1-v7-dccon-live-2026-11-01/report-headed-first.json",
+    "sha256": "6322294b23eb8ee2b22478e59f3768f1c98f20dd1597c40d0d0adb30747c6df5",
+    "phases": [
+      {
+        "phase": "native-headed",
+        "status": "OBSERVED",
+        "decoded": 35,
+        "closed": true
+      },
+      {
+        "phase": "candidate-headed",
+        "status": "OBSERVED",
+        "decoded": 35,
+        "closed": true
+      }
+    ]
+  },
+  "production": {
+    "sources": [
+      "src/targets/mobile/comment-presenter.js"
+    ],
+    "delta": "Existing comment presentation restores real hidden title/tool names;contains native pack strip;four aligned media columns;full-row pager;paired original selected states.",
+    "unchanged": [
+      "Original DOM/parents/forms/handlers/pack and paging selection/inline hidden state/authored media",
+      "Storage/network/GM/filter/observer/UiPort/metadata/build topology",
+      "Common material formulas/all14 palette definitions/PC"
+    ],
+    "newImportantRules": 0,
+    "ledgerRefresh": false,
+    "acceptedRegistryUnchanged": true
+  },
+  "checks": {
+    "offline": [
+      {
+        "name": "dccon-live-shaped",
+        "status": "passed",
+        "observations": 4
+      },
+      {
+        "name": "existing-native-content-textcon-and-image-comments",
+        "status": "passed",
+        "observations": 8
+      }
+    ],
+    "semantic": {
+      "pairs": 4,
+      "differences": 0,
+      "basis": "Separate fresh frozen/current contexts with the same corrected fixture/harness;original nodes/parents/handlers/callback/selection/hidden-state receipts,not paint equivalence"
+    },
+    "palette": {
+      "colors": [
+        "blue",
+        "mono",
+        "rose"
+      ],
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "selectedRoles": [
+        "popular-toolbar",
+        "weekly-popular-tab"
+      ],
+      "renderedSamples": 12,
+      "cancelRestorations": 2,
+      "minLabelContrast": 6.3934777159828275,
+      "formula14ColorsUnchanged": true
+    },
+    "contexts": [
+      "980x900 light/dark",
+      "390x560 dark stress",
+      "980x2306 light layout-only"
+    ],
+    "actualExtension": {
+      "browserVersion": "156.0.8078.76",
+      "executableSha256": "66885D764FA17C7A7C53E1F94148E46959C5EC21FA5BC3AC22143EB2A1F7731A",
+      "extensionVersion": "5.5.0",
+      "extensionSha256": "BCAEC082C439E11C4DF683F43D07E9AC3D4439251D72B91C5B452F977DAC15D5",
+      "install": {
+        "method": "Utilities / Import from URL / Install",
+        "sha256": "5B08CACF8054B0822716887FD09D1BC400F814FC3296279A96451F11FA81A411",
+        "registrations": [
+          {
+            "runAt": "document_start",
+            "world": "USER_SCRIPT"
+          },
+          {
+            "runAt": "document_start",
+            "world": "USER_SCRIPT"
+          }
+        ]
+      },
+      "windowMode": true,
+      "sourceInjection": false,
+      "gmShim": false,
+      "entry": "https://gall.dcinside.com/board/view/?id=comic_new6&no=6778319&exception_mode=recommend&page=1",
+      "children": [
+        {
+          "name": "base",
+          "decoded": 34
+        },
+        {
+          "name": "pack-second",
+          "decoded": 34
+        },
+        {
+          "name": "media-next",
+          "decoded": 10
+        },
+        {
+          "name": "recent",
+          "visible": true
+        },
+        {
+          "name": "popular",
+          "decoded": 20
+        },
+        {
+          "name": "settings",
+          "visible": true
+        }
+      ],
+      "positiveGeometry": {
+        "overflow": 0,
+        "titleVisible": "visible",
+        "titleY": 35,
+        "titleBottom": 59,
+        "top": 16,
+        "titleHit": true,
+        "stripInside": true,
+        "labels": [
+          {
+            "w": 69.578125,
+            "h": 18.1875,
+            "visible": "visible"
+          },
+          {
+            "w": 69.578125,
+            "h": 18.1875,
+            "visible": "visible"
+          }
+        ],
+        "row": [
+          215,
+          215,
+          215,
+          215
+        ]
+      },
+      "closed": true,
+      "reopened": true,
+      "reclosed": true,
+      "nativeSettingsOutcome": "Login-required confirmation dismissed;no authentication or management mutation",
+      "publicReadPostAllowlist": [
+        "/dccon/lists",
+        "/dccon/setting",
+        "/board/comment/",
+        "/board/comment/getImageCommentByNos"
+      ],
+      "allOtherNonGetBlocked": true,
+      "mediaSelected": false,
+      "authenticationRequests": 0,
+      "cleanup": {
+        "ownedChromeClosed": true,
+        "profileRemoved": true,
+        "vendorCopyRemoved": true
+      },
+      "notGenericFullCanaryPass": true
+    },
+    "visual": {
+      "pairs": 4,
+      "referenceFidelity": "REVIEWED",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "pixelDifferences": 4,
+      "productApproved": false,
+      "assessment": [
+        {
+          "id": "980-900-light",
+          "referenceSha256": "8a801d5582464688e2e661cf2159cb33487ed7ce5ec5ef3d7b0051c7d4f46694",
+          "candidateSha256": "f0128fa2d51316e8d20057246f0f70e1d5ccc5157991ecc3c7a30a4fc3361036",
+          "status": "REVIEWED",
+          "summary": "Title and original toolbar labels visible;contained scrollable pack strip;four aligned media columns and centered pager below grid.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Visible title/tools;contained pack strip;aligned media and native pager;current v7 selected cue",
+              "actual": "Title and original toolbar labels visible;contained scrollable pack strip;four aligned media columns and centered pager below grid.",
+              "action": "Retain same-owner repair;preserve original media and callbacks"
+            }
+          ]
+        },
+        {
+          "id": "980-900-dark",
+          "referenceSha256": "94fa1665195c2c1f24e32e9ebc41fc7ef8e1e364aa34073cd018040268c2ec9a",
+          "candidateSha256": "6af0d02afae861e89f5b67039b60038795776545d5f5a850b9dcc5d91119b655",
+          "status": "REVIEWED",
+          "summary": "Current dark floating surface retained;paired selected pack;original media left unchanged;footer spans all four columns.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Visible title/tools;contained pack strip;aligned media and native pager;current v7 selected cue",
+              "actual": "Current dark floating surface retained;paired selected pack;original media left unchanged;footer spans all four columns.",
+              "action": "Retain same-owner repair;preserve original media and callbacks"
+            }
+          ]
+        },
+        {
+          "id": "390-560-dark",
+          "referenceSha256": "5c30d5bdea5d45786964577614e00967ac426ef603f33fc3a8b1222eb35f0065",
+          "candidateSha256": "3429db5bbb5b932a5245ffefb6c26f39f7ea4142d6032c289699e4e0afa72f05",
+          "status": "REVIEWED",
+          "summary": "390px stress keeps title/tools and four media columns inside popup;vertical scroll remains necessary on this short viewport.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Visible title/tools;contained pack strip;aligned media and native pager;current v7 selected cue",
+              "actual": "390px stress keeps title/tools and four media columns inside popup;vertical scroll remains necessary on this short viewport.",
+              "action": "Retain same-owner repair;preserve original media and callbacks"
+            }
+          ]
+        },
+        {
+          "id": "actual-chrome-light",
+          "referenceSha256": "be2b5fc088a65aab3421f9de7c58dc3f5aaaa3a6c17ae050675500bcf3930485",
+          "candidateSha256": "7ee195932aee78bbfaea66af74c1fe862710de244e240ec6e935fe3d4bf2e83a",
+          "status": "REVIEWED",
+          "summary": "Actual official-extension panel now shows title/action labels and four aligned real-media columns;native pack strip scrolls inside panel. Public images are dynamic,not a golden pixel oracle.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Visible title/tools;contained pack strip;aligned media and native pager;current v7 selected cue",
+              "actual": "Actual official-extension panel now shows title/action labels and four aligned real-media columns;native pack strip scrolls inside panel. Public images are dynamic,not a golden pixel oracle.",
+              "action": "Retain same-owner repair;preserve original media and callbacks"
+            }
+          ]
+        }
+      ],
+      "actualMediaDistinctFromSynthetic": true,
+      "actualImageDimensions": [
+        481,
+        868
+      ],
+      "viewer": {
+        "url": "http://127.0.0.1:10067/dccon-live/index.html?implementation=5B08CACF",
+        "checkedInUserIab": true,
+        "imageDecoded": [
+          481,
+          868
+        ],
+        "oneImageAtATime": true
+      }
+    },
+    "static": {
+      "release": "passed current Mobile/unchanged PC",
+      "uiBoundaries": "43 sources passed",
+      "architectureLinks": "9 surfaces passed;accepted graph unchanged",
+      "impeccable": "Empty mechanical changed-source output;not aesthetic approval"
+    }
+  },
+  "review": {
+    "method": "Independent read-only source/test review followed by final scoped follow-up;no reviewer browser",
+    "fixed": [
+      "Native pager initially became one grid cell",
+      "Popular/settings selected cue lost with hidden sprite",
+      "Duplicate synthetic padding reset erased modeled native39px rule"
+    ],
+    "final": "No other confirmed product finding"
+  },
+  "impact": {
+    "changedFiles": [
+      "docs/agent-maintenance-notes.md",
+      "docs/design/b1-dccon-live-dark-2026-11-02.png",
+      "docs/design/b1-dccon-live-light-2026-11-02.png",
+      "docs/live-site-canary.md",
+      "docs/ui-surface-contracts.md",
+      "docs/work/B1_DCCON_LIVE_FINISH.md",
+      "docs/work/CURRENT_STATE.md",
+      "docs/work/INDEX.md",
+      "docs/work/NEXT_TASK.md",
+      "docs/work/UI_REVIEW_CHECKLIST.md",
+      "src/targets/mobile/comment-presenter.js",
+      "testbed/fixtures/b1-content.mjs",
+      "testbed/run-tests.mjs",
+      "testbed/ui-dccon-live-shape-contract.mjs"
+    ],
+    "automaticProfiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance"
+    ],
+    "unmappedFiles": [
+      "testbed/ui-dccon-live-shape-contract.mjs"
+    ],
+    "manualSelection": "Existing comment presenter and directly shared picker/textcon/content consumers;new4-context contract plus existing8 observations,4-pair semantic differential,2-role palette samples,actual installed extension live reads and4 readable pairs.",
+    "fallback": "New named test is unmapped by broad automatic router;inspected actual dependencies and used bounded consumer checks. No unrelated acceptance product suite launched.",
+    "omitted": [
+      "Unchanged PC/filter/storage/boot/bfcache product suites",
+      "Full editor suite and editor DCCon children",
+      "Account/private history/management/selection/submission/CAPTCHA/device acceptance"
+    ]
+  },
+  "contrary": [
+    {
+      "kind": "ENVIRONMENT_MODE",
+      "detail": "Headless native/candidate returned200 target-only/listless catalog;window-mode anonymous native/candidate returned public packs. Not an authentication/Tampermonkey blocker."
+    },
+    {
+      "kind": "HARNESS",
+      "detail": "Initial readiness used isolated JS global;existing DOM readiness marker is the actual page-readable signal."
+    },
+    {
+      "kind": "ATTRIBUTION",
+      "detail": "jQuery template pageerror belongs to Naver ad,not DCCon."
+    },
+    {
+      "kind": "PRODUCT_AND_FIXTURE",
+      "detail": "Full native blind visibility/font/offscreen rules and first-cell5px margin reproduced separate failures;fixed locally and retained in final fixture."
+    },
+    {
+      "kind": "REVIEW",
+      "detail": "Pager full-row,selected-state cue and fixture padding fixes included before final offline evidence."
+    },
+    {
+      "kind": "WORKFLOW",
+      "detail": "First visual manifest declared480px;both exact actual PNG headers are481px. Invalid report retained;final four-case report uses481 with no pixel resampling."
+    },
+    {
+      "kind": "INCOMPLETE",
+      "detail": "Earlier extended child live run interrupted by browser closure;not counted as whole-sequence PASS. Final exact5B general-window sequence observed separately."
+    }
+  ],
+  "limits": [
+    "Scoped public comment-picker observation/repair,not whole UI or formal header admission",
+    "Recent entry observed;populated personal history not qualified",
+    "Authenticated management,detail/buy/editor/submission children UNKNOWN",
+    "Actual live mode is wide light;dark/stress/phone proxy are synthetic geometry/material evidence",
+    "980x2306 layout-only;no exact phone-engine/scale qualification",
+    "No account/content/save/delete/vote/report/upload/purchase or CAPTCHA submission",
+    "Image replies N/A;four uploads user-deferred;guidebook discussion after whole UI finish"
+  ],
+  "hashMode": "Canonical LF text;raw image/runtime bytes"
+}

@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-button-reference-refinement",
+  "status": "FOCUSED_CHECKS_PASS_REFERENCE_REVIEWED_USER_PREFERENCE_PENDING",
+  "sourceBaseHead": "369d60cf4f8132737ca90762dce2ad3359fad2a0",
+  "artifact": {
+    "mobileSha256": "8A5C8209AFA4BF951C9DC38D58EBB0A1C630212859C92C4690BF070C8E12BE1D",
+    "controlMobileSha256": "96B933A1A47849885D83D42290B54E3AE33181846DF244606A9063F9E4083BFD",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "L-05",
+      "L-09",
+      "X-theme",
+      "X-viewport",
+      "X-input"
+    ],
+    "owner": "mobile-list-presenter",
+    "productionDelta": "Two existing native list primary actions:88x36 painted face inside40px native target; restrained continuous tone/rim/shadow; filled authored pencil. Existing events, nodes, UiPort, observers, storage, shared theme and PC unchanged.",
+    "appearanceApproved": false
+  },
+  "checks": {
+    "b1": {
+      "contexts": 8,
+      "paletteBindings": 28,
+      "functional": "PASS",
+      "visual": "MANUAL_REFERENCE_REVIEW_REQUIRED"
+    },
+    "nativeToolbar": {
+      "tests": 1,
+      "contexts": 36,
+      "status": "PASS"
+    },
+    "contrast": {
+      "cases": 28,
+      "minimum": 4.631592133120656,
+      "scope": "Rendered padding samples bracket the label band, not a beauty score or full-page a11y audit"
+    },
+    "focus": {
+      "active": true,
+      "outline": "solid",
+      "width": 3
+    },
+    "semantic": {
+      "observations": 16,
+      "settledRecords": 4,
+      "status": "EQUAL_WITHIN_IMMEDIATE_CONTROL_SCOPE"
+    },
+    "public": {
+      "scope": "PUBLIC_ANONYMOUS_GET_HEAD_GM_SHIM_NOT_EXTENSION",
+      "browser": "155.0.8059.85",
+      "cases": [
+        {
+          "dark": false,
+          "http": 200,
+          "overflow": 0,
+          "rect": {
+            "x": 860.890625,
+            "y": 180,
+            "width": 88.109375,
+            "height": 40,
+            "top": 180,
+            "right": 949,
+            "bottom": 220,
+            "left": 860.890625
+          }
+        },
+        {
+          "dark": true,
+          "http": 200,
+          "overflow": 0,
+          "rect": {
+            "x": 860.890625,
+            "y": 180,
+            "width": 88.109375,
+            "height": 40,
+            "top": 180,
+            "right": 949,
+            "bottom": 220,
+            "left": 860.890625
+          }
+        }
+      ]
+    },
+    "referenceReview": {
+      "status": "REVIEWED",
+      "reviewer": "Codex primary agent, direct reference-first light/dark comparison",
+      "basis": "Chosen appearance and complete component, not effect count or functional PASS",
+      "limitations": "Same implementing agent; subjective review, different browsers/content/palette hue. Not blind, autonomous-beauty or exact pixel proof. User preference pending.",
+      "cases": [
+        {
+          "id": "after-light",
+          "referenceSha256": "888fbe8a1a51eef32ea5af8db5ba7cefdcc8527255ef315aadb24376d493ddc2",
+          "candidateSha256": "0b64ac898ec9528c1b244282ca0775062163fdb70ee9d028bd79b826aa8310c6",
+          "status": "REVIEWED",
+          "summary": "Direct light/dark whole-toolbar and equal-scale detail review: lower/wider body and filled pencil now follow the reference; the former hard upper rim/dark lower gel effect is removed. Tonal transition and small contact shadow remain restrained. Palette hue differs visibly as declared.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Preview fixed cool teal and prototype icon rendering",
+              "actual": "Native selected14-palette hue/white ink and an authored filled SVG; painted body now about88×36 within the40px hit target",
+              "action": "Preserve user-selected palette semantics and native action. This review covers the observed proportion/material/icon correction, not pixel identity or user taste."
+            }
+          ]
+        },
+        {
+          "id": "after-dark",
+          "referenceSha256": "591d30a153a6d84e6024aa77160b8adefbe44e93e4d0e81dac4d40b0a2d4fab2",
+          "candidateSha256": "bb3803d09f8ccaf44811c85229464bd4a8217fa973011526ee0f6c9a45638c8c",
+          "status": "REVIEWED",
+          "summary": "Direct light/dark whole-toolbar and equal-scale detail review: lower/wider body and filled pencil now follow the reference; the former hard upper rim/dark lower gel effect is removed. Tonal transition and small contact shadow remain restrained. Palette hue differs visibly as declared.",
+          "findings": [
+            {
+              "disposition": "INTENTIONAL",
+              "expected": "Preview fixed cool teal and prototype icon rendering",
+              "actual": "Native selected14-palette hue/white ink and an authored filled SVG; painted body now about88×36 within the40px hit target",
+              "action": "Preserve user-selected palette semantics and native action. This review covers the observed proportion/material/icon correction, not pixel identity or user taste."
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "retainedFailures": [
+    "Initial local capture raced fixture theme readiness; capture now waits for the actual fixture API, no product change for this failure.",
+    "Initial native run omitted the source runtime environment and was rejected by the guard; correct final run is bound above.",
+    "White-mix12% failed cyan label contrast4.4186; discarded. Tonal floor29 failed green4.2967; discarded. Final27.5 tone plus original hue passes28 samples, minimum4.6316.",
+    "Authoritative-baseline comparator correctly refused the immediate96 control; separate fresh --side observations compare immediate control/candidate without weakening that comparator."
+  ],
+  "limits": [
+    "Scoped paint refinement: no new full144/raw/mixed/upper/release admission. Conservative impact acceptance is not claimed passed; affected checks and exact-tree repository checkpoint are reported separately.",
+    "Native/prototype images differ by browser/content and intentionally selected palette hue. REVIEWED is the supplied visual judgement, not user beauty approval or pixel identity.",
+    "Public Chrome155 is anonymous GET/HEAD with GM shim, not a new Tampermonkey, authenticated or physical-phone run.980x2306 remains phone layout proxy;390 is stress.",
+    "Relative-color gradient verified on Chromium149/Chrome155. Prior legible6%-white color-mix declaration remains fallback; actual older phone engine is not newly qualified.",
+    "Original Impeccable detector retains one unconfirmed unchanged dynamic-img serializer warning at its shifted line; no ignore or clean-scan claim."
+  ],
+  "evidence": {
+    "src/targets/mobile/list-presenter.js": "D24D308B58DF108FCF743B1CD39F60B13353DC1DD6BAF15C5E17CA07BD30BC91",
+    "artifacts/b1-button-refinement-2026-10-23/b1-final.json": "AAA549C6CD17A4301D09C564790F92F5ADB7C2BD4A48323B90D1B97B5051B88B",
+    "artifacts/b1-button-refinement-2026-10-23/native-toolbar-final.json": "F52A80D8030DAA39B5BA6EA4513DA920410C7D8A5096A24F5B1D8BDA1DE0DBF8",
+    "artifacts/b1-button-refinement-2026-10-23/material/contrast.json": "1EB26ED913A778FE8232DD74EEBD14D387E4D59FAD1BCB0A52BC79D34F858F4C",
+    "artifacts/b1-button-refinement-2026-10-23/material/focus.json": "DD6B66CAA76CE74BB4B0D66D26856D28E83B829A6A371529810F0A332A0F3D70",
+    "artifacts/b1-button-refinement-2026-10-23/public/report.json": "9C90C813E281049FA56033E42D7605974742305BC4F7729CE2466F049A5DE0AB",
+    "artifacts/b1-button-refinement-2026-10-23/control-side.json": "9EBAE7DD30277FD34F3E9774B63E9E6D43E0F9086B875B06B2F5033E0B00191C",
+    "artifacts/b1-button-refinement-2026-10-23/candidate-side.json": "D250C8FA9EDBA13342EDBA4CCE5A3D4C9D7535B0E60E6DD544E72C5ABA71AB22",
+    "artifacts/b1-button-refinement-2026-10-23/after-settled/report.json": "FFC09CE9B47887962DB1F6D00563B26A1C087CC2692E24F7F0CB94BBD0751A35",
+    "artifacts/b1-button-refinement-2026-10-23/current-visual-manifest.json": "0885314BB8281A61817A64903656F5B584E629792E3A849F5E741A9B1198B4AA",
+    "artifacts/b1-button-refinement-2026-10-23/current-visual-result/review.json": "0D68B4AA6C85F6EFD955CFCB17E5A75540FDAB4FE232EB960617CFC5241802E8",
+    "artifacts/b1-button-refinement-2026-10-23/impeccable-final.json": "3CB142AAB280FAFC3C6C9B3A730C59EC1B722F67A5A5D1227C5011F857AE0583"
+  }
+}

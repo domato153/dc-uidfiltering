@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const source=await readFile('src/meta/userscript-header.txt','utf8');
+const includes=[...source.matchAll(/^\/\/ @include\s+(.+)$/gm)].map(m=>m[1]);
+assert.equal(includes.length,1,'Mobile metadata must include only the exact sign login document');
+assert.ok(includes[0].startsWith('/')&&includes[0].endsWith('/'),'login include must be an anchored regex');
+const pattern=new RegExp(includes[0].slice(1,-1));
+const positive=['https://sign.dcinside.com/login','https://sign.dcinside.com/login/','https://sign.dcinside.com/login?s_url=https://gall.dcinside.com/board/lists/?id=test','https://sign.dcinside.com/login/?x=1'];
+const negative=['http://sign.dcinside.com/login','https://sign.dcinside.com/login/member_check','https://sign.dcinside.com/login2','https://sign.dcinside.com/myinfo/find_id','https://sign.dcinside.com/join/','https://sign.dcinside.com.evil.test/login','https://gall.dcinside.com/?https://sign.dcinside.com/login'];
+for(const url of positive)assert.ok(pattern.test(url),url);
+for(const url of negative)assert.ok(!pattern.test(url),url);
+const grants=[...source.matchAll(/^\/\/ @grant\s+(.+)$/gm)].map(m=>m[1].trim());
+assert.deepEqual(grants,['GM_setValue','GM_getValue','GM_registerMenuCommand','GM_addStyle']);
+assert.match(source,/@run-at\s+document-start/);
+console.log(`Login metadata: ${positive.length} positive/${negative.length} negative routes; grants/timing preserved. Actual TM matching is a separate witness.`);

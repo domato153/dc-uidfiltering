@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-content-glass-trial",
+  "status": "SCOPED_CHECKS_PASS_VISUAL_UNVERIFIED",
+  "sourceBaseHead": "6b2dba0c5527165dd070046e26b715f53168546e",
+  "candidateFingerprint": "b864f144a2529e252cd2479e5ff329bff142078cf3656f92831faa1ba8ebe7c2",
+  "artifact": {
+    "mobileSha256": "5E114697F8E7B4DD5968AA2903BC60608D43408103A465F9E53EBA1692B15DE0",
+    "controlMobileSha256": "BCB968526FE8817D7642C25246E447DCCD3E7D87079CAFC6C2244DB79E5AEA33",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "controlPcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "A-01~12 actually exercised children",
+      "C-01~18 actually exercised children",
+      "H-03",
+      "P-01",
+      "P-02",
+      "X-theme",
+      "X-viewport",
+      "X-input",
+      "X-open-state"
+    ],
+    "productionDelta": "Existing article/comment/recent presentation; reversible nested-picker roles; shared menu consumes optional mobile glass variables with exact PC fallbacks.",
+    "appearanceApproved": false,
+    "acceptedRegistryChanged": false,
+    "overlayActive": true
+  },
+  "checks": {
+    "browser": "Chrome155.0.8059.85",
+    "mobile": {
+      "broadPassed": 144,
+      "broadFailed": 1,
+      "remainingFailure": "Old generic composer paper expectation; corrected positive B1 paper assertion separately passes on same runtime.",
+      "focusedOracleRecheck": 1,
+      "finalFixturePickerRecheck": 1,
+      "fullCleanRunClaimed": false
+    },
+    "pc": {
+      "passed": 26,
+      "materialControlCandidateCases": 4
+    },
+    "immediateSemantics": [
+      {
+        "kind": "article",
+        "observations": 22,
+        "behaviorDifferences": 0,
+        "falseInvariants": 0,
+        "addedResources": 0,
+        "subscribersEqual": true,
+        "limits": "Immediate development control only; transient sampled timers/frames may be lower. Not published raw/mixed/upper qualification."
+      },
+      {
+        "kind": "comment",
+        "observations": 36,
+        "behaviorDifferences": 0,
+        "falseInvariants": 0,
+        "addedResources": 0,
+        "subscribersEqual": true,
+        "limits": "Immediate development control only; transient sampled timers/frames may be lower. Not published raw/mixed/upper qualification."
+      }
+    ],
+    "build": "Both targets at unchanged versions; verify-repo release passed.",
+    "visual": {
+      "capturedPairs": 16,
+      "imageBoundPairs": 6,
+      "status": "UNVERIFIED",
+      "pixelResult": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false,
+      "proposal": "docs/design/b1-popups-proposal-2026-10-24.png",
+      "proposalSha256": "A55E92CF4775D0EA5007A8F77EEA746A78283E8EFD14C7AC3AC042EDFC1D6963",
+      "proposalApproved": false,
+      "viewerImagesDecoded": 33
+    }
+  },
+  "evidence": [
+    {
+      "path": "artifacts/b1-content-2026-10-24/mobile-settled.json",
+      "sha256": "D87D9B8FE9AAEB296BFE1D10C76FE565B17F7942E9311C91D57118E273A40495"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/palette-surfaces-final.json",
+      "sha256": "CDE73F8C42D41FB00AB7404428211C21D187DD82C510121B6991DFBF93C8F205"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/picker-final-native-fidelity.json",
+      "sha256": "B99B383B7900943449959807FE1B7AB0B0DB069B8829C6F2CC84B71279A388EE"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/pc-final.json",
+      "sha256": "737158DECFB894F713F6D220004D02683024051341596529FA493FE31E9DA09E"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/pc-material.json",
+      "sha256": "A2E85F4C517C650751EE0BC72351FB6DD1582FE774C1D5AF8EBB2C80A70BC0ED"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/semantic-summary.json",
+      "sha256": "57B0F38244926C67DEE1A8F8FFABB8E9D2C5759014308DDC39B2116078183979"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/visual-manifest.json",
+      "sha256": "BDD1332E793C9AD6B1C8744E1C69A14940D71D03BB4B4EF913E466C473D75187"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/glass-review-manifest.json",
+      "sha256": "A7A13BD55C651639E65B7F323C0658C18CF4B01324CCA842FCA46914457AD82F"
+    },
+    {
+      "path": "artifacts/b1-content-2026-10-24/glass-comparison/review.json",
+      "sha256": "25EB01C58E560FA7B3D0738CD436EE3F0740DB9B0C83D0BE20A7906DD3B0123D"
+    }
+  ],
+  "contraryEvidence": [
+    "Earlier Mobile142/3 and144/1 full results retained, not rewritten as pass.",
+    "Opaque picker panel, media clipping, insufficient transparency and retired FAB-owner assumptions reproduced and corrected.",
+    "Generic fixture visual defects were corrected in the B1 specimen, not masked by production CSS.",
+    "Fine title/field/action fidelity to the new proposal is unverified; current implementation predates it.",
+    "Published raw +8 listener difference remains unwaived."
+  ],
+  "liveLimits": [
+    "Public6778319 native anatomy/hidden text/border inspected read-only.",
+    "No current actual-extension/device/authenticated or all-child qualification.",
+    "Measured phone layout980×2306 is the adopted proxy;390 layout is stress.",
+    "Login entry, editor, gallery/search, account-gated action children and nested picker variants remain separate."
+  ],
+  "nextTask": "b1-popup-reference-polish",
+  "workSuccessCertified": false
+}

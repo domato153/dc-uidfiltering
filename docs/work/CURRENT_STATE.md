@@ -1,35 +1,67 @@
-# DCUF current state
+# DCUF current situation
 
-## Accepted baseline
+## Current execution
 
-- Development branch: `codex/mobile-development`.
-- Behavior source: `cef5f71381116d2746b0319b2f8e609e8d7eae85`.
-- Accepted characterization commit: `b3e247f78d67bca4ad46bf7b35e7dd07c008cf3d`.
-- Mobile beta SHA-256: `A03038FE68126B62054EBA11244D4EE2E1766D308983FC5C27127FD3794CB343`.
-- Mobile stable 3.5.5 SHA-256: `32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D`.
-- PC 1.9.9 baseline SHA-256 at the behavior source: `D3A95C479D8D50F88D97700DE91FA17D1D338B3AEBB488F53D865F445B656212`.
+- Active plan: Four-stage Mobile UI/PC shared port/site/official publication is published. Next: user-requested local artifact cleanup inventory;guidebook consolidation remains a later discussion.
+- Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
+- Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
+- Source state: Source checkpoint base HEAD `1f8f451efa56fd1edd92044130893532e0835ef4` on `codex/ui-port-boundary`. Official main da65ebb4f48b4e8418df093e98345aebe00e31c7;Mobile b9cfe32ae90fadbfe0370341f250f75ac99e2639;tag mobile-v3.5.6. No whole-source merge.
+- Candidate fingerprint: `6d9dcb507b2028f6830274801607c2ce6b794634e5cc47d181cdfe41ab8bef77`
+- Current stage receipt: `verification/receipts/2026-11-05-stable-356-pc200-publication.json` SHA-256 `3429BA5C14826B81104625544042450E5673D31B3CDA2C10938200ABE557EF1F`.
+- Current artifact: Mobile3.5.6 FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55;PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD. Canonical files and Release downloads match exactly.
+- Current scoped checks: Three focused writer tests pass,including screen412/layout980/touch nickname text room/containment in both themes. Existing PC port test retains exact bytes. Actual Mobile extension startup6 observations and replay pass;not whole-feature/device proof.
+- Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/stable-3.5.6-pc-2.0.0/published has workflow receipt/public readback. testbed/artifacts/stable-356-final-canary binds actual extension evidence. Keep needed release/evidence bytes until cleanup inventory;old prepared bundle is superseded.
+- Accepted baseline: Actual adopted memo/current v7 detail,pale paired-ink dark buttons,theme accents,inline services/categories and list-only unified plate/original scroll direction. Writer two independent media/HTML and font/link rows;phone nickname uses2 columns/readonly44px reserve. PC keeps native host layout.
+- Last current audit: PASS:Official publication only. Workflow41990171245 prepare/publish SUCCESS;environment approved;two canonical scripts,two Release assets and checksum verified;Pages built exact main;6 anonymous public HTTP readbacks PASS. Formal upper admission,installed-PC and physical-phone/mutation states remain UNKNOWN. Unrelated old password oracle was not weakened or called pass.
+- Blockers: None for this publication. Trusted main workflow and mobile-release approval environment now exist;OAuth workflow scope verified. No pending publication action.
+- Pending live checks: No pending publication readback. Physical phone/installed-PC and broader formal UI qualification remain separate;do not relabel them as release startup evidence.
 
-## Accepted characterization
+```dcuf-current-artifacts
+{"schemaVersion":1,"mobile":{"sha256":"FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
+```
 
-- Phase 1 governance, registry, impact routing, skills, locked toolchain, and hosted-runner workflows are committed.
-- Mobile guarded runtime `BB9A847B5FBB76CADC87D7CA6BFC97AB639D77E4BC2E1C9C4F11B53425FCB296`: 96/96 full and 11/11 host compatibility passed.
-- PC guarded runtime `5852A579F00D83E3C166B78B09B4843E11AE2A19E1BBAD48F8CC94DB28636104`: 13/13 target-applicable functional tests passed.
-- Wrong-head, stale-harness, and wrong-artifact mutations were rejected.
-- One narrow pre-existing contract repair is declared: Chromium parser replacement can remove the provisional document-start lock; bootstrap now restores it before paint and disconnects its repair observer at terminal state.
+## Pending real-use feedback —2026-11-03
 
-## Active phase
+Historical diagnosis below initiated this batch. The user subsequently authorized implementation of every item plus compact shared headers and reply-thread boundaries;ARTICLE_COMMENT_POPUP_REPAIRS.md owns current status. The old hold and unchanged-runtime statements are superseded.
 
-- Phase 2: introduce `UiPort`, immutable snapshots, typed intents, disposable UI scopes, and a legacy adapter before moving owners.
-- Current mixed ownership is recorded in the accepted registry; UI-port debt remains explicit.
-- The discarded broad UI/login redesign and dirty checkout are excluded.
+- ADOPTED/implemented,pending final review:compact two-row article header on one very pale theme-tinted surface. Group title/headtext,then author/date and existing scrap/stats. Put the single separator below the complete metadata row;share the body's left baseline and remove stacked native/new top spacing. Long titles wrap;do not freeze a height or add factual content/actions.
+- REPAIRED in current candidate,scoped checks:reply nickname moves right. Native reply_info > addbox is not projected as the content stack;its floated800px body displaces the inline author. Native-shaped replay placed body atx91 and author atx913.
+- REPAIRED in current candidate,scoped checks:reply textarea stays927px inside a1343px input box because native small-form CSS remains. Previous checks proved containment only,not filling available width. Treat host visual fixed width as replaceable presentation,not an immutable behavior contract.
+- ADOPTED/implemented:FAB should use the same pale common-button material as the other current controls. The previous dark-tint/white-ink exception is superseded for the next design;the current candidate uses common pale primary material.
+- REPAIRED in current candidate,scoped checks:original900px article content starts at its container's left;development auto inline margins center it318px inward. Restore container positioning while preserving the author's explicit text/image alignment.
+- REPAIRED in current candidate,scoped checks:comment last-row border plus native paging top border produce two lines;new row/date stacking,padding and footer spacing overexpand short/image-text comments. Keep one purposeful separator and content-sized height;do not shrink authored sticker art to mask spacing.
+- REPAIRED in current candidate,scoped checks:category overflow popup is detached from its moved arrow;related-gallery popup is detached from its trigger. Qualify original popup containing block/anchor,scroll and wide-page changes together.
+- REPAIRED in current candidate,scoped checks:comment nickname menu first exposes/flashes the native window and then appears far from its clicked author. Trace native opening coordinates and first-paint/owner timing;do not silently hide it or add a new portal/observer before diagnosis.
 
-## Evidence status
 
-- Exact beta/stable normalization and repository release checks: passed.
-- Characterization receipt: `verification/receipts/2026-09-05-characterization.json`.
-- July live evidence is historical and may be stale.
-- No live canary has been claimed for this refactor.
+## Draft-complete checkpoint — 2026-10-21
 
-## Resume rule
+- User-requested milestone: **초안 완성 / draft complete**, immediately before the actual UI replacement pilot. Code baseline: `b89f3ae26bb216ad39f1202fcb1c0cc738b3348b`; Mobile478A and PC C14D are the historical milestone artifacts; the broader repair artifact was1677; current follow-up identity is recorded above.
+- Completed scope: Initial UI/function source separation, including the header closeout, and the diagnosed UI defect repairs within the recorded evidence scopes. `verification/receipts/2026-10-21-header-source-separation.json` and the progress routes below retain their actual checks and limits.
+- Historical milestone: the four bounded header pilot scenarios and the first Concept01 prototype are now closed in their own receipts. Continue only from the current next action; all-child visual completion, six mixed criteria and raw admission remain separate.
+- Resume via INDEX → CURRENT/NEXT; this historical draft milestone does not supply another task.
 
-Recheck fresh refs, HEAD, worktree status, active candidate overlay, impact receipt, fixture/harness hashes, and generated artifacts before continuing.
+## Meaningful progress retained
+
+These are scoped recorded results with explicit runtime identities. The composition row is478A coverage; palette3BC9 and older FD58 rows retain their historical scopes. Reuse only while direct runtime/oracle/fixture/harness/toolchain inputs are unchanged; global proof/continuity identities need their own qualification.
+
+| Adopted result | Evidence route and limits |
+| --- | --- |
+| Real header layout trial implemented; native controls remain in place. | HEADER_LAYOUT_REDESIGN.md/current receipt: final144 mobile,8 layout,5 scroll,10 public images and actual-extension4+4. Larger title card costs height; all-child visuals remain separate. |
+| Concept01 prototype and direction-aware original toolbar implemented. | CONCEPT01_TRIAL.md/current receipt: final144 mobile,26 PC,5 scroll contexts and actual-extension candidate4; separate readiness/palette prerequisites. Remaining child visuals are not approved. |
+| Comment outer frame removed; four header replacement scenarios demonstrated on9889. | HEADER_REPLACEABILITY_PILOT.md + current receipt:12 comment contexts/30 fresh variant contexts, unchanged non-presenter bytes/native input/storage/resources,−80px negative and exact restore. Build-time header scope only. |
+| Reported native UI batch and centered paging repaired. | UI_LIVE_REGRESSION_REPAIR.md:1677 broad repair (mobile144,203 focused checks, four semantic comparisons,16 image pairs, actual TM startup4+4);08BC paging follow-up (14/266). Each receipt keeps its own runtime scope. |
+| UI/function source separation, including header, closed. | HEADER_SEPARATION_CLOSEOUT.md:38 boundaries, generated CSS/pure factories and body/layout checks;478A source evidence. Six mixed visual criteria/51 priorities remain, with no registry promotion. |
+| Historical exact header qualification retains contrary evidence. | HEADER_STAGE_ADMISSION.md / HEADER_EXIT_QUALIFICATION.md / HEADER_CASCADE_FINALIZATION.md adjudicate only their478A raw palette failure. Their false-completion controls and live limits remain historical; no certificate for9889 follows. |
+| Native header layout/palette repairs and phase ownership retained. | HEADER_COMPOSITION_REPAIR.md / HEADER_PALETTE_BATCH.md:3BC9→478A scoped CSS changes and preservation/native evidence;980 primary and390 stress stay distinct. No old inherited defect or blocker is silently revived. |
+| Earlier15 integrated defects repaired within their scope. | UI_ALL_REPAIRS.md:FD58 mobile143, PC26, host11; published-control semantic comparisons and77 image pairs. These are historical fixture/state scopes, not all128 child states. |
+| Early resets and typea applicability are retained for causal reasons. | HEADER_EARLY_RESET_ADMISSION.md rejects removal (142/143); HEADER_TYPEA_APPLICABILITY.md retains tested native context/unsupported paths. Frozen ledgers and phase contracts remain; do not delete them based only on source purity. |
+| Actual extension testing works through an isolated reproducible route. | docs/live-site-canary.md: installed Chrome + official pinned TM5.5.0, fresh profiles and replay/cleanup. Parent successful runs are exact-runtime scopes. A missing public comment container is not a global capability/POST blocker. |
+| Complete review inventory and chosen unified design remain routed. | UI_REVIEW_CHECKLIST.md has128 children/11 families. UI_DESIGN_REFERENCES.md binds Concept01; UI_REPLACEABILITY_VALIDATION.md governs its integrated trial. The bounded header pilot and first Concept01 prototype are complete; all-child visual approval is not. |
+| User phone environment measured and adopted. | PHONE_VIEWPORT_PROFILE.md retains screen412/layout980/scale0.420684/DPR2.625 and proxy/input gaps.390/412 layout is stress. Remeasure only for changed device/settings, contrary evidence or a specific unresolved need. |
+| Continuity/checkpoint cost is bounded. | VERIFICATION_EFFICIENCY.md + docs/checkpoint-workflow.md: exact continuity-only diffs use four document checks; unknown/runtime/mixed changes keep all repository validation. Checkpoint/CI scope is not product acceptance. |
+
+## Resume discipline
+
+Read INDEX → CURRENT/NEXT, fresh root/branch/HEAD/status and continuity inspector. Retrieve detail only for the action. VERIFICATION_EFFICIENCY.md owns proportional checks and the short do-not-revive record; historical proposals never become active by age or repetition. Checkpoint CI proves its own narrow scope, not product acceptance.

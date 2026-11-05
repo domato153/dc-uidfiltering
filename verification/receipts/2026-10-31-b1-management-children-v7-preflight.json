@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_MANAGEMENT_CHILDREN_V7_PREFLIGHT",
+  "status": "READ_ONLY_PREFLIGHT_COMPLETE_IMPLEMENTATION_PENDING",
+  "sourceBaseHead": "383208e1a30d3df7175222885ccaa8864eddba71",
+  "candidateFingerprint": "d9f0dd41478c815c50f477663bfa19ed330dd3b1584a4616d36fec2a38684842",
+  "artifacts": {
+    "mobileSha256": "7E824AD336F6B6173487FB24052D2586184F4F5D169C01BC036D1FDBA9092E7D",
+    "pcSha256": "FEACBA669839690F398A1540EF925C71C078BD646C6C6435DD0EC639585539A3",
+    "unchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_MANAGEMENT_CHILDREN_V7_PREFLIGHT.md",
+      "sha256": "7869bf6f8fce84bf26660f98dfa960a48c1e1985fda372dbd8ce7a91c1c4bbf8"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "a29312dcf585d321d0fa3dc8d2c8ec79ed87ac12e3622bc6d18cfc3355815540"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "3b5ee6d659af927e6f2684b91d6d2a3909ec728951f1a4fabe4619f7b7b0fd9c"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "00e49ce096b8869144a504797550e8c9a4cc3ef127a2b5675bae5c6a1b9d115a"
+    },
+    {
+      "path": "docs/work/UI_REFERENCE_GUARD.md",
+      "sha256": "e23fc60e018cd7c835130fb7f1eeaf1c8f5d255cb07e0134efb76497c4ff982a"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "00ab9664eff12ed78eb4a08bf46f86bd7d4aad4df8f519f135ad931ace0b77f6"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "8eb73c75df0150d084652058e55fc51f27666e4982bb6be42fde39a3c51a6744"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "7f2e5d3b830f45728b4e52e2d5059d66dac8922bade3dc89bbad1423de74c36c"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "src/targets/shared/filter-ui-style.js",
+      "sha256": "9283ea3725370d9bc63e19c72e52afaf1ccfa0b8c7f66cf9759d543ec8fe4abf"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "c4f8b253d9376c25cbaa09eaf54cfdaa6623c3489214cfc22039cf8999f1ff08"
+    },
+    {
+      "path": "testbed/ui-owned-management-v7-contract.mjs",
+      "sha256": "2e0808497ba62a1331aa4af86fc29999cd8bea8d3f3a27614cdca7aa2c89b09c"
+    },
+    {
+      "path": "testbed/harness/ui-review-preparation.mjs",
+      "sha256": "2efc5ea49dea0f84ead88c0b043a7d1ffb88a2ba17d128c33cc587b5971e56a2"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    },
+    {
+      "path": "architecture/registry.json",
+      "sha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "400f83ab61209912f421e77c0c4fc2b9828d61ce8abcfeda66497f1bc4aee7fa"
+    }
+  ],
+  "curatedCurrentAnatomy": [
+    {
+      "path": "docs/design/b1-management-child-manual-light-current-2026-10-31.png",
+      "sha256": "00b1088a70399edf70dbabfb84bb2c45f0d199368275aed77666547dad5620f8"
+    },
+    {
+      "path": "docs/design/b1-management-child-manual-dark-current-2026-10-31.png",
+      "sha256": "82a9ccf7d36d265ca9e5c096b92197f0220c06df358f124f401d4f6410796912"
+    },
+    {
+      "path": "docs/design/b1-management-child-backup-light-current-2026-10-31.png",
+      "sha256": "3b1e7408e339005a4fc3470e8e7d7fbc33310b85ad38d461a3eabfb66e60a342"
+    },
+    {
+      "path": "docs/design/b1-management-child-backup-dark-current-2026-10-31.png",
+      "sha256": "edc58c97e94341c7c634e6d17df4af03e7e9bdbefb6d24cb3829c472764b534c"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-management-children-v7-preflight-2026-10-31/inspection.json",
+      "sha256": "a63c882b49959bc5791310626552e9538ffaf1cc715d61f03a0dc071e6239739"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-preflight-2026-10-31/short-scroll.json",
+      "sha256": "a4307cfa5db874d4ce55d8a847d12c5a0cb4a4f101436886878b8ee18c384d52"
+    },
+    {
+      "path": "artifacts/b1-management-children-v7-preflight-2026-10-31/current/capture-metadata.json",
+      "sha256": "101f42b769ed71714a56086b851d96a6acd476cc15ded19705176636d7f89db5"
+    }
+  ],
+  "scope": {
+    "ids": [
+      "P-05",
+      "P-06",
+      "P-11",
+      "P-12"
+    ],
+    "currentSourceConsumers": [
+      "personal-manual",
+      "personal-backup"
+    ],
+    "mode": "Operate",
+    "generatedComposition": "NOT_NEEDED_EQUIVALENT_ADOPTED_FAMILY",
+    "implementation": "PENDING",
+    "ownerChanges": false,
+    "productSourceChanges": false
+  },
+  "observations": {
+    "browser": "156.0.8078.76",
+    "contexts": 5,
+    "childStates": 25,
+    "rootBoundsAndHorizontalOverflow": "PASS_ALL25",
+    "parentBlockingCloseReturnAndDisposableStorage": "PASS5_CONTEXTS",
+    "initialOffscreenCenters": 3,
+    "shortInternalScroll": {
+      "contexts": 2,
+      "samples": 4,
+      "result": "PASS4_POSITIVE_HITS_AFTER_SCROLL"
+    },
+    "backupTextareaActionGapPx": 0,
+    "legacyChildPrimary": "Dense accent fill and white ink;not yet bound to current v7 paired roles",
+    "normalContentTransmission": "Existing shell visibly transmits normal synthetic page/management content;reading fields remain stable"
+  },
+  "decision": {
+    "reuse": "Actual adopted memo detail + current bright dark primary,existing glass shell and compact stacked native composition",
+    "nextAction": "b1-owned-management-children-v7-implementation",
+    "scope": "Material,tab/auxiliary finish and form/action separation in original presenter;preserve PC fallbacks and original events/storage/geometry"
+  },
+  "validation": {
+    "nextAction": "ACCEPTED",
+    "productBuild": "NOT_RUN_PRODUCT_UNCHANGED",
+    "fullProductSuite": "NOT_RUN_IMPACT_SELECTED_PREFLIGHT",
+    "pcSuite": "NOT_RUN_NO_PC_CHANGE",
+    "actualExtensionDeviceAccount": "NOT_RUN",
+    "writesClipboardImportExport": "NOT_RUN",
+    "viewport": "980×2306 is layout dimensions only,not full measured-phone profile",
+    "environment": "Initial sandbox local-loopback EACCES;resolved by allowed escalated local-only run. Not a product or Tampermonkey failure",
+    "wholeUiCertified": false
+  },
+  "hashMode": "Canonical LF for text;raw image/runtime bytes"
+}

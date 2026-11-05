@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-native-header-list-visual-repair",
+  "status": "SCOPED_REPAIR_VERIFIED",
+  "scope": "DIAGNOSED_BATCH_ONLY_AGENT_VISUAL_REVIEW_NOT_USER_AESTHETIC_APPROVAL",
+  "sourceBaseHead": "e837eb62e9c0eb42db504218cc42dcf4672bc0da",
+  "artifact": {
+    "mobileSha256": "8606114FA2A2D7E242197A711277F375EFD626F77CEA22759D951B58A15310C2",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "versionChanged": false
+  },
+  "changes": [
+    "Compact desktop/narrow native header and gallery hierarchy",
+    "Native dark-tab and recent-sprite cascade repaired in existing presenters",
+    "Visible original native promotion contained and dismissible",
+    "Original recent interiors themed; native underline/min-height/nested padding removed",
+    "Compact scrollable categories, inset opaque list and readable metadata"
+  ],
+  "validation": {
+    "mobile": {
+      "status": "PASS",
+      "passed": 144,
+      "failed": 0,
+      "browser": "149.0.7827.55"
+    },
+    "b1": {
+      "status": "PASS",
+      "contexts": 7,
+      "paletteThemeBindings": 28
+    },
+    "headerLayout": {
+      "status": "PASS",
+      "contexts": 8
+    },
+    "toolbarScroll": {
+      "status": "PASS",
+      "contexts": 5
+    },
+    "pureBoundary": {
+      "status": "PASS",
+      "builders": 4,
+      "slots": 46
+    },
+    "immediateControl": {
+      "status": "PASS",
+      "controlSha256": "945C3DE7D4A6EDC94829EC6D7DA5A8C54CC8077237E5F11B967906A69E63EC77",
+      "observations": 16,
+      "settledResourceObservations": 4,
+      "rawResources": "Transient timer/frame differences retained; no blanket raw normalization"
+    },
+    "installedExtension": {
+      "status": "PASS",
+      "control": 3,
+      "candidate": 3,
+      "browser": "Chrome155",
+      "extension": "Official pinned Tampermonkey5.5.0",
+      "replay": "PASS",
+      "scope": "Smoke startup/basic native input, not full-menu visual certification"
+    },
+    "public": {
+      "scope": "Anonymous GET/HEAD actual Chrome155 with GM shim",
+      "contexts": 4,
+      "menuStates": 4,
+      "viewport": "980x900 light/dark,980x2306 phone-layout proxy,390x900 stress",
+      "directVision": "Native light/dark/recent/narrow/phone inspected"
+    },
+    "review": {
+      "status": "ONE_FIXTURE_FINDING_FIXED",
+      "finding": "Native .blind CSS missing in fixture; concealment/assertion added and six pairs regenerated",
+      "additionalProductFindings": 0
+    }
+  },
+  "visualComparison": {
+    "engine": "playwright@1.61.1",
+    "designPairs": 6,
+    "sameFixtureBeforeAfterPairs": 6,
+    "pixelDifferences": 12,
+    "automaticProductApproval": false,
+    "disposition": "B1_VISUAL_REPAIR.md: compact geometry/cascade/menu defects repaired; retain native metadata, original controls and legitimate extra links. Do not invent prototype-only table/simulator UI. Feasible typography/spacing/icons/button proportions/material details remain unpolished; those are not waived as prototype-only.",
+    "viewer": "Official HTML images both decoded980x900 at equal scale",
+    "demonstratedBenefit": "Direct image comparison caught selected-tab pseudo underline and nested/min-height whitespace after focused PASS",
+    "designDetailStatus": "INCOMPLETE_NOT_AN_ARRANGEMENT_ONLY_MOCK"
+  },
+  "failureHistory": {
+    "initialMobile": "140/144; two obsolete visual contracts and two transient color samples. Original color tests pass independently; exact assertions retained with transition completion wait.",
+    "laterMobile": "143/144; old all-category visibility/200px narrow-tab geometry expectations and initially open fixture-only option layer classified and corrected. Every original category remains pointer-reachable; behavior/containment/hit assertions retained.",
+    "preservedPublishedRawFailure": "Earlier +8-listener published-control failure remains unwaived"
+  },
+  "limits": [
+    "Diagnosed breakage/composition repair is verified; complete B1 aesthetic/detail fidelity is not accepted. Current separation permits refinement; no AI capability ceiling is established.",
+    "No whole128-child visual approval, authenticated input or exact physical phone validation",
+    "Article/comments/write/dialog redesign and whole-masthead motion remain later",
+    "No accepted-registry/mixed/upper/raw/release promotion",
+    "Public/fixture images have distinct provenance; all pixel mismatches require disposition",
+    "Ignored evidence requires correctly labeled recovery; never silently seed a golden"
+  ],
+  "inputHashConvention": "LF-canonical tracked text; raw SHA-256 for local evidence",
+  "inputs": {
+    "architecture/candidates/mobile-ui-modernization-assurance.json": "689fc2e1e23c3c5156fac4d0af5db92057698a790e19470da97a60af600d36ef",
+    "docs/agent-maintenance-notes.md": "afad096036c817fcac2b67dcc758091bc71aad5499e68ad9c898c137d29c7b09",
+    "docs/ui-surface-contracts.md": "8c928c2db798a9240ec49be95b325c346cf98257199bb032975f705f972266a7",
+    "docs/work/B1_PRODUCT_TRIAL.md": "6e56fd4aa0ccfd43829faed90441f9364288a607a410df36d9b2d232630f53c8",
+    "docs/work/DECISION_RATIONALE.md": "8a635fa2e026fc80f613c54d1f7c7d0b89cd45aa43ef3c5c87ba6a37f1069929",
+    "docs/work/INDEX.md": "0335fcaaa3ec63d36e330a4678bd0c27da5c78c44a1bf66bb821526c86de827d",
+    "docs/work/MOBILE_UI_MODERNIZATION.md": "0cc796cc34d972cf9a86df9030607a8b6343c2105a832dd7171d81a0620ef9a1",
+    "docs/work/UI_VISUAL_REVIEW.md": "bcfb8195fd51f92c6a54824776526f61cc4ac895d13cbc49d999ef47f828389a",
+    "src/targets/mobile/gallery-page-head-presenter.js": "afa9e993f751f95a4e149a10fef0631417e5d470a887ccf1ec8e7176ccd8a95a",
+    "src/targets/mobile/header-drawer-presenter.js": "4d175949b8740e178fd8c20417e01b5765372fe46b23b5c31ab895fe66826e8d",
+    "src/targets/mobile/header-gnb-presenter.js": "9088792c02a47e0c7c6b3fc081fa81f27a6b8bf53b94dce85b549c0ee26f01be",
+    "src/targets/mobile/header-recent-visit-host-adapter.js": "064e2ce6a222e308500776be5b1152a08720a96da573efb0ccaf006a9dc95635",
+    "src/targets/mobile/header-recent-visit-presenter.js": "f89ef9fa8d5a5d25ad8804cfadc2c36514fa7f1b92c716107fbce9ca5165fb59",
+    "src/targets/mobile/header-shell-host-adapter.js": "b62c5a8303f721716e5fe125dec433a1509dbb80256a7ecad9b7269b6584531a",
+    "src/targets/mobile/header-shell-presenter.js": "7978025520a3bd30db75ee59640cdf9900e7d2f0df1ec42f0b1753bc82fd2c25",
+    "src/targets/mobile/list-presenter.js": "974026922bd991a1eb8048337d2c83e96f278149d931fc58bc35d1fa734597a4",
+    "testbed/fixtures/pages.mjs": "b3f81bc2491dd4e6703b3ab7fcf593efc9d0c5cdec3581a78a6a605ab0cf559e",
+    "testbed/run-b1-product.mjs": "e1c3e7ee0d675d377bd393b7c6792ec4cc19748deea7f50e41ec839af0a88185",
+    "testbed/run-header-final-boundary.mjs": "bfd849f7801f4a06b39a1a664b4bafd8c6f69990c01207b5cc28ebfa8db504c3",
+    "testbed/run-header-layout-redesign.mjs": "2655a9019dce0cb50e2dbdb7760ef1330b0efb32da9f0d929f52de17caf4fd8f",
+    "testbed/run-tests.mjs": "4671c194a7e6ea247126ada2a0448e9da4755920a084c0a98938eb45ce894689",
+    "verification/b1-header-visual-delta.json": "5448f07c3abf1122b527716cb3f289ce9965d4730ffe43ff25fe284058e0a8c3",
+    "docs/work/B1_VISUAL_REPAIR.md": "4489c7eaed3189fe83532626e771ea8d1cb12754b47d2652aed00de37d4e501d",
+    "testbed/fixtures/b1-native-list.mjs": "74a7d6e186952e85b97c24d304f80eda15e6df983f13a8bd9e0b33e35fd6bd4b",
+    "testbed/run-b1-visual-capture.mjs": "41fd0031a2f2700f3eb9fd59f9201e8322459cc760469f4b804c027f49fd661e",
+    "verification/visual/b1-repaired-native-list.json": "bf3382382941e4533d783745d73cd8f16c0d7892eebd7e0502da1b76161ef879",
+    "tools/visual-review.mjs": "dbedb45fac68ffae988ba1bb04e3bfae86bb002cee14956ee6c739864c5220bb",
+    "testbed/visual/image-review.spec.mjs": "d2813a88c864ef7880047d84ccdbec81ae24ef39c753fda71527b01110d3314e",
+    "testbed/visual/playwright.config.mjs": "63186a19a9d1ea7f15bdbd87938b34032e372fe7582da471047d17ac22a75dcf"
+  },
+  "localEvidence": {
+    "artifacts/b1-repair-2026-10-23/mobile-complete.json": "c995b5da9f8b0abbf4beb938e6d822c016e19465b9924093cfc1d6cec2a1082a",
+    "artifacts/b1-repair-2026-10-23/mobile-complete.log": "11938447a6e5cdeb2e460dd0efa401cfdcf314d10462b08afabf895797a93cce",
+    "testbed/artifacts/b1-product/report.json": "ae8cdde30e4278753af15dbff78a76e76a5c28d4500d90394330874e75fed852",
+    "testbed/artifacts/header-layout-redesign/report.json": "9db395bf18f0578ff70ad865985c974b30e6167c8ea36d8d8132efd96b4dc3e8",
+    "testbed/artifacts/concept01-scroll-2026-10-22/report.json": "977c75bc12262e7dfb1e5a33bf432f17577cf4851d69ae598d70d54e12ae8472",
+    "testbed/artifacts/b1-repair-extension-2026-10-23/report.json": "412c7de8f566399605cc839b453af63f160c24e22f4c0ac0188063c4f4f8b80d",
+    "artifacts/b1-repair-2026-10-23/control-side.json": "106c2e574fd06d56f369c8c34a78ae7ff84973f27cfed6fdd71942444e787707",
+    "artifacts/b1-repair-2026-10-23/candidate-side.json": "c5f297409045091b5c312ad0f95c1edfa3c544439ad8e93b59e4a41b912ffe56",
+    "artifacts/b1-repair-2026-10-23/immediate-semantic.json": "6e6bf3f1e8af0e774db0a5a13a677955f7f9a5d0e782677092366595c47380f3",
+    "artifacts/b1-repair-2026-10-23/design-report/review.json": "31ea5ca048efe191d81e96a5329203221ea1067fe4279a0f923eac12225d8246",
+    "artifacts/b1-repair-2026-10-23/paired-accepted-report/review.json": "6595842a1543f6cacddc5fe5aeb306b0780bcd1dd672c1118c06e6909c0d28a5",
+    "artifacts/b1-repair-2026-10-23/paired-accepted/pairs.json": "29fdd6ea607b2e914080e57760f4a9900ef388d8bf406960d9a77d0d5f449113",
+    "artifacts/b1-repair-2026-10-23/public/public.json": "5d78b1773787c581139548852ef92fe580f6700b7091b71b6ccd9599171ecab7",
+    "artifacts/b1-repair-2026-10-23/capture.mjs": "268f87643735cb784e8621b6233fe0ab708f55c3c8e0e8cbae7bfebab72d2e75",
+    "artifacts/b1-repair-2026-10-23/red.log": "1c13364dfc9b59cd1f5b987ce09618072dc8b15887c4700a49bae2b6f593a209",
+    "artifacts/b1-repair-2026-10-23/mobile.log": "b5db5ce3f979d4323635b6d35dd2291136e7fe871e4f71fac4a69efe216e4fdb",
+    "artifacts/b1-repair-2026-10-23/mobile-final.log": "f047c14d5db4ce9c559ecf58716367e01085ab985c1b49b15dfced737f587aba",
+    "artifacts/b1-repair-2026-10-23/mobile-accepted.log": "eae220ee787468f7bfd17881bc6dc5f393802503d8868901cad17a6eda7deb6a",
+    "artifacts/b1-repair-2026-10-23/toolbar-probe.log": "75463bab2650067bd29d896dd0dcc438d7a095a2be22e8af6a43f0571cbc69a3",
+    "artifacts/b1-repair-2026-10-23/color-race-repro.log": "26ad46ac1c8c91527fe34c602c132273c81073fe9122ac4ede0d8775cfef4f2a",
+    "artifacts/b1-repair-2026-10-23/color-surface-repro.log": "bac8223200136e71ae6d0778b101d954317172e6033f8819eb1c09dcd9f07765"
+  },
+  "decision": "D-44"
+}

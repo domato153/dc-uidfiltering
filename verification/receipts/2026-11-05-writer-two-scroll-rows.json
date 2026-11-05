@@ -1,0 +1,442 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-05",
+  "sourceBase": "4dbe897cdd3d2c1c5641cd86cfa3dfa512f6333b",
+  "scope": "Writer two independent tool rows and actual writer example only",
+  "mobileSha256": "6f95c1444073a871ca73e5eeb98f7cf691a36685194eab76bd0900b2394bc943",
+  "pcSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+  "delta": "Latest writer direction:two independent horizontal strips(media through HTML,fonts through links),not the discarded single combined strip. Existing native controls/handlers stay;only direct group containers are reversibly projected by the existing native-form owner. Original group order/parents restore on dispose;drag/native touch and popup positioning reuse the existing write-editor owner.",
+  "checks": {
+    "writer": "5 contexts pass,independent mouse and trusted touch,preserved native controls,input,HTML transition,font menu,exact dispose/clone restoration",
+    "editorMenus": "Existing6-kind light/dark/viewport contract passes",
+    "pairedBehavior": [
+      {
+        "width": 980,
+        "control": {
+          "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+          "behavior": {
+            "title": "preservation title",
+            "body": "preservation body",
+            "commands": [
+              "bold"
+            ],
+            "html": false,
+            "form": {
+              "action": "/__testbed/write-submit",
+              "method": "post",
+              "hidden": [
+                [
+                  "id",
+                  "test"
+                ],
+                [
+                  "_GALLTYPE_",
+                  "M"
+                ],
+                [
+                  "gallery_no",
+                  "fixture-gallery"
+                ],
+                [
+                  "r_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "upload_status",
+                  "N"
+                ],
+                [
+                  "clickbutton",
+                  "N"
+                ],
+                [
+                  "user_ip",
+                  "127.0.0.1"
+                ],
+                [
+                  "block_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "tempIdx",
+                  ""
+                ],
+                [
+                  "headtext",
+                  "190"
+                ],
+                [
+                  "use_headtext",
+                  "Y"
+                ],
+                [
+                  "poll",
+                  ""
+                ],
+                [
+                  "service_code",
+                  "fixture"
+                ],
+                [
+                  "use_html",
+                  "N"
+                ],
+                [
+                  "c_r_k_x_z",
+                  "fixture-redacted"
+                ],
+                [
+                  "use_gall_nick",
+                  "N"
+                ],
+                [
+                  "auto_zzal",
+                  "N"
+                ]
+              ]
+            },
+            "originalControls": true
+          }
+        },
+        "candidate": {
+          "runtimeSha256": "6f95c1444073a871ca73e5eeb98f7cf691a36685194eab76bd0900b2394bc943",
+          "behavior": {
+            "title": "preservation title",
+            "body": "preservation body",
+            "commands": [
+              "bold"
+            ],
+            "html": false,
+            "form": {
+              "action": "/__testbed/write-submit",
+              "method": "post",
+              "hidden": [
+                [
+                  "id",
+                  "test"
+                ],
+                [
+                  "_GALLTYPE_",
+                  "M"
+                ],
+                [
+                  "gallery_no",
+                  "fixture-gallery"
+                ],
+                [
+                  "r_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "upload_status",
+                  "N"
+                ],
+                [
+                  "clickbutton",
+                  "N"
+                ],
+                [
+                  "user_ip",
+                  "127.0.0.1"
+                ],
+                [
+                  "block_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "tempIdx",
+                  ""
+                ],
+                [
+                  "headtext",
+                  "190"
+                ],
+                [
+                  "use_headtext",
+                  "Y"
+                ],
+                [
+                  "poll",
+                  ""
+                ],
+                [
+                  "service_code",
+                  "fixture"
+                ],
+                [
+                  "use_html",
+                  "N"
+                ],
+                [
+                  "c_r_k_x_z",
+                  "fixture-redacted"
+                ],
+                [
+                  "use_gall_nick",
+                  "N"
+                ],
+                [
+                  "auto_zzal",
+                  "N"
+                ]
+              ]
+            },
+            "originalControls": true
+          }
+        }
+      },
+      {
+        "width": 390,
+        "control": {
+          "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+          "behavior": {
+            "title": "preservation title",
+            "body": "preservation body",
+            "commands": [
+              "bold"
+            ],
+            "html": false,
+            "form": {
+              "action": "/__testbed/write-submit",
+              "method": "post",
+              "hidden": [
+                [
+                  "id",
+                  "test"
+                ],
+                [
+                  "_GALLTYPE_",
+                  "M"
+                ],
+                [
+                  "gallery_no",
+                  "fixture-gallery"
+                ],
+                [
+                  "r_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "upload_status",
+                  "N"
+                ],
+                [
+                  "clickbutton",
+                  "N"
+                ],
+                [
+                  "user_ip",
+                  "127.0.0.1"
+                ],
+                [
+                  "block_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "tempIdx",
+                  ""
+                ],
+                [
+                  "headtext",
+                  "190"
+                ],
+                [
+                  "use_headtext",
+                  "Y"
+                ],
+                [
+                  "poll",
+                  ""
+                ],
+                [
+                  "service_code",
+                  "fixture"
+                ],
+                [
+                  "use_html",
+                  "N"
+                ],
+                [
+                  "c_r_k_x_z",
+                  "fixture-redacted"
+                ],
+                [
+                  "use_gall_nick",
+                  "N"
+                ],
+                [
+                  "auto_zzal",
+                  "N"
+                ]
+              ]
+            },
+            "originalControls": true
+          }
+        },
+        "candidate": {
+          "runtimeSha256": "6f95c1444073a871ca73e5eeb98f7cf691a36685194eab76bd0900b2394bc943",
+          "behavior": {
+            "title": "preservation title",
+            "body": "preservation body",
+            "commands": [
+              "bold"
+            ],
+            "html": false,
+            "form": {
+              "action": "/__testbed/write-submit",
+              "method": "post",
+              "hidden": [
+                [
+                  "id",
+                  "test"
+                ],
+                [
+                  "_GALLTYPE_",
+                  "M"
+                ],
+                [
+                  "gallery_no",
+                  "fixture-gallery"
+                ],
+                [
+                  "r_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "upload_status",
+                  "N"
+                ],
+                [
+                  "clickbutton",
+                  "N"
+                ],
+                [
+                  "user_ip",
+                  "127.0.0.1"
+                ],
+                [
+                  "block_key",
+                  "fixture-redacted"
+                ],
+                [
+                  "tempIdx",
+                  ""
+                ],
+                [
+                  "headtext",
+                  "190"
+                ],
+                [
+                  "use_headtext",
+                  "Y"
+                ],
+                [
+                  "poll",
+                  ""
+                ],
+                [
+                  "service_code",
+                  "fixture"
+                ],
+                [
+                  "use_html",
+                  "N"
+                ],
+                [
+                  "c_r_k_x_z",
+                  "fixture-redacted"
+                ],
+                [
+                  "use_gall_nick",
+                  "N"
+                ],
+                [
+                  "auto_zzal",
+                  "N"
+                ]
+              ]
+            },
+            "originalControls": true
+          }
+        }
+      }
+    ],
+    "actualWriter": {
+      "path": "design-prototypes/site-v7/assets/mobile-write.png",
+      "url": "https://gall.dcinside.com/mgallery/board/write/?id=wutheringwaves",
+      "sha256": "9dda217780e78cbef99e3cf110b2876617e7e189d383f4d554468f5f50e213fd",
+      "runtimeSha256": "6f95c1444073a871ca73e5eeb98f7cf691a36685194eab76bd0900b2394bc943",
+      "viewport": [
+        980,
+        2306
+      ],
+      "screen": [
+        412,
+        1006
+      ],
+      "exportDpr": 1,
+      "geometry": [
+        {
+          "kind": "media",
+          "box": {
+            "x": 65.828125,
+            "y": 1146.90625,
+            "width": 848.34375,
+            "height": 114.171875,
+            "top": 1146.90625,
+            "right": 914.171875,
+            "bottom": 1261.078125,
+            "left": 65.828125
+          },
+          "scrollWidth": 759,
+          "clientWidth": 357,
+          "wrap": "nowrap",
+          "cssHeight": "47.9988px",
+          "zoom": "1",
+          "offsetWidth": 357,
+          "offsetHeight": 48
+        },
+        {
+          "kind": "format",
+          "box": {
+            "x": 65.828125,
+            "y": 1261.078125,
+            "width": 848.34375,
+            "height": 114.171875,
+            "top": 1261.078125,
+            "right": 914.171875,
+            "bottom": 1375.25,
+            "left": 65.828125
+          },
+          "scrollWidth": 786,
+          "clientWidth": 357,
+          "wrap": "nowrap",
+          "cssHeight": "47.9988px",
+          "zoom": "1",
+          "offsetWidth": 357,
+          "offsetHeight": 48
+        }
+      ],
+      "actualFontMenu": "opened safely;no submission",
+      "source": "Actual unmodified public writer with current source injection,not fixture/installed-extension/device proof"
+    },
+    "boundaries": "43 source files and exact759-entry ledger pass;existing overlay only,accepted registry unchanged",
+    "build": "Current-version Mobile rebuilt;release-artifact checks pass;PC bytes unchanged",
+    "knownFailure": "Legacy modify/delete semantic-style test has the same retired grid/dense-color expectations failure on80EC control and candidate;unrelated oracle mismatch,not a pass"
+  },
+  "ledger": {
+    "beforeCount": 758,
+    "after": {
+      "count": 759,
+      "hash": "4125cd33419b82bc7ff5726c9eabef5b6c493f1c0f059f0c00d91d7302fa85c8",
+      "payload": "90389D1B12A7D4F3462BC9BA0F2418F3A0B367B4004FCE7023AD6E6F3841C1C2"
+    },
+    "scope": "Only2 existing profile fields and2 writer payload registrations;no unrelated test/color/phase relaxation"
+  },
+  "limits": [
+    "Source-injected public observation,not installed extension/exact-device proof",
+    "Formal upper admission remains UNKNOWN",
+    "No actual posting/upload/account/setting save",
+    "Other screenshots retain their exact prior SUT/route bindings"
+  ]
+}

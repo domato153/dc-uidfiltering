@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_FILTER_SETTINGS_V7_IMPLEMENTATION",
+  "status": "IMPLEMENTED_SCOPED_VALIDATION_PASSED",
+  "sourceBaseHead": "bbeaf5ca3c41359cb8af387291a3b9f33fc398ec",
+  "candidateFingerprint": "d291fe11c376c9dcbce66e2ca6f5892a3314e34733ec478768dd88ece53c98d7",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "9BC0E122C519853CB9BAF2CC23B84B5E892EB7937E29EE47196331B08A037BBC",
+    "mobileRootDistGuardMatch": true,
+    "pcVersion": "1.9.9",
+    "pcSha256": "B9DA2C375660A080FEFC9EA019E681115FABCAC1C554674CC47B81997F3D5837",
+    "pcRootDistGuardMatch": true,
+    "pcBytesChangedSharedCss": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_FILTER_SETTINGS_V7_IMPLEMENTATION.md",
+      "sha256": "518f5eda642c9708107eda04ceeb76a8dc698d8bf46cff8937708d83909e0130"
+    },
+    {
+      "path": "docs/work/B1_FILTER_SETTINGS_V7_PREFLIGHT.md",
+      "sha256": "cce5729a7c13ad646f3514950349e5b6a5f1efee58ea188be30b5f9d76d3599b"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "8f4d381b4599d5339d05846a0c760788c55bbe089dd6d6ee922cd2c760d0351f"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "8891251005f03f673401cd64c909bab38570b69f74a086654ebaa832a8743109"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "6a5ee1b58f9f6ce1c9c98b6c7d9f635a9cdc985c4661fd4f75ceb03972003c32"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "fe8b088fbb8d6fd0beb88229c2d2cc21c4be16337acec338fb5d699c38008cf4"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "b77d8b535c24c80ee8d202153d999eae76723be97f7afa4c4a7de5e16aad1dce"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "f87292e173cd415789a3f0b3f6f48cb6d27c5bed9a29a1bbfb16084b66c6cd6e"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "642ef6130298de54e6f4f350eb068d1a1949b5983dac2711ce93884c23e05d9f"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "cfbbc06fc869dd14212149461f2e1520a43b22bb154beed98a43b612dea7566d"
+    },
+    {
+      "path": "src/targets/shared/filter-settings-host-adapter.js",
+      "sha256": "e46d129ee41b04dcf0c0d7ddeec6af57f3859196e092f5f123d6a84f6dbbf00c"
+    },
+    {
+      "path": "src/shared/storage-core.js",
+      "sha256": "1af1c12df554adfbf597cfa12c2bc8b756dac8d6a94d524eb0a7d5070b64c943"
+    },
+    {
+      "path": "src/shared/ip-data.js",
+      "sha256": "52bf1191f76824712d8fdc0d111114de60dbd5f7cb564155027edf3285a802a6"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "testbed/ui-filter-settings-v7-contract.mjs",
+      "sha256": "d45707014bb4cc8cd860e0165d729806a785d4b20ee49f0a0fb87ef96efad657"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "de0d20557f794b5690db0f61dcf1c0e8df79ef994fb2f4218561d20ee3483550"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "testbed/ui-control-material-contract.mjs",
+      "sha256": "9648c8389e45f4980c5d550e9197994441e2b97b0a0d5f4f33e7e02e56c2c93d"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-filter-v7-settings-top-light-2026-10-31.png",
+      "sha256": "0e2c371ed65c1e4743a2ad01645b274c4905fb41e395ed36a7c895b0f938857b"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-settings-top-dark-2026-10-31.png",
+      "sha256": "93f4b77bb96e7693c02a0c33eb15b92b051e4666b7083b26b102c7e13169b386"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-settings-bottom-light-2026-10-31.png",
+      "sha256": "df8436d9cd8a6a72a96bcf176fe718713cf593e914999455ccba414908b92f57"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-settings-bottom-dark-2026-10-31.png",
+      "sha256": "74c08a14aa812abf871feefeb9b8ece29b6160733b5bb7d0c2ad98065f732daa"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-headtext-light-2026-10-31.png",
+      "sha256": "3e46640a97a001474aaed2315c61e72356a24c664663b5211091cc927f6a0a4f"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-headtext-dark-2026-10-31.png",
+      "sha256": "a2407da52466e54891e45d156984d4dd29ba432f57a48b048b423b2cbe93ca8d"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-headtext-empty-light-2026-10-31.png",
+      "sha256": "2848303746b5920a5440ef1f4f25df1440839855a8110e616885fec67a7fc956"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-headtext-empty-dark-2026-10-31.png",
+      "sha256": "e06564dce817c44cb592d0fb7503bcb8406f1e47b0db84b52fdce2eb96ae3062"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-shortcut-light-2026-10-31.png",
+      "sha256": "3954fc550ebfbd37451d09e66eb8d7658323b392852bf7462661aba3141d1bf0"
+    },
+    {
+      "path": "docs/design/b1-filter-v7-shortcut-dark-2026-10-31.png",
+      "sha256": "1a73382d25ef8ed9747c6148175823c8cc97bdf8580ea74926f6bafe9d1f3955"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/red.json",
+      "sha256": "f08e1cd48d12a1042d3bab05ba9ba6e3fb09016c7f08ca2bde3385f7f3a37dd3"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/short-label-red.json",
+      "sha256": "89e6e7361fd8db0bc5113c92beff2cbabaf4c3d8ea38ebb4e4059f64e82953b7"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/focused-settled.json",
+      "sha256": "5abb50e36eeaf7173a64005f4d6465bdea4f2ed0da75a54566a28ee15a88eeeb"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/differential.json",
+      "sha256": "3aa44542782c554380ebf117cf2db798854783dd54c123ca9b855e5ea69a1665"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/differential-observations.json",
+      "sha256": "ce4a0e0899712f64ef90402cb39df0340720d409b199da8b1c7c126e29945b7b"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/finish-check.json",
+      "sha256": "3dff6248516bc8731cff99c6d327880e60bd724dbb6101f3bf18867586a2ca8f"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/visual-manifest.json",
+      "sha256": "d897bc3a85426114baa821f26b682e510b28828e211aa8ec5df7e056a76f129f"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/visual-review-bound/review.json",
+      "sha256": "edc5aa436851294d97916c501d269b580e0e7f5b92edf6a8038320783ec759fb"
+    },
+    {
+      "path": "artifacts/b1-filter-settings-v7-2026-10-31/impact-final.json",
+      "sha256": "c3e00e933eeb478e11a66bcb77720b609e5fbebd37d6676ff62a396ee1c27baa"
+    }
+  ],
+  "delta": {
+    "scope": [
+      "S-01",
+      "S-02",
+      "S-03",
+      "S-04",
+      "S-05",
+      "S-06",
+      "S-07",
+      "S-08"
+    ],
+    "productionFiles": 2,
+    "groupedOptions": "One borderless rounded group,transparent inactive items,selected-only tinted face;role-adapted guidance",
+    "ownersChanged": false,
+    "commonV7FormulasChanged": false,
+    "templatesAdaptersStorageGeometryUnchanged": true,
+    "newImportant": false,
+    "newStylePhase": false,
+    "newDependency": false
+  },
+  "validation": {
+    "browser": "156.0.8078.76",
+    "focusedRegistrations": 2,
+    "geometryContexts": 7,
+    "palette": "Actual blue/mono/rose preview/save/cancel;main/proxy/shortcut and supplemental headtext selected/checkbox",
+    "labelContrast": {
+      "samples": 24,
+      "min": 6.411401198258359,
+      "headtextMin": 10.249174613067638,
+      "threshold": 4.5
+    },
+    "differential": {
+      "freshContexts": 8,
+      "statePairs": 64,
+      "pcAppearancePairs": 32,
+      "differences": 0
+    },
+    "visual": {
+      "cases": 10,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false
+    },
+    "viewer": {
+      "decoded": 22,
+      "zoom": true
+    },
+    "staticReview": "Independent read-only source/test review:no substantive finding;final140px refinement separately measured and checked",
+    "architecture": "Effective links passed;owners/map unchanged",
+    "buildArtifacts": "Both root/dist/guard match;current versions/release verification passed",
+    "impeccableMechanical": "No findings;not an aesthetic oracle"
+  },
+  "contraryEvidence": [
+    {
+      "classification": "Product geometry",
+      "finding": "Short current headtext wraps despite root/hit pass on2A83;130px trial still produces3columns",
+      "resolution": "Measured434px group,89.66px text;min140 yields2columns/92.5px text and positive1line contract"
+    },
+    {
+      "classification": "Harness numeric expectation",
+      "finding": "Proxy attribute string is not persisted numeric mode",
+      "resolution": "Use original numeric0/1/2;no product change"
+    }
+  ],
+  "impact": {
+    "resolver": "Conservative acceptance/proof-runtime fallback for shared presenter/harness/new test",
+    "actual": "Scoped CSS/value consumers with original behavior owners",
+    "omissions": "Unrelated full filter/network/writer/PC/128-child suites;formal broad acceptance UNKNOWN"
+  },
+  "limits": [
+    "Synthetic source injection,not actual extension/device/account/live writes",
+    "980×2306 layout-only;390 stress",
+    "OS/native alerts,real storage failures and unmeasured gesture/lifecycle remain separate",
+    "Older palette/convenience/native B1 families not all v7-complete"
+  ],
+  "nextAction": "b1-palette-convenience-v7-preflight",
+  "hashMode": "Canonical LF for tracked text;raw image/runtime bytes"
+}

@@ -1,0 +1,229 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-unified-control-material",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "c5d060ad9cd9e38a482347538aef045ba92b5956",
+  "candidateFingerprint": "2d2b36d5febe2ce360ab91f638c584d078633575f01b7cba11dcdf0c309f2907",
+  "artifact": {
+    "mobileSha256": "159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF",
+    "pcSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212",
+    "mobileVersion": "3.5.5",
+    "pcVersion": "1.9.9",
+    "runtimeBytesChanged": true,
+    "versionChanged": false
+  },
+  "scope": {
+    "commonMaterialAcrossCurrentOwnedControlFamilies": true,
+    "writerDecorativeBackingAndCompactNativeActions": true,
+    "perSurfaceShapesPreserved": true,
+    "nativeNodesEventsFormsAndStoredSettingsPreserved": true,
+    "metadataStorageNetworkFilterOwnershipChanged": false,
+    "architectureRegistryPromoted": false,
+    "wholeUiApproved": false,
+    "nativeGaejukSuppression": true,
+    "publishedAndStableUntouched": true,
+    "mobileAdRulesChangedWithinExistingOwner": true,
+    "adoptedSimpleButtonTreatmentRestored": true,
+    "highTransparencyTrialDiscarded": true
+  },
+  "reference": {
+    "selected": {
+      "path": "docs/design/b1-writer-material-v3-2026-10-26.png",
+      "sha256": "2A2D8A964F79D9DB5BC8127856206E3C74CA6E8731B841EABD72B1A785BE310E"
+    },
+    "region": "light/dark writer chrome and lower action-detail strips; shared glass material, per-surface shapes",
+    "decisionPath": "docs/work/UI_DESIGN_REFERENCES.md",
+    "renderedCandidates": [
+      {
+        "path": "docs/design/b1-controls-implemented-light-2026-10-26.png",
+        "sha256": "B9F8C88F201616A6BF7888957CF4B98F2EFD05B4B185B9EE801EDD780509C01B"
+      },
+      {
+        "path": "docs/design/b1-controls-implemented-dark-2026-10-26.png",
+        "sha256": "325A002712F80E0043EFBE25A1EFA8E1A17D50AFE0ADA12104AE1E6B779CA279"
+      }
+    ],
+    "candidateSamplesAreAutomaticGoldens": false,
+    "finalButtonAuthority": "User explicitly adopted the pre-transparency C885 simple treatment. V3 is overall context; high-transparency/scrim trials are discarded. Current10 pairs exactly match C885, not a new automatic golden."
+  },
+  "verification": {
+    "mobile": {
+      "status": "PASS",
+      "uniqueChecks": 153,
+      "groups": {
+        "functional": 103,
+        "write": 35,
+        "boot": 13,
+        "smoke": 1,
+        "performance": 1
+      },
+      "runtimeSha256": "159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF",
+      "harnessSha256": "70DBF1D010C76651BF91EF8588C3BD62BC9E437FE315D5053130E4E774D2C278",
+      "freshProcessFunctionalCases": 103
+    },
+    "pc": {
+      "status": "PASS",
+      "checks": 26,
+      "runtimeSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+    },
+    "pcFinishFallback": {
+      "status": "PASS",
+      "roles": 6,
+      "themes": [
+        "light",
+        "dark"
+      ],
+      "controlSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+      "candidateSha256": "D73A445F9A5013D295C49C199F77084D894E39F4E2455824185FA65D4E2C6212"
+    },
+    "nativeSemantics": {
+      "status": "PASS",
+      "observations": 25,
+      "controlSha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD",
+      "candidateSha256": "159FF7591AE47629017CA5798FB1B825520DF1557FE2C1F3A1429A759D1FD6DF",
+      "scope": "Existing native-form --side behavior and candidate invariants in independent browser processes against immediate CE3, not published-baseline admission"
+    },
+    "visual": {
+      "status": "REVIEWED",
+      "pairs": 10,
+      "pixelResult": "PIXEL_MATCH",
+      "productApproved": false,
+      "userPreferencePending": false,
+      "userVerdict": "ADOPTED_SIMPLE_PRE_TRANSPARENCY_C885_TREATMENT",
+      "highTransparencyTrial": "REJECTED_DO_NOT_REVIVE",
+      "backingProbe": [
+        {
+          "theme": "light",
+          "blur": 4,
+          "inverse": 16,
+          "visibleTransmission": true
+        },
+        {
+          "theme": "dark",
+          "blur": 3,
+          "inverse": 11,
+          "visibleTransmission": true
+        }
+      ],
+      "paperAlpha": 255,
+      "scope": "Exact rollback appearance in10 native-shaped writer/list/settings normal/probe pairs against C885. User choice applies to button treatment, not all128 children or whole UI. Form exterior transmission remains separate."
+    },
+    "sourceReview": {
+      "liveArchitectureLinks": "PASS_6_SURFACES_NOT_LIVE_SITE",
+      "newGlobalOverrideOrObserver": false,
+      "removedCompetitors": [
+        "legacy palette write paint",
+        "dark footer slab",
+        "late fixed-white statusbar",
+        "host AI shell border"
+      ],
+      "repairedOmittedConsumer": "Existing marked AI submit/close/input presentation",
+      "oracleDelta": "Approved solid-to-alpha/glaze and exact CSS-payload expectations updated; exact palette values, contrast, native topology/events, reversible projection, containment and resources retained Legacy dark write foreground expectations now resolve the adopted shared roles. A retained narrow-list failure was the initial visibility transition, confirmed by computed hidden visibility and ARTICLE hit; wait for visible original control before the unchanged geometry/hit/click assertions. No production timing/style change. Final14 preset primary contrast uses actual rendered label backing, retaining exact palette values. User rollback explicitly removes a button-transmission requirement; form/popup transmission remains as applicable.",
+      "impeccableDetector": "Final native form: zero findings. Earlier changed-source scan warned about the unchanged dynamic IMG serializer. Allowed attributes are validated, but missing descriptor src is not universally proved safe; covered image states pass. No new empty-src literal or ignore change, and no general image-input hardening claim.",
+      "independentReview": {
+        "importantFound": 3,
+        "importantRemaining": 0,
+        "corrections": [
+          "Native toolbar active state now has its final material consumer",
+          "Danger paint follows ordinary and redundant dark ordinary paint was removed",
+          "Opaque primary fill plus top-edge glaze retains lime label contrast"
+        ],
+        "renderedMinimumPrimaryContrast": {
+          "teal": 7.472670607942729,
+          "lime": 4.923950063148771
+        },
+        "renderedMinimumDangerContrast": 10.286045584863333
+      },
+      "registrationCorrections": {
+        "nativeFormPriorityProfiles": "Exact187 modify-delete and774 write declarations re-registered; required semantic prefix unchanged. Ancestry uses semantic form prefix with :where, not a widened prefix.",
+        "commentPriorities": "Three unsupported new priorities removed; normal native-popup paint remains covered by focused functional checks.",
+        "paletteOwner": "Source verifier requires actual native-form primary consumer and rejects legacy theme repaint; eight positive/negative controls pass.",
+        "continuity": "Canonical Source checkpoint base HEAD and scoped PASS fields restored without relaxing verifier."
+      }
+    },
+    "checkpointValidation": "Owned by exact-tree checkpoint publisher; its external receipt/CI is separate from product acceptance",
+    "gaejuk": {
+      "status": "PASS",
+      "contexts": 4,
+      "states": [
+        "initial",
+        "native class/display toggle",
+        "reinsertion"
+      ],
+      "positiveClicksPerContext": 3,
+      "authoredPhotosAndDcconPreserved": true,
+      "nestedUnrelatedClassPreserved": true,
+      "primaryFilter": "https://github.com/hooray804/adguard-gallery-filter/blob/main/filter.txt",
+      "nativeSpecimen": "https://gall.dcinside.com/board/view/?id=comic_new6&no=6778319&exception_mode=recommend&page=1",
+      "scope": "Existing mobile core CSS hides native body mascot and following body div.click-blocker. No new observer/timer/global script patch/network rule; not complete anti-adblock-engine or extension/device qualification."
+    },
+    "environment": {
+      "unsafePort": "One local fixture launch randomly used Chrome-blocked4045 and failed before page load. Failure retained; ordinary fresh-server retry passed without changing browser flags or security.",
+      "previewRefresh": "Earlier IAB refresh was not executed because automatic approval review hit account usage limits. No alternate browser/CDP workaround."
+    }
+  },
+  "resources": {
+    "oneBrowserJobAtATime": true,
+    "doNotStartNextBelowAvailableGB": 4,
+    "largeInterruptedGroup": "Final103 functional cases each ran in a fresh browser process using existing group/filter commands. Pre-review A750 results are historical, not reused as final coverage.",
+    "peakOrCausalSavingsClaim": false,
+    "preview": "One selected image or pair; old image nodes removed, no hidden full gallery",
+    "unrelatedAppsOrUserBrowsersTerminated": false,
+    "availableBeforeFinalBatchesGB": "about6.8–8.2 observed;4GB floor before each job, not a peak measurement"
+  },
+  "limitations": [
+    "Source-fixture Chrome155 evidence, not current installed-extension/device/account qualification",
+    "980 layout proxy and existing narrow stress checks do not replace the adopted phone profile or native touch/engine evidence",
+    "Full settings/menu-window glass and remaining editor/action/account children stay in the checklist; all128 children and formal header admission remain open",
+    "Retained published raw-list resource difference is not waived by immediate-control native equality",
+    "Fixture-only sentinels/raw header stubs remain outside the changed control-material judgement",
+    "No real submit, upload, AI execution, authentication or new POST was performed"
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-controls-2026-10-26/aggregate-rollback.json",
+      "sha256": "F24B4951D285063CA4900F2313CD423AB5A4730A68ED88EE49E3FED36D2C4E35"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/rollback-functional-ledger.json",
+      "sha256": "25CE76B82099A97581C38DC07580DAF16CFC62A36340873A4B1883623339036A"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/native-comparison-rollback.json",
+      "sha256": "E74344E715A055D17B1A6247CCC5319BC60FF7B15220325719E8C1A1E17C53DA"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/pc-fallback.json",
+      "sha256": "CC0BB7813D70F9F2E2127EE1EDBDCF4C7359315071C24F50CD14BFD85C589BAA"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/rollback-pc-all.json",
+      "sha256": "C4816E8696FCF42DA44CC7B0F0851F65B8D012E61F741226B304D89A34A66A73"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/rollback-captures/capture.json",
+      "sha256": "7900E4B5F38C66B6576BB4E3FEE2E1EB45CC783E7DB5E61C50C2FDEADCE0C35C"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/rollback-comparison.json",
+      "sha256": "99B489E49E9FD2D21EB40176C1C0F0EF5E6A49DFD079D264C36466E8A9989D31"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/rollback-visual-review/review.json",
+      "sha256": "555F76317C16E5FF42320FE427D8198B716661CF3ABF3E714DFBE3CDD0A20A8F"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/rollback-functional/025-unsafe-port.json",
+      "sha256": "BAA985E12CAADCA1DB20101CFEDBD6E5B182834910F5CD68BCE0459EF06EC5A4"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/impeccable-detector.json",
+      "sha256": "F677DEB647BB9F9A52B95D322F6FB144F4F5DC915FB1188DC0F55E166B1914D8"
+    },
+    {
+      "path": "artifacts/b1-controls-2026-10-26/impeccable-native-form-rollback.json",
+      "sha256": "A5338D955B09046EC0B16F3A9625B7955C763AAE07DC722E474E6078745F932F"
+    }
+  ],
+  "recovery": "Rebuild the recorded source at current versions and guarded output, use the existing groups/filters and native --side tool, then recapture/reference-review. Recover exact control bytes matching the hashes or start a new bounded comparison. Missing ignored evidence cannot inherit PASS from this receipt alone."
+}

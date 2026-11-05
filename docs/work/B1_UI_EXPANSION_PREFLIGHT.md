@@ -1,0 +1,116 @@
+# B1 전체 UI 확장 preflight
+
+상태: `P6_PARTIAL_FINISH / preview·draft 마감`. P1–P5의 명명된 구현 결과는 아래 라우터로 재사용한다. B1_PREVIEW_DRAFT_FINISH.md가 누락2root/추천 카드 마감을 완료했고 B1_INTEGRATED_UI_GAPS.md가 원본 미확인 자식을 구별하며 NEXT_TASK.md가 다음 한 단위를 소유한다. 전체 UI 완료는 아직 주장하지 않는다.
+
+## 채택 기준과 목표
+
+현재 재질/버튼 판단은 B1_GLASS_TRANSMISSION.md의 일반창 투과와 B1_CONTROL_MATERIAL.md의 채택 C885 simple controls를 따른다. 아래 초기 소스/96% 재질값/로그인 진입 설명은2026-10-24 preflight 시점이며 현재 소스 사실을 대체하지 않는다. sign 구현은 B1_LOGIN_ENTRY_IMPLEMENTATION.md가 담당한다.
+
+- 기준 소스: `2dcd9603f856cdd28cbabf895c9e982ff5bc559c`; Mobile3.5.5 `BCB968526FE8817D7642C25246E447DCCD3E7D87079CAFC6C2244DB79E5AEA33`. 실제 목록의 B1 톤·버튼·간격·메뉴를 확장 기준으로 채택한다. 기존 Prism 이미지/코드 시안은 보조 디자인 근거다. 이는 자동 스냅샷 갱신이나 전체 제품 승인과 다르다.
+- 같은 제품처럼 보이는 본문·댓글·작성창·원래 사이트 메뉴·DCUF 메뉴/설정. 팝업은 유리 재질로 통일하되 오래 읽고 입력하는 내부는 선명하게 유지한다.
+- Read: 본문/댓글/이미지. Operate: 작성·수정·삭제·선택 메뉴·설정. 기능, 실제 콘텐츠, 이미지 원색,14 팔레트와 저장값, 원래 노드/폼/이벤트를 보존한다.
+- 기본 모바일 환경은 PHONE_VIEWPORT_PROFILE.md의 screen412/layout980×2306/scale0.420684/DPR2.625.390/412 **layout**은 별도 stress다.
+
+## 실제 표본과 이번 확인 범위
+
+| 용도 | 표본 | 이번 확인 / 남은 확인 |
+| --- | --- | --- |
+| **주 표본: 본문·댓글·이미지댓글·주변 버튼·수정/삭제** | [6778319](https://gall.dcinside.com/board/view/?id=comic_new6&no=6778319&exception_mode=recommend&page=1) | 원래 페이지에서 이미지16개, 일반/대댓글, 이미지댓글 버튼16개와 추천/비추천·실베추·펌·공유·스크랩·신고·수정·삭제·글쓰기 확인. 이미지 hover로 버튼을 노출하고 첫 이미지의 댓글을 접기/재열기: 별도 이미지 루트, 접힌 미리보기3행/114px 확인. 그 미리보기에는 입력창이 없었으므로 전체 펼침/입력 상태를 확인하기 전 새 입력창을 만들지 않는다. 개수는 조사 시점 관찰이지 고정 기대값이 아니다. |
+| 보조: 일반/대댓글·디시콘·글자콘 | [6782494](https://gall.dcinside.com/board/view/?id=comic_new6&no=6782494&exception_mode=recommend&page=1) | 댓글/미디어·원래 도구 존재와 글자콘 `#div_txtcon` 열린 레이어 확인. 주 표본을 대체하지 않고 필요한 추가 상태에만 사용. |
+| 보조: 비회원 수정/삭제 | [6786251](https://gall.dcinside.com/board/view/?id=comic_new6&no=6786251&page=1), [수정 비밀번호](https://gall.dcinside.com/board/modify/?id=comic_new6&no=6786251) | `form[name=password_confirm]`의 비밀번호1개·취소/확인과 `.no_memberwrap` 확인. 제출/비밀번호 추측/실제 수정·삭제는 하지 않았다. 주 표본의 대응 진입을 우선 사용. |
+| 긴 목록·대문 | [명조 목록](https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves); 응답이 느리면 기존 barca 표본 | 기존 소스/표본 라우터 재사용. 대문 내부와 순위·도움말·연관·설정 등 각 열린 자식은 해당 작업 착수 시 따로 확인. |
+| 로그인 | [sign 로그인](https://sign.dcinside.com/login) | 헤더의 실제 로그인 링크가 별도 sign 도메인으로 이동하며 로그인 문서의 식별 코드/비밀번호·저장 옵션 확인. 인증 정보 입력/제출 없음. 현재 @match는 gall의 board 세 경로뿐이고 bootstrap은 other에서 조기 종료하므로, 메타데이터만 넓혀도 꾸며지지 않는다. |
+
+위 관찰은 기본 브라우저의 **원래 사이트 구조 조사**다. 현재 후보가 실제 확장에서 이 모든 창을 통과했다는 증거가 아니다. 검색 포커스의 기록창, 공유의 완전한 열린 레이어, 로그인/권한별 스크랩·실베추·신고, 이미지댓글 전체/입력·편집기의 세부 도구는 아직 모두 펼쳐 확인하지 않았다. 실제 상태를 못 본 항목을 PASS/N/A로 바꾸지 않는다. 게시물 삭제/댓글 변화로 표본이 바뀌면 같은 종류의 상태만 대체한다.
+
+## 무엇을 같은 느낌으로 바꾸는가
+
+UI_REVIEW_CHECKLIST.md의 기존128개 부모 항목을 재사용하고 아래 이름 있는 자식 분기를 추가로 연결한다. 새 표를 별도 전체 체크리스트로 중복 관리하지 않는다.
+
+| 묶음 / 체크리스트 | 포함할 화면과 자식 창 | 디자인·배치 방향 |
+| --- | --- | --- |
+| 본문 / A-01~12, V-02~05 | 제목·메타·작성자 메뉴, 본문/인용/링크/첨부/미디어·확대, 추천·비추천·CAPTCHA, 원문 미리보기 | 본문은 목록과 같은 불투명 paper, 폭·메타 위계·구분선 정돈. 액션은 보조/주요/위험 구분. 실제 이미지와 작성자 서식·색을 테마색으로 덮지 않음. |
+| 일반·대댓글·이미지댓글 / C-01~18 | 텍스트/디시콘/GIF·미디어, 묶음/형제 대댓글, 이미지별 접힌 미리보기/전체/입력(C-07 답글 없음), 정렬·더보기·작성자·수정삭제 비밀번호·로딩/빈/실패/차단 | 같은 행·작성자·시간·도구 규칙. 대댓글은 들여쓰기/공간으로 연결하고 ㄴ 겹침·카드 안 첫 윗선·전체 파란 테두리를 되살리지 않음. 이미지마다 대상을 유지. |
+| 본문 버튼의 창 / A-07~12, C-11~13 | **스크랩**의 로그인 요구/폴더·선택/결과, **실베추**의 안내/입력/확인·권한 분기, **신고**의 종류/사유/확인, 공유 옵션·펌, 작성자/메모·댓글 수정삭제 | 작은 선택 메뉴, 안내/확인 창, 입력형 창을 같은 재질·제목·닫기·액션 계층으로 통일. 실제 전송/신고/투표는 하지 않고 결과·오류는 합성 fixture로 확인. |
+| 헤더·대문·검색 / H-01~11, L-03/04/08 | **대문 열기/닫기**, 소개·랭킹/추천·설정·연관 갤러리·이용안내 및 그 내부 순위/팁, 통합검색의 **기록/추천어/빈 기록/전체 삭제 안내**, 하단 검색 보조창, 최근/즐겨찾기 | 현재 B1 헤더는 유지. 대문은 glass 프레임과 읽기 내부, 작은 메뉴/팁은 공통 floating material. 원래 가능한 중첩을 유지하고 자식마다 진입/닫기를 확인. 통합검색 기록과 하단 searchTypeLayer를 같은 창으로 취급하지 않음. |
+| 글작성·수정 편집 / W-01~19/23/24, V-06~08 | 제목·말머리·닉/비밀번호·CAPTCHA, visual/source 편집기, 글꼴/크기/색/문단/정렬/목록/줄간격/표·링크·이미지 등 실제 개별 메뉴, 디시콘·첨부/업로드·AI 레이어·옵션·이탈 확인·초안 배너 | 편집 영역 paper, 툴바/외곽 glass. 선택기/큰 픽커도 같은 버튼·선택·포커스 역할. 커서·입력내용·초안·첨부·원래 도구 이벤트를 보존. 업로드/AI 실행 없이 열린 UI와 fixture 상태를 검토. |
+| 수정·삭제 진입 / W-20~22, C-13 | 비회원 수정 비밀번호 **페이지**, 비회원 삭제 비밀번호 **페이지**, 회원 삭제 확인, 댓글/대댓글/이미지댓글의 비밀번호 창, 취소·오류 | 페이지와 모달을 구별해 같은 glass 카드/필드/액션으로 통일. 실제 삭제는 fixture에서만; 비밀번호 입력·제출 필요 없이 외형 조사 가능. |
+| 로그인 / H-01 자식 | 갤러리 안 로그인 필요 안내, **sign의 로그인 페이지 자체** | 포함한다. sign은 전용 presentation 진입을 별도 작업으로 설계: 현재 other 조기 종료보다 앞에서 필요한 로그인 UI만 처리하고 갤러리 필터/메뉴/관찰자는 실행하지 않음. 메타데이터·초기화·새 소유권 overlay 검토를 먼저 한다. 인증 동작·폼·비밀번호 관리자·보안접속·리다이렉트는 원래대로. |
+| DCUF 메뉴·설정 / S-01~12, P-01~14, V-01~08 | **메뉴 FAB/펼침**, 글+댓글 합·네트워크/비율·말머리·단축키·14색/미리보기·저장실패, 직접차단/선택/관리/검색/추가·백업/크기·편의기능·초안/미리보기 | 목록의 glass/quiet/primary 계층을 공통 패널에 적용. 현재 크기·위치/드래그·저장/취소·중첩 부모 상태는 유지. PC에 모바일 외형이 새지 않게 타깃 역할을 분리. |
+| 브라우저/OS UI / N-01~07 | alert/confirm, 파일 선택·다운로드/권한·자동완성 UI | 목록에 남기되 CSS 재디자인 대상과 구분. 브라우저 기본창을 HTML 창으로 바꿔 glass처럼 보이게 하는 기능 변경은 이 계획에 몰래 포함하지 않는다. |
+
+### 공통 재질·상호작용 규칙
+
+기존 구현도 적용 대상이다. H-03 최근 방문 팝업의 갤러리/미니갤/인물갤 등 실제 탭·목록·푸터, P-01 메뉴/FAB 버튼 자체와 P-02 펼친 메뉴를 같은 glass 기준으로 다시 본다. 'B1 헤더 유지'는 채택한 배치/분위기 유지이며 재질 검토 면제가 아니다.
+
+1. **Reading / floating / dialog** 세 역할. 읽기·장문/입력 내부는 paper, 떠 있는 메뉴는 현재96% paper+blur24/radius14 계열을 재사용, 큰 dialog는 B1 glass 프레임과 선명한 내부 면을 사용한다. 크게 투명한 창을 겹겹이 쌓지 않는다.
+2. B1 토큰의 색·림·sheen·그림자와8/12/16/24 간격 체계를 공유한다. 일반 컨트롤 radius8, 작은 메뉴14, 큰 패널16을 기본안으로 삼고 실제 내용/기존 기능에 맞춘다.14 팔레트의 선택/글쓰기 색·의미를 유지한다. 위험 버튼만 위험 역할로 구분한다.
+3. 제목/닫기 → 내용 → 원래 액션 순서와 강조를 통일하되 **네이티브 노드를 옮기거나 복제하지 않고** 기존 문맥의 CSS 배치로 처리한다. DOM 변경이 필요한 발견은 별도 근거/소유권 결정을 거친다.
+4. 열림은 짧은 fade/작은 이동(제안120~180ms) 정도. reduced-motion은 정지 상태. blur 지원/대비가 부족하면 가까운 불투명 재질로 fallback한다. 모든 행·동영상·본문에 blur나 스크롤 애니메이션을 걸지 않는다.
+5. 중첩 창은 활성 자식/부모가 구분되고 닫기·포커스·스크롤이 원래 의미대로 복귀한다. CSS backdrop-filter/transform이 만드는 새 stacking/containing context를 실제 앵커·클리핑·hit test로 확인한다. z-index만 올리는 해결이나 전역 .pop_wrap 덮어쓰기는 금지한다.
+
+## 구현 경계와 실제로 더 필요한 부분
+
+| 현재 책임 | 구현 후보 파일 / 확인할 경계 |
+| --- | --- |
+| 공통 모바일 재질 | `src/targets/mobile/theme-host-style.js`의 B1 역할 재사용. 새 popup/control 역할이 필요할 때 여기서 명시; 공유 accent/설정 의미를 바꾸지 않음. |
+| 본문·댓글 | `article-presenter.js`, `comment-presenter.js`; 발견/상태/위치는 대응 host-adapter. 스크랩/실베추/신고 등의 body 하위 루트가 현재 본문 역할에 모두 매핑된 것은 아니므로 트리거→원래 루트→자식/상태별 최종 소유자를 먼저 정한다. |
+| 헤더·대문·검색 기록 | shell/recent/page-head/drawer presenter와 대응 adapter. 검색 **통합 기록 레이어**는 현재 하단 검색 역할과 다르며 추가 의미 투영/앵커 확인 필요. 기존 frozen selector 계약을 바꾸면 candidate overlay부터 갱신. |
+| 작성/수정/삭제·도구 | `native-form-presenter.js`, `write-font-presenter.js`; native-form/write-editor adapter가 폼·레이어 상태/위치 담당. `#div_con`처럼 댓글/편집기가 함께 쓰는 루트는 활성 문맥에서 한 소유자만 꾸민다. 기존 post-main-fixes/legacy CSS 경합도 함께 좁힌다. |
+| DCUF 소유 UI | `src/targets/shared/settings-presenter.js`가 공통 settings/FAB CSS 소유자. 먼저 기존 역할 변수+PC fallback으로 모바일 재질을 전달한다. 배치까지 다른 변형이 필요하면 immutable presentation 입력으로 분리하고 shared 변경/두 타깃 검증을 선언한다. PC 외형·동작을 부수효과로 바꾸지 않는다. 편의기능/배너의 잔여 mixed 소유권도 실제 선언 위치를 확인. |
+| 로그인 | 현재 metadata/early-other-return 밖. 제안은 **로그인 전용 presentation 분기**이며, 별도 인증 구현/현재 필터 부트 재사용이 아니다. 구현 전 `src/meta/userscript-header.txt`, `src/runtime/bootstrap.js`, 해당 새 presentation 입력/컴포넌트를 metadata-safety/semantic-architecture로 검토한다. 정확한 entry 방식은 이 단위의 좁은 진입 audit에서 확정한다. |
+
+기존 네이티브 팝업 내부 격리 규칙은 현재 제품의 보존 계약이다. 이번 요청은 그 내부를 B1로 바꿀 **계획 범위**를 승인한 것이므로, 각 구현 단위의 의도한 시각 delta를 먼저 선언하고 스타일 기대값만 갱신한다. 원래 이벤트/폼/권한/열기닫기·격리·hit/focus 검사를 없애지 않는다. 새로운 책임/marker/진입/공유 변형은 accepted registry 직접 수정 대신 candidate overlay로 다룬다. GM/network/filter/관찰자·공유 mutable state를 presenter로 가져오지 않는다.
+
+## 진행 순서와 각 결과물
+
+- [x] **P0 preflight:** 채택 기준, 전체 가족/자식 범위, 주 표본, 소유권·별도 로그인 경계와 미확인 상태를 기록. 제품 소스/메타데이터/런타임은 변경하지 않음.
+- [ ] **P1 본문·댓글:** B1_CONTENT_TRIAL.md/B1_POPUP_POLISH.md/B1_ARTICLE_ACTION_POPUPS.md/B1_IMAGE_COMMENTS.md의 scoped 구현 완료. 작성자/권한/계정/미디어 예외 자식은 체크목록에 남음. C-07은 N/A.
+- [ ] **P2 대문·검색:** B1_GALLERY_SEARCH_POPUPS.md의8root 및 명명된 native 자식 구현 완료. 설정 하위/계정 자식은 미확인.
+- [ ] **P3 작성·수정·삭제:** B1_PASSWORD_PAGES.md/B1_FORM_HEADER_REUSE.md/B1_WRITE_EDITOR_SHELL.md/B1_EDITOR_MENUS.md의 scoped 구현 완료. 실제 editor 내부는 별도; 외부 업로드4문서는 사용자 수용 보류.
+- [ ] **P4 DCUF 메뉴·설정:** B1_GLASS_TRANSMISSION.md/B1_OWNED_CONDITIONAL_FINISH.md/B1_OWNED_INPUT_CHILDREN.md의 root·조건부·입력 범위 완료. preview/draft 두 root는 B1_PREVIEW_DRAFT_FINISH.md에서 후속 마감; OS/예외 자식은 분리.
+- [x] **P5 로그인 전용 진입:** B1_LOGIN_ENTRY_IMPLEMENTATION.md의 exact entry/원본 노드/theme reuse/source+TM replay 범위 완료. 실제 인증·계정 오류·기기는 별도.
+- [ ] **P6 통합 마감:** B1_INTEGRATED_UI_GAPS.md에서128ID의 실제 근거와 잔여를 대조 완료. 확인된 preview/draft2root 및 추가 추천 카드 수정은 B1_PREVIEW_DRAFT_FINISH.md에서 마감했고 전체 적용/미관 완료는 미확정. release/공식 게시/버전 상승 권한과 구별.
+
+매 수정마다 전체128개를 다시 검사하지 않는다. 각 가족을 바꿀 때 해당 자식+인접/X 상태를 보고, 공통 재질·공유 코드가 바뀐 경우에만 관련 소비자로 넓힌다. 완성 마지막에는 이번에 포함한 모든 적용 자식을 빠뜨리지 않고 한 번 점검한다.
+
+## 확인 방법과 마감 조건
+
+- 기존 UI_REVIEW_CHECKLIST → UI_VISUAL_REVIEW → UI_DESIGN_DETAIL_REVIEW/Impeccable 경로를 재사용. 선택한 B1 전체 흐름/디테일과 현재를 같은 크기로 보고, 스타일·정렬/질감의 중요한 차이를 먼저 판단한 뒤 수정/재비교한다. 테스트 숫자나 작은 갤러리만으로 미적 완성을 판정하지 않는다.
+- 각 항목은 원래 진입과 **닫힘/열림/선택/내부 자식/재열기**를 명명한다. 실제/fixture, 계정, 테마, viewport, runtime identity와 알려진 차이를 표시한다. 대표 창 하나로 모든 팝업을 완료 처리하지 않는다.
+- 정상 라이트/다크와980 폰 레이아웃을 중심으로 확인하고 짧은 창·390 stress·긴 내용·화면 끝·중첩 중 필요한 경우만 추가. 공통 토큰은14색 binding/대비, 미디어는 실제 크기·decode/지연/실패를 확인한다. 1×1 이미지를 실제 이미지댓글 시각 증거로 대신하지 않는다.
+- 기존 guarded article/comment/native-form differential, write 그룹, host-compatibility/settings 캡처·geometry, 실제 Chrome/Tampermonkey 경로를 재사용. 재연결은 기존 subscriber/관찰자 경로를 활용하며 새 전역 엔진을 만들지 않는다. 실제 입력·제출 동작과 상태는 fixture, 실제 공개 사이트는 허용된 읽기/열기닫기 중심. 계정이 없는 상태를 전체 테스트 능력 차단으로 오인하지 않는다.
+- 미완료/인증 전제/외부 문서/브라우저 네이티브/지원되지 않는 상태를 구분해 남긴다. 한 가족의 통과를 다른 가족이나 전체 출시 승인으로 확장하지 않는다. 마지막 통합 검사는 최종 코드에 필요한 강도로 한 번 실행한다.
+
+이 preflight의 범위/순서는 사용자 진행 요청으로 채택됐다. 초기 P1 시도와 별도 팝업 제안 시안은 B1_CONTENT_TRIAL.md가 담당했고, 현재 진행은 위 P6 라우터가 소유하며, 최종 미적 채택은 별도다. 세부 CSS값·개별 컴포넌트의 새 파일/인터페이스는 해당 단위의 실제 상태·owner audit 뒤 작은 실행계획으로 확정한다.
+
+## 시안 없는 창의 비교 경로
+
+UI_VISUAL_REVIEW.md의 원본 → 별도 B1 제안 → 구현 비교를 따른다. 현재 제안은 docs/design/b1-popups-proposal-2026-10-24.md에 보존한다. 작은 메뉴·확인/입력 창·큰 픽커는 채택된 가족 시안을 재사용하고, 구성이 달라질 때만 추가한다. 원본/합성 fixture/생성 이미지/구현의 출처와 미확인 자식을 분리한다. 실제로 비치는 배경과 읽기성을 함께 확인하며 구현을 자기 정답으로 삼지 않는다.
+
+P1 progress: B1_POPUP_POLISH.md owns recent/textcon/DCCon refinement; B1_ARTICLE_ACTION_POPUPS.md owns share/realbest/report/guest-scrap/PUM and modeled suggestion/guide children, with original/proposal/current comparisons. Representative P1 families are reviewable, while unobserved picker/account/history/result children stay named and the P1 checkbox remains open. Continue with bounded P2 gallery/search native layers; no implicit all-child approval.
+
+P2 progress: B1_GALLERY_SEARCH_POPUPS.md owns the observed gallery/search8-root family plus closed-parent ranking and paging edges. Final148 Mobile and15 PC functional checks pass;36 focused contexts,20 callback/storage comparisons,8 selected reference pairs and54 decoded viewer images are scoped evidence. Unopened settings/account/native children and actual final extension/device use remain named; the P2 checkbox is not a blanket all-child approval. Next bounded P3 work starts with anonymous modify/delete password pages.
+
+2026-10-25 P3 password-card slice: user6801789 is the fresh modify specimen;6778319 deletion remains available. Anonymous cards adopt the B1 material with original forms/actions preserved. The password cards and shared-header reuse are closed within their named scopes: title/tools margins, quiet utility decoration, single recent remove icon and centered chevron, plus stable mutation/removal/reinsertion handling. Final Mobile150/150 and scoped evidence are in B1_FORM_HEADER_REUSE.md. Full write/editor/tools remain the next P3 work; P3 is not all-child complete.
+
+2026-10-26 P3 in-document menu slice: B1_EDITOR_MENUS.md owns W-05–W-10 glass shells/rows through existing owners. Keep the adopted simple button face and original horizontal palette scroll; wrapping/shrinking was rejected after its behavior regression. Original Summernote editing, unobserved nested palette/list controls, native table feedback and actual device/extension use remain explicitly scoped gaps. Separate image/movie/YouTube/external upload documents are DEFERRED_USER_ACCEPTED because they require the original opener and a separate metadata entry; do not reopen that task from a generic continuation. P3 is not all-child complete. Next bounded family is P4's existing script menu/settings preflight, with a fresh family proposal before materially different styling.
+
+2026-10-27 image-comment follow-up: user explicitly prioritized full image comments/composer before P4. B1_IMAGE_COMMENTS.md supersedes the old folded-preview-only assumption: native section click reveals the full sibling composer. It reuses ordinary comment material; C-07 was later corrected to N/A because image comments have no replies; actual submit and device/extension remain separate. P4 menu/settings preflight resumes after this bounded unit.
+
+2026-10-27 P4 preflight: B1_OWNED_PANELS_PREFLIGHT.md preserves12 actual roots/entries, current/published anatomy, a tailored light/dark draft and actual backing-transmission probes. Shared opaque header/body/footer are the material cause. Next is one existing-owner common-panel implementation with optional Mobile hooks and exact PC fallback; no product source was changed by this preflight. P4 remains open.
+
+P4 common material and broad B1 follow-up2026-10-27: B1_GLASS_TRANSMISSION.md supersedes the denser draft material, applies optional shared hooks and existing Mobile glass roles, and preserves PC fallback. User requested same-region enlargement; current review retains the real page/scrim and3× crop. Next is named unreviewed conditional P4 appearance, not repeated default-shell work. P4/all-child acceptance stays open.
+
+Applicability correction2026-10-28: C-07 image-comment replies do not exist (explicit user correction; original observed rows/composer contain no reply trigger). Generic reply selectors in shared/legacy code do not establish this native feature. Retire that checklist item as N/A and remove it from future work. Earlier immutable receipts retain their historical unqualified wording; it is superseded by this correction,not a new feature or a newly passing reply test.
+
+2026-10-28 P5 entry preflight: B1_LOGIN_ENTRY_PREFLIGHT.md closes the read-only anatomy/entry decision and independent draft stage. Current/preserved-stable metadata omit sign; current manual-injection probe returns other before gallery startup. The chosen implementation is an exact Mobile login-only branch with minimal pure theme reuse,preserved native authentication and a candidate ownership overlay first. Six draft geometry contexts do not constitute product P5 completion. Source remains1593/EF24; actual login styling/entry and current extension qualification are next.
+
+P5 implementation2026-10-28 supersedes the login-preflight-only projection above: B1_LOGIN_ENTRY_IMPLEMENTATION.md applies the exact isolated original-node skin with pure theme reuse. F87E/8915,48 source observations,10 actual-TM native-replay routes and four reviewed image pairs are scoped evidence; real authentication and conditional auth children remain untested. Next: reconcile existing family/child evidence and investigate only real gaps,with D-55 impact-selected tests.
+
+
+## 전체 UI 작업 종료 후 논의 예약 —2026-10-28
+
+상태: **DEFERRED_DISCUSSION**. 사용자 요청으로 전체 UI 교체·마감 작업이 끝난 뒤, 축적된 경험을 간결한 재사용 가이드북으로 묶을 필요가 있는지 논의한다. 현재 미리보기/초안 단위의 종료와 전체 UI 작업 종료를 구별한다.
+
+이미 UI_REUSE_PREPARATION.md, UI_VISUAL_REVIEW.md/UI_DESIGN_DETAIL_REVIEW.md, docs/agent-maintenance-notes.md에 재사용·비교·원인/폐기안이 있다. 그때 실제 다음 UI 변경에 도움이 되는 부분과 중복/오래된 내용을 살펴, 기존 문서 정리로 충분한지 또는 작은 가이드북이 유용한지 결정한다. 작성 여부·구성·분량은 그 논의에서 정한다. 지금 새 가이드북 구현/문서 체계 확대나 완료 gate를 추가하는 요청은 아니다. CURRENT/NEXT의 현재 UI 작업은 계속 유지한다.

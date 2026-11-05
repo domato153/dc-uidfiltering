@@ -1,0 +1,103 @@
+name: DCUF approved combined stable release
+on:
+  workflow_dispatch:
+    inputs:
+      release_spec:
+        description: Exact source, expected official heads, versions, artifact hashes and observed canary
+        required: true
+        type: string
+      publish_confirmation:
+        description: Prepare only or approved publication
+        type: choice
+        default: DRY_RUN
+        options: [DRY_RUN, PUBLISH]
+permissions:
+  contents: read
+  actions: read
+env:
+  NODE_VERSION: 22.17.0
+  PNPM_VERSION: 10.33.1
+concurrency:
+  group: dcuf-official-release
+  cancel-in-progress: false
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          persist-credentials: false
+      - name: Bind trusted main control plane
+        env:
+          RELEASE_SPEC: ${{ inputs.release_spec }}
+          WORKFLOW_REF: ${{ github.ref }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          node --input-type=module -e 'import assert from "node:assert/strict"; const s=JSON.parse(process.env.RELEASE_SPEC); assert.equal(process.env.WORKFLOW_REF,"refs/heads/main"); assert.equal(process.env.WORKFLOW_SHA,s.expectedHeads.main); assert.match(s.sourceSha,/^[0-9a-f]{40}$/);'
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ fromJSON(inputs.release_spec).sourceSha }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Rebuild exact candidate and verify release artifacts
+        working-directory: source
+        run: |
+          node tools/build-userscript.mjs
+          node tools/build-pc-filter-userscript.mjs
+          node tools/verify-repo.mjs release
+      - name: Prepare source-bound explicit payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SPEC: ${{ inputs.release_spec }}
+          SOURCE_DIR: ${{ github.workspace }}/source
+          STAGING_DIR: ${{ github.workspace }}/release-preparation
+        run: node control/tools/stable-release.mjs prepare
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: stable-preparation-${{ fromJSON(inputs.release_spec).sourceSha }}
+          path: release-preparation/
+          if-no-files-found: error
+          retention-days: 14
+  publish:
+    needs: prepare
+    if: inputs.publish_confirmation == 'PUBLISH'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: mobile-release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: control
+          fetch-depth: 0
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: stable-preparation-${{ fromJSON(inputs.release_spec).sourceSha }}
+          path: release-preparation
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Stage verified draft, atomically update official files and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_SPEC: ${{ inputs.release_spec }}
+          PUBLISH_CONFIRMATION: ${{ inputs.publish_confirmation }}
+          CONTROL_DIR: ${{ github.workspace }}/control
+          STAGING_DIR: ${{ github.workspace }}/release-preparation
+        run: node control/tools/stable-release.mjs publish
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: stable-publication-${{ fromJSON(inputs.release_spec).sourceSha }}
+          path: release-preparation/*receipt.json
+          if-no-files-found: warn
+          retention-days: 14

@@ -1,0 +1,474 @@
+{
+  "schemaVersion": 1,
+  "kind": "header-source-separation-closeout",
+  "scope": "HEADER_SOURCE_SEPARATION_ONLY",
+  "status": "PASS",
+  "sourceHead": "5ccc5d5045dadbdf2aae24e6c0a5cd7250df19ec",
+  "candidateFingerprint": "b9b31bf5c9c75cbb60ae72facf52c320147ff5bec698759bf32c98611ab0d9e5",
+  "evidenceBinding": {
+    "bindingSchemaVersion": 4,
+    "registrySha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191",
+    "architectureStateSha256": "fb2e43f9c5ffa658da096a167274e91742802ff35f90ab880cabc3597aafbc83",
+    "architecturePlanSha256": "f406d6f7fd3cc148f9fc59bf1d838dfef3b2348928380e922d11ebaabfb08855",
+    "modernizationContractSha256": "e449d28d8c2f87bb641ab0921b634b9e9ce84b820f101d6761f1401d53b7ab6e",
+    "gatesSha256": "65979922b8e4c1b1b3b4e50e27d135afda54d0f718a92f8ea9ea984efcebfb17",
+    "sourceInputsSha256": "23f0adb94e18645d540fd4c68e93c3ef71849ae125136371f5bd97a1af68332c",
+    "harnessSha256": "d627823b960450f62b77d94be33300df7c9d04f6c20a97ea0a754736774aefd1",
+    "fixturesSha256": "9f30dd3b0b0f4341073437d30858ce908d687991f7d35abd87c02c987fd892cf",
+    "toolchainSha256": "2b92aea0dbb71304c0f366284248263cab4cf315443c530edf49a431ff56f559",
+    "proofSystemSha256": "564d5cacd5e3c6b90aa69732d60b5ca5f861fe12c7a63c07ee1bdfb5c7c10006",
+    "node": "v22.17.0"
+  },
+  "artifacts": {
+    "mobile": {
+      "version": "3.5.5",
+      "sha256": "478A440F133D80A813124069BD82B043B960EAB0156098223286C325975170B5"
+    },
+    "pc": {
+      "version": "1.9.9",
+      "sha256": "C14D163F2757DB02117E3F93204B56B6AA22D464541729315A6B40C4128C7D37"
+    }
+  },
+  "architectureTransitionAdmitted": false,
+  "visualPromotionStatus": "UNKNOWN",
+  "replaceabilityStatus": "PLANNED_NOT_EXECUTED",
+  "components": [
+    {
+      "componentId": "mobile-header-shell-presenter",
+      "sourceSeparation": "PASS",
+      "formalBoundaryState": "mixed",
+      "visualPromotionCriterionSha256": "14AED5520FAE451D07B4B06F74598DE125B0B9BFB9C50D70D49FD032551F9C0A",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-shell-presenter.js",
+          "sha256": "67191324076EBAC4F531D2E61A0F81176ABCB3F86F6E06E9502AB8EFC7BDD150"
+        }
+      ]
+    },
+    {
+      "componentId": "mobile-gallery-page-head-presenter",
+      "sourceSeparation": "PASS",
+      "formalBoundaryState": "mixed",
+      "visualPromotionCriterionSha256": "D565775EE503782B5B567D0E993DB7A7CF9923B8A130B54468A1FC714B76FAD6",
+      "sources": [
+        {
+          "path": "src/targets/mobile/gallery-page-head-presenter.js",
+          "sha256": "49AB632212CB392C8C3A2A2D2B929A0B1B08C4A96DAA2BF5B43DA0506C83FC47"
+        }
+      ]
+    },
+    {
+      "componentId": "mobile-header-gnb-presenter",
+      "sourceSeparation": "PASS",
+      "formalBoundaryState": "mixed",
+      "visualPromotionCriterionSha256": "79D691210EA983515E9C1DE5E39C96159CF25056F6B8963525C6A2AFDB730324",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-gnb-presenter.js",
+          "sha256": "4BDF59540883138766FBCA55AFBCFE0A63BFC971B20851014CB72C45A9768B0C"
+        }
+      ]
+    },
+    {
+      "componentId": "mobile-header-recent-visit-presenter",
+      "sourceSeparation": "PASS",
+      "formalBoundaryState": "mixed",
+      "visualPromotionCriterionSha256": "C9EDDB26D1F665891870A31FBD6C5E84EAEE92673ED6FA6A1D5E1F3398B7BED4",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-recent-visit-presenter.js",
+          "sha256": "4B81EB59A5845C4A3E5F3CB8DA08295B1DE4A5138634A28B3CB776BDA8C4DEEF"
+        }
+      ]
+    },
+    {
+      "componentId": "mobile-header-drawer-presenter",
+      "sourceSeparation": "PASS",
+      "formalBoundaryState": "mixed",
+      "visualPromotionCriterionSha256": "7B003F2C8626618D4299034AED67D49B4847E7F7FE7949DF5466A75A2F111E84",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-drawer-presenter.js",
+          "sha256": "E626BF1DD85342FAC58917A92DBF47101C06397CCFAD67E149825504369DF869"
+        }
+      ]
+    },
+    {
+      "componentId": "mobile-header-drawer-host-adapter",
+      "sourceSeparation": "PASS",
+      "formalBoundaryState": "mixed",
+      "visualPromotionCriterionSha256": "38ACED403B945E8FC80EB8D4C2C0D7427571FF470D63A8079CEC6E7FE32985EF",
+      "sources": [
+        {
+          "path": "src/targets/mobile/header-drawer-host-adapter.js",
+          "sha256": "47208A2505592FBB01E8F49FEC95871E65656D9E3552FF87DFFB4C217CC0E540"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "id": "ui-boundaries",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "disposition": "PASS",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/ui-boundaries.log",
+        "sha256": "C9BD8C7966049B068A8A09160C4538A38E7F887494C92264ADEE71BBA912CB14"
+      }
+    },
+    {
+      "id": "generated-css",
+      "command": "node",
+      "args": [
+        "tools/test-header-generated-css.mjs"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "disposition": "PASS",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/generated-css.log",
+        "sha256": "37520F4AEA3468C012E03CB739B3EE0CA77C9B075E6B8D58916D3A676BB0B5ED"
+      }
+    },
+    {
+      "id": "early-inputs",
+      "command": "node",
+      "args": [
+        "testbed/run-header-early-selector-binding.mjs",
+        "--current-control",
+        "artifacts/header-cascade-batch-2026-10-19/control-FD58.user.js",
+        "--output",
+        "artifacts/header-separation-closeout-2026-10-21/early-binding.json"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "disposition": "PASS",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/early-inputs.log",
+        "sha256": "3BC148632A61ED244CBA52A80A85EC45DD82AD9E0B86216FE72C75873777DE9F"
+      }
+    },
+    {
+      "id": "late-inputs",
+      "command": "node",
+      "args": [
+        "testbed/run-header-final-boundary.mjs",
+        "--snapshot-contract"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "disposition": "PASS",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/late-inputs.log",
+        "sha256": "774CF452509441B72EB7091E70B910F24F7B0AEB8081B83643296302526DE69D"
+      }
+    },
+    {
+      "id": "drawer-body-layout",
+      "command": "node",
+      "args": [
+        "testbed/header-drawer-body-contract.mjs"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "disposition": "PASS",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/drawer-body-layout.log",
+        "sha256": "8F48CD98960D981DF77A68B767832E9A39600B31C3304FEA3563674A460C5883"
+      }
+    },
+    {
+      "id": "drawer-priority",
+      "command": "node",
+      "args": [
+        "tools/test-header-drawer-priorities.mjs",
+        "--output",
+        "artifacts/header-separation-closeout-2026-10-21/drawer-priorities.json"
+      ],
+      "exitCode": 0,
+      "expectedExitCode": 0,
+      "disposition": "PASS",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/drawer-priority.log",
+        "sha256": "08A0B26C5A19149FB42AE169A8CFB597DE5FC94A7BDC28190B6EC21803F5E866"
+      }
+    },
+    {
+      "id": "reject-mobile-header-shell-presenter",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs",
+        "--audit-inject-forbidden",
+        "mobile-header-shell-presenter",
+        "member-gm"
+      ],
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "disposition": "EXPECTED_FORBIDDEN_DEPENDENCY_REJECTED",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/reject-mobile-header-shell-presenter.log",
+        "sha256": "8C4F211F32F7F05854F3E3CD22F66479CFDF5FD9F60E2250A2706958C62152D8"
+      }
+    },
+    {
+      "id": "reject-mobile-gallery-page-head-presenter",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs",
+        "--audit-inject-forbidden",
+        "mobile-gallery-page-head-presenter",
+        "member-gm"
+      ],
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "disposition": "EXPECTED_FORBIDDEN_DEPENDENCY_REJECTED",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/reject-mobile-gallery-page-head-presenter.log",
+        "sha256": "9DAA9F5214E572270C54F9EC14E5BBE938E8525CDC76A07C105D415864517E25"
+      }
+    },
+    {
+      "id": "reject-mobile-header-gnb-presenter",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs",
+        "--audit-inject-forbidden",
+        "mobile-header-gnb-presenter",
+        "member-gm"
+      ],
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "disposition": "EXPECTED_FORBIDDEN_DEPENDENCY_REJECTED",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/reject-mobile-header-gnb-presenter.log",
+        "sha256": "ECDA5536D69E9D40F5352E9F5BF39F9DD388E1FBDCBCA30CBED69A486E9FDD75"
+      }
+    },
+    {
+      "id": "reject-mobile-header-recent-visit-presenter",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs",
+        "--audit-inject-forbidden",
+        "mobile-header-recent-visit-presenter",
+        "member-gm"
+      ],
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "disposition": "EXPECTED_FORBIDDEN_DEPENDENCY_REJECTED",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/reject-mobile-header-recent-visit-presenter.log",
+        "sha256": "8AEB701142F4165B26EAF36314741DF7ED3B04A3C07DB4DC2ABC664A9E49524E"
+      }
+    },
+    {
+      "id": "reject-mobile-header-drawer-presenter",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs",
+        "--audit-inject-forbidden",
+        "mobile-header-drawer-presenter",
+        "member-gm"
+      ],
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "disposition": "EXPECTED_FORBIDDEN_DEPENDENCY_REJECTED",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/reject-mobile-header-drawer-presenter.log",
+        "sha256": "6E4DD56FB7C5F2C0251437671261FBDDCDC2C6EF2F5B717ABA991892FB85EEA8"
+      }
+    },
+    {
+      "id": "reject-mobile-header-drawer-host-adapter",
+      "command": "node",
+      "args": [
+        "tools/verify-ui-boundaries.mjs",
+        "--audit-inject-forbidden",
+        "mobile-header-drawer-host-adapter",
+        "adapter-member-gm"
+      ],
+      "exitCode": 1,
+      "expectedExitCode": 1,
+      "disposition": "EXPECTED_FORBIDDEN_DEPENDENCY_REJECTED",
+      "log": {
+        "path": "artifacts/header-separation-closeout-2026-10-21/reject-mobile-header-drawer-host-adapter.log",
+        "sha256": "2E75A902C4642DC6DCB2DC9D82237DA61EE1356D32B626015D7250F5080ED76E"
+      }
+    }
+  ],
+  "generatedPayloads": [
+    {
+      "sourceRef": "src/targets/mobile/header-shell-presenter.js",
+      "styleKey": "theme",
+      "importantCount": 3,
+      "cssSha256": "5E03AFE3512878412E013DCE48AFB2E5665AA6B6FE3C155087247242AD9016C7"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-shell-presenter.js",
+      "styleKey": "reset",
+      "importantCount": 7,
+      "cssSha256": "46DD72DD5080B892DA49729F19E5D4AD203BFFC57154D1464175E218E51C4C6E"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-shell-presenter.js",
+      "styleKey": "header-shell",
+      "importantCount": 5,
+      "cssSha256": "1EEEA1194B7263572C2EE4B77B0ED83AC33342419E4D36F028A428F53C6000B0"
+    },
+    {
+      "sourceRef": "src/targets/mobile/gallery-page-head-presenter.js",
+      "styleKey": "theme",
+      "importantCount": 1,
+      "cssSha256": "5286AB2280483013AC30A5CFD52CD86C0C4C5A3911F9674C96A4266591653759"
+    },
+    {
+      "sourceRef": "src/targets/mobile/gallery-page-head-presenter.js",
+      "styleKey": "gallery-page-head",
+      "importantCount": 1,
+      "cssSha256": "EE0DCF96A20BA275771E4877AEA2B3E2B776DC81E9CD4A9206CCF88E128DE17B"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-gnb-presenter.js",
+      "styleKey": "theme",
+      "importantCount": 1,
+      "cssSha256": "ACA3E99A69BEADE61F241271E612150044D399402C653770DCB4CA2B191CCC72"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-gnb-presenter.js",
+      "styleKey": "reset",
+      "importantCount": 7,
+      "cssSha256": "EE4EDE7C9D8F7FD92024C2D3E5AFDF6105C8F344BFD15EB49A1F1859BF6BC080"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-gnb-presenter.js",
+      "styleKey": "header-gnb",
+      "importantCount": 4,
+      "cssSha256": "62A8E4584015B175F9CBA17FBBBF46CF75DF9A1C6DB87627FCC8698C7E28A457"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-recent-visit-presenter.js",
+      "styleKey": "theme",
+      "importantCount": 1,
+      "cssSha256": "88593D5F385E6FA52F2A10AE47001FE6E4590887BA4E37872DA87131E51013AA"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-recent-visit-presenter.js",
+      "styleKey": "header-recent-visit",
+      "importantCount": 11,
+      "cssSha256": "AE715845BF13F642FA1C8A22F1C94BB514C4AAD14C289CDF469C8B9067183EEA"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-drawer-presenter.js",
+      "styleKey": "theme",
+      "importantCount": 1,
+      "cssSha256": "CD759A0EBC9BF1E548165556B9BC0C11F46EE2318DDB67EE9082D7B345C185B0"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-drawer-presenter.js",
+      "styleKey": "visibility",
+      "importantCount": 1,
+      "cssSha256": "F0DBB2101E53E70FABD38EC3DAE4EEB7312DD6B8942E2CC775C1C75293C2537A"
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-drawer-presenter.js",
+      "styleKey": "header-drawer",
+      "importantCount": 8,
+      "cssSha256": "F6B7B668258952E5F878FF385D57C0344D73304386CF1DC5C3FB278054E44833"
+    }
+  ],
+  "reusedEvidence": {
+    "stageReceipt": {
+      "path": "verification/receipts/2026-10-20-header-stage-admission.json",
+      "sha256": "1989A21DBF43363EB5F121F0BE9B50CD3684C89134B5D8B8D2CA365E54294A34"
+    },
+    "unchangedBindingKeys": [
+      "bindingSchemaVersion",
+      "registrySha256",
+      "architectureStateSha256",
+      "architecturePlanSha256",
+      "gatesSha256",
+      "sourceInputsSha256",
+      "harnessSha256",
+      "fixturesSha256",
+      "toolchainSha256",
+      "proofSystemSha256",
+      "node"
+    ],
+    "excludedBinding": {
+      "key": "modernizationContractSha256",
+      "reason": "This unit changes only source-separation/next-pilot contract prose; no product, oracle, harness, fixtures, gate, toolchain or architecture change."
+    },
+    "actualStageEvidenceBytesVerified": 18,
+    "mobilePasses": 143,
+    "hostPasses": 11,
+    "pcFunctionalPasses": 15,
+    "actualExtensionScope": "Prior same-runtime16 native/4 startup cases at their recorded browser/viewports; no new live or physical-phone claim."
+  },
+  "limits": [
+    "Six mixed labels and full-visual exit criteria unchanged.",
+    "51 authored CSS priorities inventoried, not all newly justified.",
+    "Actual cosmetic/composition/width/replacement-and-restore pilot remains to execute.",
+    "Whole-UI readiness, accepted-registry fold and release remain unclaimed."
+  ],
+  "nextTask": "header-replaceability-pilot",
+  "verificationInputs": [
+    {
+      "path": "tools/verify-ui-boundaries.mjs",
+      "sha256": "663AFD9EC9E1A7A77A5FA5C24DF2FCC10997ABB537B124DC8E2F6570212D8D37"
+    },
+    {
+      "path": "tools/header-generated-css.mjs",
+      "sha256": "1FDCC729A90DC8BD42B8D99B0472AEE430E6ACFB1C3125ADEA63306298DBB74A"
+    },
+    {
+      "path": "tools/test-header-generated-css.mjs",
+      "sha256": "1D7E21FC88EDEA13FAB4BA7F27B3AE7617DA868EDE409398020BD78A7C98840B"
+    },
+    {
+      "path": "testbed/run-header-early-selector-binding.mjs",
+      "sha256": "DBEE429D00AEEB28916E4AAD016DF3F4905A85DD9AF249B82AB8B8D9ADD0D042"
+    },
+    {
+      "path": "testbed/run-header-final-boundary.mjs",
+      "sha256": "922F7D7CBF4292974BF0C4DD602A311C0F8AD17F46AD43FE355F64FB2FAEE768"
+    },
+    {
+      "path": "testbed/header-drawer-body-contract.mjs",
+      "sha256": "B4A1EB7F147BB851B1B4245F14ABE3E5C3AACE4547DB413D394D09FFBEB25ECC"
+    },
+    {
+      "path": "tools/test-header-drawer-priorities.mjs",
+      "sha256": "3DF9F17234748E05B1A5AE026DEA3BF4132468EE2D7BAFA963B5F0ADAC6AB124"
+    },
+    {
+      "path": "tools/header-drawer-priority-contract.mjs",
+      "sha256": "96AC3B6E59A7E5E12F1C6FE86EF6C657503ABEECEEA900B1DB00DEAF11C0F284"
+    },
+    {
+      "path": "tools/header-palette-priority-contract.mjs",
+      "sha256": "4E35B117F4F3A8E2F44D3236D186A974EA59593D3195C70CC5D23314E1416870"
+    },
+    {
+      "path": "tools/header-gnb-priority-contract.mjs",
+      "sha256": "93332D553872333C0C1D2AD92B4FB529C6C0BC8204A2719A6F2BC28B4BB9B38B"
+    },
+    {
+      "path": "tools/header-composition-contract.mjs",
+      "sha256": "6C7E6296168B2B4E63438172A5A1E446767BAB57C151A1B9606AFD2525C35D90"
+    },
+    {
+      "path": "tools/architecture-state.mjs",
+      "sha256": "D72D058156A9739FC6D4D67EE38A4C671510FF1235AF65EC30328292FF18F1D7"
+    }
+  ],
+  "frozenPilotControl": {
+    "path": "artifacts/header-replaceability-pilot-2026-10-21/control-478A.user.js",
+    "sha256": "478A440F133D80A813124069BD82B043B960EAB0156098223286C325975170B5",
+    "recovery": "Recover exact mobile artifact from source checkpoint5ccc5d5 if missing; verify digest before experiment."
+  }
+}

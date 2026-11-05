@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_OWNED_V7_PREFLIGHT",
+  "status": "IMAGE_PROPOSAL_READY_FOR_USER_REVIEW_PRODUCT_UNCHANGED",
+  "sourceBaseHead": "21e82a4f407d3d42f25297bf339940ee82147c37",
+  "candidateFingerprint": "1f398ba40497edb2d28476033359457e2fc45ff59ac9a714435f8460f19ffdca",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "331336FE15D7951AD3751D0A76AD201CFBB9AB31A209B1A7A747E6331AD976F2",
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "unchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "ef8e99ff02a00aad71d4217d9a1ba4bcacdea7b0c2f8e6a8747778f9c01d35ed"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "4a0725b46fc613be424d28a82cc8f34448c4ca26d53219bbe2febec0341de20b"
+    },
+    {
+      "path": "src/targets/shared/popup-geometry-host-adapter.js",
+      "sha256": "7ffc936b838df4cd34a2ff3c5c7b0c21a259848b8cc9161d766c57d98f8a6073"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "430a075b53585a72cbbdb9dc6abc06af4f373201bbf162e724e7372754586491"
+    },
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "934fb2daccac53fcf76840ef80f0706b216db6395f68362ba12a9933f140dd94"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "docs/work/B1_OWNED_V7_PREFLIGHT.md",
+      "sha256": "a17184704315a05de1ec2b9aa6d2a3d2b1dc2d3bac9db2714321ee3a5ae8a8d3"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "bb995021004237a26f6fa3a19fd9b26768f57cb20bd7ddb7c7260baa3e8b9ff7"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-owned-v7-preflight-2026-10-30/current-inventory.json",
+      "sha256": "b24bcf1d89c8d73cf335e18f6326f212f354ed3576753b830d1be7f98c66398c"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-preflight-2026-10-30/viewer-check.json",
+      "sha256": "d5d24c09189cec318a71ade56d286feb75d1324e6d32f715fec0d59a051f56fe"
+    },
+    {
+      "path": "artifacts/b1-owned-v7-preflight-2026-10-30/capture-current.mjs",
+      "sha256": "48f57f419fe745c04e5a99e193a0264da39caeef3087505c4f1d333f6baf2cbe"
+    },
+    {
+      "path": "docs/design/b1-owned-management-incumbent-light-2026-10-30.png",
+      "sha256": "de91791dca19bf3b7b843d7d9d62f7fbb21f2cc920c8040112ed798893796c84"
+    },
+    {
+      "path": "docs/design/b1-owned-management-v7-proposal-2026-10-30.png",
+      "sha256": "ddd4c17b070f73751717029b0d4ebb8df81d83ec21427a7af5e62c4c60103a4e"
+    },
+    {
+      "path": "docs/design/b1-owned-management-v7-proposal-prompt-2026-10-30.txt",
+      "sha256": "f568e79a42d15b4076fbffe600c5071e648d93dbd2ead61e5496173aad26e2db"
+    },
+    {
+      "path": "docs/design/b1-owned-management-v7-proposal-refine-prompt-2026-10-30.txt",
+      "sha256": "82633c1896dace4cf0b1f94a10e10ad1f79cb38fe2dcc98476357ca144b0936e"
+    }
+  ],
+  "generation": {
+    "tool": "built-in image_gen",
+    "mode": "Reference-based new mockup followed by one focused edit",
+    "composition": "docs/design/b1-owned-management-v7-proposal-2026-10-30.png",
+    "sha256": "ddd4c17b070f73751717029b0d4ebb8df81d83ec21427a7af5e62c4c60103a4e",
+    "actualMemoDetail": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+    "memoSha256": "f40c243d8789e412d1d59cba5d0661a6711821baf3c042082308015136eb0fa5",
+    "firstDraft": "SUPERSEDED_BOXED_AUXILIARIES_AND_EXCESS_VERTICAL_SPACE",
+    "userAdopted": false
+  },
+  "observations": {
+    "browser": "156.0.8078.76",
+    "viewport": {
+      "width": 980,
+      "height": 900
+    },
+    "windows": [
+      "menu",
+      "management",
+      "filter"
+    ],
+    "themes": 2,
+    "contexts": 6,
+    "horizontalOverflow": 0,
+    "syntheticPersistedSettingsUnchanged": true,
+    "viewerImagesDecoded": 6,
+    "scope": "ANATOMY_AND_STATIC_PREVIEW_ONLY"
+  },
+  "findings": [
+    "Shared presenter/per-surface CSS and Mobile material hooks already exist",
+    "Management live400x500 default comes from the open adapter,not600px presenter CSS",
+    "Unsaved deletion selection is not the memo checkbox model"
+  ],
+  "validation": {
+    "productTests": "NOT_RUN_PRODUCT_UNCHANGED",
+    "build": "NOT_RUN_PRODUCT_UNCHANGED",
+    "implementation": false,
+    "visualRegressionBaselineApproved": false,
+    "physicalPhone": false,
+    "actualExtension": false,
+    "accountOrRealSave": false,
+    "allPopupStates": false
+  },
+  "nextAction": "b1-owned-management-v7-user-review",
+  "hashMode": "Canonical LF for text;exact binary PNG and runtime bytes"
+}

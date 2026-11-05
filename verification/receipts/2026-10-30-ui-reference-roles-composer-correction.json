@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "kind": "UI_REFERENCE_ROLE_AND_COMPOSER_CORRECTION",
+  "status": "READY_DESIGN_AND_ROUTING_ONLY",
+  "sourceBaseHead": "da07ac3dec384dee3be7dcd083070121e2fcb480",
+  "artifact": {
+    "mobileSha256": "79DD07831C87C8E02346E31BF5EEB19F4E53FF2D1A221C8A763F109F140D9CCC",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "runtimeChanged": false,
+    "officialRelease": false
+  },
+  "authority": {
+    "policy": {
+      "path": "docs/work/UI_REFERENCE_GUARD.md",
+      "sha256": "665436B5849F6DE05350CB4EFBDD3E2156D3425FC392575E1AEF26F276364C3F"
+    },
+    "actualMemo": {
+      "light": {
+        "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+        "sha256": "F40C243D8789E412D1D59CBA5D0661A6711821BAF3C042082308015136EB0FA5"
+      },
+      "dark": {
+        "path": "docs/design/b1-memo-workbench-dark-2026-10-29.png",
+        "sha256": "BB3932799DDFC1D24AC21C9573FF61F84B86269A1D9036726514F920C955D3AE"
+      },
+      "firstImplementationReceipt": {
+        "path": "verification/receipts/2026-10-29-b1-memo-workbench.json",
+        "sha256": "3CB37E27C64648310EEC71E601A6EED6F0E3B59A2AB757D25B3CAEA92CB6C8A9"
+      },
+      "role": "ADOPTED_ACTUAL_FINE_DETAIL"
+    },
+    "composition": {
+      "path": "docs/design/b1-article-comments-v7-proposal-2026-10-29.png",
+      "sha256": "DD07ACB48766B2691DC2FE8C7B0181E79A3C120F48817DEC84894CFAF8A5EF2D",
+      "role": "GENERATED_COMPOSITION_ONLY_ORDINARY_COMPOSER_EXCLUDED"
+    },
+    "composer": {
+      "path": "docs/design/b1-comment-composer-corrected-2026-10-30.png",
+      "sha256": "EA385E2220D7792038F7C3EB3D20C53A9CA01869D3FD900FC3BBF2A53E87345F",
+      "role": "GENERATED_GEOMETRY_ONLY_NO_MATERIAL_AUTHORITY"
+    },
+    "context": "Adapt page/popup density,elevation,background and readable paper;native behavior/theme/accessibility constraints remain."
+  },
+  "cause": "Known visible raster overlap had been written as a later implementation adaptation rather than corrected/excluded at design handoff. Whole-page correction still overlapped and was not selected.",
+  "correction": {
+    "outer": "Enclose both identity fields and entire editor/footer",
+    "footer": "Separate row beneath textarea,quiet tools left,submit right",
+    "submit": "Completely inside footer and outer enclosure",
+    "geometryWitness": {
+      "path": "artifacts/b1-article-v7-2026-10-29/composer-geometry.json",
+      "sha256": "911BA3F05D5BBD8A39554A240A6CB8E7BCC7479CEDA8C62A45CBF1AD251DD534",
+      "scope": "DESIGN_LAYOUT_REFERENCE_ONLY_NOT_NATIVE_OR_PRODUCT_TEST",
+      "pass": true,
+      "notProductEvidence": true
+    },
+    "viewer": {
+      "path": "artifacts/b1-article-v7-2026-10-29/viewer-check.json",
+      "sha256": "A9AE895D151B311EC0C442C1CF0F8FF87F23BB1CC34261B1F5BF8DC26666FA6E",
+      "states": 9,
+      "oneImageAtATime": true,
+      "status": "PASS_VIEWER_ONLY"
+    }
+  },
+  "guidanceTransfer": {
+    "selectedDesignImage": "Actual memo rendering,not generated proposal",
+    "generatedDependencies": "Separately frozen composition and geometry references",
+    "requiredDecision": "actual-memo-detail-priority",
+    "newFrameworkOrToolSchema": false
+  },
+  "limits": [
+    "No product CSS/DOM/runtime changed",
+    "No claim of actual native composer geometry passing yet",
+    "Generated detail is not fine-material approval",
+    "No full product/physical device/actual extension/account qualification"
+  ],
+  "next": "b1-article-comments-v7-implementation"
+}
