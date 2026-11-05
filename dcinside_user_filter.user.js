@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DCInside PC User Filter
 // @namespace    http://tampermonkey.net/
-// @version      1.9.9
+// @version      2.0.0
 // @description  DCInside PC filter port based on the latest mobile filter runtime and shared filter core
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -27,6 +27,13 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
 
     const __dcufRoot = (typeof unsafeWindow !== 'undefined' && unsafeWindow) ? unsafeWindow : window;
     if (window.top !== window.self) return;
+
+    // Login is an independent presentation entry. No gallery boot, menus,
+    // filtering or body lock may run on the authentication document.
+    if (false && __dcufIsLoginRoute(window.location)) {
+        __dcufMountLoginPresentation();
+        return;
+    }
 
     const detectedRouteType = ((window.location.pathname || '').match(/\/board\/(lists|view|write|modify|delete)(?:\/|$)/) || [])[1] || 'other';
     const detectedPageType = detectedRouteType === 'delete' && 'off' !== 'mobile'
@@ -92,6 +99,7 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     let criticalTimer = 0;
     let domReadyListener = null;
     let loadListener = null;
+    let lockRepairObserver = null;
 
     const pageType = pageContext.type;
     const isTargetPage = () => pageType !== 'other';
@@ -122,6 +130,8 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         if (domReadyListener) document.removeEventListener('DOMContentLoaded', domReadyListener);
         if (loadListener) window.removeEventListener('load', loadListener);
         domReadyListener = loadListener = null;
+        lockRepairObserver?.disconnect();
+        lockRepairObserver = null;
     };
     const ensureLockStyle = () => {
         const mount = document.head || document.documentElement;
@@ -242,7 +252,10 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         filterReady: false,
         ensure(reason = 'ensure') {
             if (!isTargetPage() || this.state === 'ready' || this.state === 'degraded') return true;
-            document.documentElement?.setAttribute(STATE_ATTR, this.state === 'preparing' ? 'preparing' : 'locked');
+            const expectedState = this.state === 'preparing' ? 'preparing' : 'locked';
+            if (document.documentElement?.getAttribute(STATE_ATTR) !== expectedState) {
+                document.documentElement?.setAttribute(STATE_ATTR, expectedState);
+            }
             ensureLockStyle();
             ensureOverlay();
             note('boot.ensure', { reason });
@@ -314,6 +327,28 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
     const startBootUiWatchdog = () => {
         if (!isTargetPage() || ensureTimer) return;
         const tick = () => bootController.ensure('watchdog');
+        // At document-start Chromium can replace the provisional <html>/<head>
+        // after an init script has installed the lock. Repair that parser-owned
+        // replacement in the mutation checkpoint before the next paint; the
+        // interval below remains only a bounded fallback.
+        if (typeof MutationObserver === 'function' && document) {
+            lockRepairObserver = new MutationObserver(() => {
+                if (bootController.state !== 'locked' && bootController.state !== 'preparing') return;
+                const root = document.documentElement;
+                const expectedState = bootController.state === 'preparing' ? 'preparing' : 'locked';
+                if (root?.getAttribute(STATE_ATTR) !== expectedState
+                    || !document.getElementById(LOCK_STYLE_ID)
+                    || !document.getElementById(OVERLAY_ID)) {
+                    bootController.ensure('parser-repair');
+                }
+            });
+            lockRepairObserver.observe(document, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: [STATE_ATTR]
+            });
+        }
         ensureTimer = setInterval(tick, 80);
         absoluteTimer = setTimeout(() => bootController.degrade('absolute-deadline'), ABSOLUTE_DEADLINE_MS);
         domReadyListener = () => {
@@ -347,6 +382,303 @@ https://namu.wiki/w/DBAD%20%EB%9D%BC%EC%9D%B4%EC%84%A0%EC%8A%A4
         startBootUiWatchdog();
     }
     // PC filter port shared prelude
+// Pure inherited theme values, hoisted for the isolated login entry.
+function __dcufGetThemePresets() {
+    return Object.freeze([
+        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
+        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
+        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
+        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
+        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] }),
+        Object.freeze({ id: 'indigo', label: '인디고', light: ['#4f46e5', '#4338ca', '#eef2ff'], dark: ['#4f46e5', '#3730a3', '#29274f'] }),
+        Object.freeze({ id: 'sky', label: '스카이', light: ['#0284c7', '#0369a1', '#e0f2fe'], dark: ['#0369a1', '#075985', '#17384a'] }),
+        Object.freeze({ id: 'cyan', label: '시안', light: ['#0891b2', '#0e7490', '#ecfeff'], dark: ['#0e7490', '#155e75', '#173b44'] }),
+        Object.freeze({ id: 'teal', label: '틸', light: ['#0f766e', '#115e59', '#e6f7f4'], dark: ['#0f766e', '#115e59', '#173c38'] }),
+        Object.freeze({ id: 'lime', label: '라임', light: ['#65a30d', '#4d7c0f', '#f7fee7'], dark: ['#4d7c0f', '#3f6212', '#2c3918'] }),
+        Object.freeze({ id: 'amber', label: '앰버', light: ['#d97706', '#b45309', '#fffbeb'], dark: ['#b45309', '#92400e', '#493016'] }),
+        Object.freeze({ id: 'red', label: '레드', light: ['#dc2626', '#b91c1c', '#fef2f2'], dark: ['#c62828', '#991b1b', '#4a2020'] }),
+        Object.freeze({ id: 'rose', label: '로즈', light: ['#e11d48', '#be123c', '#fff1f2'], dark: ['#cf234c', '#9f1239', '#4a202d'] }),
+        Object.freeze({ id: 'pink', label: '핑크', light: ['#db2777', '#be185d', '#fce7f3'], dark: ['#c52a72', '#9d174d', '#472138'] }),
+    ]);
+}
+
+function __dcufBuildThemeBaseCss(ROOT_ATTRIBUTE, PRESETS = __dcufGetThemePresets()) {
+    const buildPresetVariables = () => PRESETS.map((preset) => {
+        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
+        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
+        return `
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] { --dcuf-theme-accent:${accent};--dcuf-theme-accent-strong:${strong};--dcuf-theme-accent-soft:${soft};--dcuf-theme-on-accent:${onAccent}; }
+            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
+            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode { --dcuf-theme-accent:${darkAccent};--dcuf-theme-accent-strong:${darkStrong};--dcuf-theme-accent-soft:${darkSoft};--dcuf-theme-on-accent:${darkOnAccent}; }
+        `;
+    }).join('\n');
+
+    return `
+        ${buildPresetVariables()}
+        html[${ROOT_ATTRIBUTE}] {
+            --dcuf-theme-accent-ink:var(--dcuf-theme-accent-strong);--dcuf-theme-fg:#27313f;--dcuf-theme-fg-muted:#687384;--dcuf-theme-border:#e2e7e5;--dcuf-theme-border-strong:#cbd5d1;--dcuf-theme-page:#f7f8f8;--dcuf-theme-surface:#ffffff;--dcuf-theme-surface-raised:#ffffff;--dcuf-theme-surface-muted:#f2f5f4;--dcuf-theme-surface-input:#ffffff;--dcuf-theme-canvas:#f7f8f8;--dcuf-theme-card-top:#ffffff;--dcuf-theme-card-bottom:#ffffff;--dcuf-theme-article-surface:#ffffff;--dcuf-theme-concept-surface:#f5f8f7;--dcuf-theme-notice-surface:#f3f6f5;--dcuf-theme-reply-surface:#f3f6f5;--dcuf-theme-card-shadow:0 1px 2px rgba(24,40,34,.035);--dcuf-theme-panel-shadow:0 16px 48px rgba(24,40,34,.14);--dcuf-theme-primary-top:color-mix(in srgb,var(--dcuf-theme-accent) 78%,white);--dcuf-theme-focus-ring:color-mix(in srgb,var(--dcuf-theme-accent) 18%,transparent);--dcuf-theme-accent-shadow:color-mix(in srgb,var(--dcuf-theme-accent-strong) 25%,transparent);
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-theme-accent-ink:color-mix(in srgb,var(--dcuf-theme-accent) 55%,white);--dcuf-theme-fg:#edf2f7;--dcuf-theme-fg-muted:#aeb8c4;--dcuf-theme-border:#343c3d;--dcuf-theme-border-strong:#4a5656;--dcuf-theme-page:#141819;--dcuf-theme-surface:#1b2021;--dcuf-theme-surface-raised:#222829;--dcuf-theme-surface-muted:#202728;--dcuf-theme-surface-input:#171c1d;--dcuf-theme-canvas:#171c1d;--dcuf-theme-card-top:#1b2021;--dcuf-theme-card-bottom:#1b2021;--dcuf-theme-article-surface:#1b2021;--dcuf-theme-concept-surface:#202827;--dcuf-theme-notice-surface:#252e2d;--dcuf-theme-reply-surface:#202827;--dcuf-theme-card-shadow:0 1px 2px rgba(0,0,0,.16);--dcuf-theme-panel-shadow:0 16px 48px rgba(0,0,0,.4);--dcuf-theme-primary-top:color-mix(in srgb,var(--dcuf-theme-accent) 68%,white);
+        }
+        `;
+}
+// Existing B1 values only; no gallery DOM rules or initialization.
+function __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE) {
+    return `
+        /* Mobile B1 material roles from the selected preview. Shared palette
+           IDs/accent values and the PC theme remain unchanged. */
+        html[${ROOT_ATTRIBUTE}] {
+            /* Page planes follow the existing full-width header. */
+            --dcuf-page-gutter: 10px;
+            --dcuf-b1-canvas: #f1f5f5;
+            --dcuf-b1-paper: var(--dcuf-theme-surface);
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 80%, var(--dcuf-theme-accent-soft)) 58%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 64%, transparent);
+            --dcuf-menu-button-background: var(--dcuf-v7-primary-bg);
+            --dcuf-menu-button-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-menu-button-width-ratio: .66;
+            --dcuf-menu-button-height-ratio: .63;
+            --dcuf-menu-button-padding-ratio: .57;
+            --dcuf-menu-button-font-ratio: .69;
+            --dcuf-menu-button-weight: 650;
+            /* Lowercase Segoe UI ink sits below its line box's midpoint. */
+            --dcuf-menu-button-padding-block: 0 .32em;
+            --dcuf-menu-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            --dcuf-menu-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 var(--dcuf-b1-rim);
+            --dcuf-menu-backdrop: var(--dcuf-b1-floating-filter);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff2e, #ffffff08 42%, transparent 65%);
+            --dcuf-b1-floating-filter: blur(8px) saturate(1.08);
+            --dcuf-b1-structural-filter: blur(12px) saturate(1.1);
+            --dcuf-panel-scrim: rgba(18,25,35,.22);
+            --dcuf-panel-status-error: #a52b40;
+            --dcuf-panel-status-success: #12694e;
+            --dcuf-b1-rim: #fffffff2;
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-border) 55%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 12px 32px #2e5a5f12, 0 1px 3px #3651560b;
+            --dcuf-control-highlight: #ffffff38;
+            --dcuf-control-glaze: linear-gradient(180deg, #ffffff20, #ffffff06 14%, #ffffff00 28%, #0000000c);
+            --dcuf-control-depth: #244d5514;
+            --dcuf-control-opacity: 82%;
+            --dcuf-v7-primary-glaze: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 68%);
+            --dcuf-v7-primary-shadow: inset 0 1px 0 var(--dcuf-b1-rim), 0 3px 7px #152e3412;
+        }
+        @media (max-width: 899px) {
+            html[${ROOT_ATTRIBUTE}] { --dcuf-page-gutter: 8px; }
+        }
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            --dcuf-b1-canvas: #171e21;
+            --dcuf-b1-paper: #20292c;
+            --dcuf-b1-glass: color-mix(in srgb, color-mix(in srgb, var(--dcuf-b1-paper) 85%, var(--dcuf-theme-accent-soft)) 72%, transparent);
+            --dcuf-b1-floating: color-mix(in srgb, var(--dcuf-b1-paper) 76%, transparent);
+            --dcuf-b1-sheen: linear-gradient(120deg, #ffffff0d, transparent 58%);
+            --dcuf-panel-scrim: rgba(18,25,35,.28);
+            --dcuf-panel-status-error: #ff9ba9;
+            --dcuf-panel-status-success: #7cdbb4;
+            --dcuf-b1-rim: color-mix(in srgb, var(--dcuf-theme-fg) 9%, transparent);
+            --dcuf-b1-line: color-mix(in srgb, var(--dcuf-theme-fg) 5%, var(--dcuf-b1-paper));
+            --dcuf-b1-shadow: 0 14px 34px #0003, 0 1px 2px #0003;
+            --dcuf-control-highlight: #ffffff08;
+            --dcuf-control-glaze: linear-gradient(180deg, var(--dcuf-control-highlight), transparent 40%);
+            --dcuf-control-depth: #00000024;
+            --dcuf-control-opacity: 88%;
+            --dcuf-v7-dark-primary-fill: color-mix(in srgb, color-mix(in srgb, #d7e2e2 76%, var(--dcuf-theme-accent)) 92%, transparent);
+            --dcuf-v7-dark-primary-ink: color-mix(in srgb, #1b3033 86%, var(--dcuf-theme-accent-strong));
+            --dcuf-v7-primary-glaze: linear-gradient(180deg, #ffffff2e, transparent 68%);
+            --dcuf-v7-primary-rim-accent: 28%;
+            --dcuf-v7-primary-shadow: inset 0 1px 0 #ffffff61, inset 0 -1px 0 #102d321a, 0 3px 7px #00000026;
+        }
+        html[${ROOT_ATTRIBUTE}],
+        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
+        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
+            /* Optional shared-panel hooks: PC retains each existing fallback. */
+            --dcuf-panel-background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            --dcuf-panel-backdrop: var(--dcuf-b1-floating-filter);
+            --dcuf-panel-rim: var(--dcuf-b1-rim);
+            --dcuf-panel-shadow: var(--dcuf-b1-shadow), inset 0 1px 0 #ffffff26;
+            --dcuf-panel-header-background: transparent;
+            --dcuf-panel-body-background: transparent;
+            --dcuf-panel-footer-background: transparent;
+            --dcuf-panel-section-background: transparent;
+            --dcuf-panel-section-border: 0;
+            --dcuf-panel-section-divider: 1px solid var(--dcuf-b1-line);
+            --dcuf-panel-section-radius: 0;
+            --dcuf-panel-kicker-display: none;
+            --dcuf-panel-title-size: 20px;
+            --dcuf-panel-close-background: transparent;
+            --dcuf-panel-close-position: relative;
+            --dcuf-panel-close-shadow: none;
+            --dcuf-panel-close-border: transparent;
+            --dcuf-panel-close-font-size: 0;
+            --dcuf-panel-close-content: "";
+            --dcuf-panel-close-hover: var(--dcuf-control-secondary-bg);
+            --dcuf-panel-switch-thumb: #f7fbfa;
+            --dcuf-panel-range-margin: 0;
+            --dcuf-panel-status-info: var(--dcuf-theme-fg);
+            --dcuf-panel-empty-ink: var(--dcuf-theme-fg);
+            --dcuf-panel-help-ink: color-mix(in srgb,var(--dcuf-theme-fg) 75%,var(--dcuf-theme-fg-muted));
+            --dcuf-panel-pending-opacity: 1;
+            --dcuf-panel-pending-decoration: line-through;
+            /* Material values only: each existing presenter owns shape,
+               positioning and state. No filtered native-popup ancestors. */
+            /* Keep the specular edge above the label; dense primary tint
+               preserves small white-label contrast in lighter palettes. */
+            --dcuf-control-primary-fill: var(--dcuf-theme-accent-strong);
+            --dcuf-control-secondary-fill: color-mix(in srgb, var(--dcuf-b1-paper) var(--dcuf-control-opacity), transparent);
+            --dcuf-control-selected-fill: color-mix(in srgb, var(--dcuf-theme-accent-soft) 90%, transparent);
+            --dcuf-control-primary-bg: var(--dcuf-control-glaze), var(--dcuf-control-primary-fill);
+            --dcuf-control-secondary-bg: var(--dcuf-control-glaze), var(--dcuf-control-secondary-fill);
+            --dcuf-control-selected-bg: var(--dcuf-control-glaze), var(--dcuf-control-selected-fill);
+            --dcuf-control-primary-rim: color-mix(in srgb, var(--dcuf-theme-on-accent) 28%, var(--dcuf-theme-accent-strong));
+            --dcuf-control-rim: color-mix(in srgb, var(--dcuf-b1-rim) 65%, var(--dcuf-theme-border-strong));
+            --dcuf-control-shadow: inset 0 1px 0 var(--dcuf-control-highlight), inset 0 -1px 0 #00000012, 0 3px 8px var(--dcuf-control-depth);
+            --dcuf-control-quiet-shadow: inset 0 1px 0 var(--dcuf-control-highlight);
+            --dcuf-control-danger-bg: var(--dcuf-control-glaze), color-mix(in srgb, color-mix(in srgb, #c43249 12%, var(--dcuf-b1-paper)) 90%, transparent);
+        }
+        /* Adopted memo v7 recipes. Rebind on body as well: body-only dark
+           state changes must resolve composed palette values at that scope. */
+        html[${ROOT_ATTRIBUTE}], html[${ROOT_ATTRIBUTE}] body {
+            --dcuf-v7-reading: color-mix(in srgb, var(--dcuf-theme-fg) 7%, var(--dcuf-b1-paper));
+            --dcuf-v7-primary-fill: var(--dcuf-v7-dark-primary-fill,color-mix(in srgb, var(--dcuf-b1-paper) 76%, var(--dcuf-theme-accent)));
+            --dcuf-v7-primary-ink: var(--dcuf-v7-dark-primary-ink,color-mix(in srgb, var(--dcuf-theme-fg) 86%, var(--dcuf-theme-accent-strong)));
+            --dcuf-v7-primary-bg: var(--dcuf-v7-primary-glaze), var(--dcuf-v7-primary-fill);
+            --dcuf-menu-button-background: var(--dcuf-v7-primary-bg);
+            --dcuf-menu-button-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-v7-primary-rim: color-mix(in srgb, var(--dcuf-theme-accent) var(--dcuf-v7-primary-rim-accent,48%), var(--dcuf-b1-rim));
+            /* Optional management values; shared consumers keep PC fallbacks. */
+            --dcuf-management-default-width: 720;
+            --dcuf-management-default-height: 560;
+            --dcuf-management-panel-radius: 16px;
+            --dcuf-management-inset: 20px;
+            --dcuf-management-title-size: 24px;
+            --dcuf-management-title-weight: 750;
+            --dcuf-management-tabs-display: flex;
+            --dcuf-management-tabs-gap: 4px;
+            --dcuf-management-tabs-margin: 0 20px;
+            --dcuf-management-tabs-padding: 0;
+            --dcuf-management-tabs-border: 0;
+            --dcuf-management-tab-height: 44px;
+            --dcuf-management-tab-padding: 10px 12px;
+            --dcuf-management-tab-size: 13px;
+            --dcuf-management-tab-selected-shadow: inset 0 -2px 0 var(--dcuf-theme-accent);
+            --dcuf-management-body-flex: 1 1 auto;
+            --dcuf-management-tools-padding: 0;
+            --dcuf-management-tools-border: 0;
+            --dcuf-management-quiet-bg: transparent;
+            --dcuf-management-quiet-rim: transparent;
+            --dcuf-management-quiet-shadow: none;
+            --dcuf-management-quiet-radius: 0;
+            --dcuf-management-action-weight: 600;
+            --dcuf-management-action-hover: var(--dcuf-v7-primary-bg);
+            --dcuf-management-danger-hover: var(--dcuf-control-danger-bg);
+            --dcuf-management-delete-height: 44px;
+            --dcuf-management-reading: var(--dcuf-v7-reading);
+            --dcuf-management-list-offset: 12px;
+            --dcuf-management-list-padding: 4px 12px;
+            --dcuf-management-list-border: 1px solid var(--dcuf-b1-rim);
+            --dcuf-management-list-radius: 10px;
+            --dcuf-management-list-gap: 0;
+            --dcuf-management-list-margin: 0;
+            --dcuf-management-row-height: 64px;
+            --dcuf-management-row-sizing: border-box;
+            --dcuf-management-row-padding: 12px 14px;
+            --dcuf-management-row-divider: inset 0 -1px 0 var(--dcuf-b1-line);
+            --dcuf-management-primary-width: 118px;
+            --dcuf-management-primary-radius: 10px;
+            --dcuf-management-primary-weight: 650;
+            --dcuf-management-primary-bg: var(--dcuf-v7-primary-bg);
+            --dcuf-management-primary-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-management-primary-rim: var(--dcuf-v7-primary-rim);
+            --dcuf-management-primary-shadow: var(--dcuf-v7-primary-shadow);
+            --dcuf-management-resize-clearance: 44px;
+            /* Equivalent management children consume the same v7 roles.
+               Shared presenter fallbacks remain the PC appearance. */
+            --dcuf-child-primary-bg: var(--dcuf-v7-primary-bg);
+            --dcuf-child-primary-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-child-primary-rim: var(--dcuf-v7-primary-rim);
+            --dcuf-child-primary-shadow: var(--dcuf-v7-primary-shadow);
+            --dcuf-child-primary-width: 118px;
+            --dcuf-child-backup-primary-width: auto;
+            --dcuf-child-backup-primary-height: 36px;
+            --dcuf-child-backup-primary-padding: 6px 12px;
+            --dcuf-child-control-radius: 10px;
+            --dcuf-child-control-weight: 650;
+            --dcuf-child-quiet-bg: transparent;
+            --dcuf-child-quiet-rim: transparent;
+            --dcuf-child-quiet-shadow: none;
+            --dcuf-child-quiet-radius: 0;
+            --dcuf-child-action-hover: var(--dcuf-v7-primary-bg);
+            --dcuf-child-actions-flex: 0 0 auto;
+            --dcuf-child-actions-justify: flex-end;
+            --dcuf-child-tabs-padding: 0;
+            --dcuf-child-tabs-border: 0;
+            --dcuf-child-tab-height: 44px;
+            --dcuf-child-tab-selected-shadow: inset 0 -2px 0 var(--dcuf-theme-accent);
+            --dcuf-child-section-padding: 4px 0 16px;
+            --dcuf-child-export-margin: 8px 0 0;
+            --dcuf-child-import-margin: 12px 0 0 auto;
+            --dcuf-child-import-display: block;
+            --dcuf-child-import-width: auto;
+            --dcuf-personal-utility-height: 36px;
+            --dcuf-personal-utility-padding: 6px 12px;
+            --dcuf-personal-quiet-ink: var(--dcuf-theme-fg);
+            --dcuf-personal-range-height: 36px;
+            --dcuf-personal-reset-spacer: auto;
+            --dcuf-personal-menu-hover: color-mix(in srgb,var(--dcuf-theme-accent-soft) 38%,transparent);
+            --dcuf-selection-background: var(--dcuf-panel-background);
+            --dcuf-selection-backdrop: var(--dcuf-panel-backdrop);
+            --dcuf-selection-rim: var(--dcuf-panel-rim);
+            --dcuf-selection-shadow: var(--dcuf-panel-shadow);
+            --dcuf-selection-title-size: 18px;
+            --dcuf-selection-title-margin: 0 0 16px;
+            --dcuf-selection-reading: var(--dcuf-v7-reading);
+            --dcuf-selection-group-padding: 0 12px;
+            --dcuf-selection-group-rim: 1px solid var(--dcuf-b1-rim);
+            --dcuf-selection-group-radius: 10px;
+            --dcuf-selection-row-margin: 0;
+            --dcuf-selection-row-padding: 12px 0;
+            --dcuf-selection-row-border: 0;
+            --dcuf-selection-row-radius: 0;
+            --dcuf-selection-row-bg: transparent;
+            --dcuf-selection-row-divider: inset 0 -1px 0 var(--dcuf-b1-line);
+            --dcuf-filter-reading: var(--dcuf-v7-reading);
+            --dcuf-filter-utility-width: auto;
+            --dcuf-filter-utility-display: inline-flex;
+            --dcuf-filter-segment-border: 0;
+            --dcuf-filter-segment-bg: color-mix(in srgb,var(--dcuf-theme-surface-input) 72%,var(--dcuf-theme-accent-soft));
+            --dcuf-filter-segment-radius: 10px;
+            --dcuf-filter-segment-item-bg: transparent;
+            --dcuf-filter-segment-shadow: none;
+            --dcuf-filter-segment-ink: var(--dcuf-theme-fg);
+            --dcuf-filter-segment-selected: color-mix(in srgb,var(--dcuf-theme-accent-soft) 75%,var(--dcuf-v7-reading));
+            --dcuf-filter-choice-padding: 8px;
+            --dcuf-filter-choice-min: 140px;
+            --dcuf-filter-choice-border: 0;
+            --dcuf-filter-choice-bg: transparent;
+            --dcuf-filter-choice-selected: var(--dcuf-filter-segment-selected);
+            --dcuf-filter-headtext-height: auto;
+            --dcuf-filter-manual-margin: 12px 0 0;
+            --dcuf-filter-clear-margin: 8px 0 16px;
+            --dcuf-filter-heading-margin: 16px 0 10px;
+            --dcuf-filter-rule-gap: 0;
+            --dcuf-filter-rule-padding: 8px;
+            --dcuf-palette-reading: var(--dcuf-v7-reading);
+            --dcuf-palette-options-padding: 8px;
+            --dcuf-palette-options-radius: 10px;
+            --dcuf-palette-option-height: 56px;
+            --dcuf-palette-option-border: 0;
+            --dcuf-palette-option-bg: transparent;
+            --dcuf-palette-option-selected-bg: var(--dcuf-v7-primary-fill);
+            --dcuf-palette-option-selected-ink: var(--dcuf-v7-primary-ink);
+            --dcuf-palette-option-selected-shadow: none;
+            --dcuf-palette-name-weight: 650;
+            --dcuf-palette-resize-clearance: 44px;
+            --dcuf-palette-default-spacer: auto;
+            --dcuf-convenience-header-cursor: default;
+        }
+`;
+}
 /**
  * Shared storage/schema constants extracted from v2.7.5.4.
  */
@@ -671,6 +1003,27 @@ function isSuspiciousLegacyManagedIpList(rawIpValue, marker = ETC_CONSTANTS.MOBI
     return parseIpPrefixList(rawIpValue, marker).length >= threshold;
 }
 
+function normalizeShortcutEventKey(event) {
+    const key = String(event?.key || '');
+    if (key === 'OS') return 'Meta';
+    if (key === 'Esc') return 'Escape';
+    if (key === ' ' || key === 'Spacebar') return 'Space';
+    if (key.length === 1 && key !== '+') return key;
+    if (/^(?:Control|Meta|Alt|Shift|CapsLock|Tab|Enter|Escape|Backspace|Delete|Insert|Home|End|PageUp|PageDown|Arrow(?:Up|Down|Left|Right)|F(?:[1-9]|1\d|2[0-4])|Space|Add|Subtract|Multiply|Divide)$/.test(key)) return key;
+    const code = String(event?.code || '');
+    if (/^Key[A-Z]$/.test(code)) return code.slice(3);
+    if (/^(?:Digit|Numpad)\d$/.test(code)) return code.slice(-1);
+    return ({ Equal: '=', Minus: '-', Comma: ',', Period: '.', Slash: '/', Backslash: '\\', Semicolon: ';', Quote: "'", Backquote: '`', BracketLeft: '[', BracketRight: ']', NumpadAdd: 'Add', NumpadSubtract: 'Subtract', NumpadMultiply: 'Multiply', NumpadDivide: 'Divide' })[code] || '';
+}
+
+function matchesShortcutEvent(event, shortcut) {
+    if (!shortcut?.key || Boolean(event.ctrlKey) !== shortcut.ctrlKey || Boolean(event.metaKey) !== shortcut.metaKey
+        || Boolean(event.altKey) !== shortcut.altKey || Boolean(event.shiftKey) !== shortcut.shiftKey) return false;
+    // Preserve existing logical-key strings;fall back only for named/IME/code keys.
+    return String(event.key || '').toUpperCase() === shortcut.key
+        || normalizeShortcutEventKey(event).toUpperCase() === shortcut.key;
+}
+
 function formatShortcutKeys(keySet) {
     if (!keySet || keySet.size === 0) return '';
 
@@ -682,7 +1035,7 @@ function formatShortcutKeys(keySet) {
         .sort((a, b) => priority.indexOf(a) - priority.indexOf(b));
 
     const others = keys
-        .filter((key) => !priority.includes(key) && key.length === 1)
+        .filter((key) => !priority.includes(key) && Boolean(normalizeShortcutEventKey({ key })))
         .sort();
 
     return [...modifiers, ...others].map((key) => key === 'Control' ? 'Ctrl' : key).join('+');
@@ -783,11 +1136,557 @@ function normalizeStoredFilterSettings(rawValues = {}) {
         extractIpPrefix,
         normalizeBlockConfigIp,
         isSuspiciousLegacyManagedIpList,
+        normalizeShortcutEventKey,
+        matchesShortcutEvent,
         formatShortcutKeys,
         parseShortcutString,
         createDefaultFilterSettings,
         normalizeStoredFilterSettings,
     });
+
+const UI_INTENT_TYPES = Object.freeze({
+    PALETTE_LOAD: 'palette/load',
+    PALETTE_COMMIT: 'palette/commit',
+    SURFACE_OPEN: 'surface/open',
+    SURFACE_CLOSE: 'surface/close',
+    FILTER_SETTINGS_COMMIT: 'filter-settings/commit',
+    PERSONAL_BLOCK_ADD: 'personal-block/add',
+    PERSONAL_BLOCK_REMOVE: 'personal-block/remove',
+});
+
+function cloneUiValue(value) {
+    if (typeof structuredClone === 'function') return structuredClone(value);
+    return JSON.parse(JSON.stringify(value));
+}
+
+function assertSerializableUiValue(value, path = 'snapshot', seen = new WeakSet()) {
+    if (value === null || ['string', 'number', 'boolean'].includes(typeof value)) return;
+    if (typeof value !== 'object') throw new TypeError(`${path}: SurfaceSnapshot values must be JSON-serializable`);
+    if (typeof Node !== 'undefined' && value instanceof Node) throw new TypeError(`${path}: SurfaceSnapshot cannot contain DOM nodes`);
+    if (seen.has(value)) throw new TypeError(`${path}: SurfaceSnapshot cannot contain cycles`);
+    if (!Array.isArray(value) && Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+        throw new TypeError(`${path}: SurfaceSnapshot can contain only plain objects and arrays`);
+    }
+    seen.add(value);
+    if (Array.isArray(value)) value.forEach((child, index) => assertSerializableUiValue(child, `${path}[${index}]`, seen));
+    else Object.entries(value).forEach(([key, child]) => assertSerializableUiValue(child, `${path}.${key}`, seen));
+    seen.delete(value);
+}
+
+function freezeUiValue(value, seen = new WeakSet()) {
+    if (!value || typeof value !== 'object' || seen.has(value)) return value;
+    seen.add(value);
+    Object.values(value).forEach((child) => freezeUiValue(child, seen));
+    return Object.freeze(value);
+}
+
+function comparableSnapshot(snapshot) {
+    const value = cloneUiValue(snapshot);
+    delete value.revision;
+    return JSON.stringify(value);
+}
+
+function createCommandResult(ok, code, committedSnapshot = null) {
+    const result = { ok: Boolean(ok), code: String(code || (ok ? 'ok' : 'error')) };
+    if (committedSnapshot) result.committedSnapshot = committedSnapshot;
+    return Object.freeze(result);
+}
+
+function createUiSurface({ mount, render, unmount }) {
+    if (![mount, render, unmount].every((entry) => typeof entry === 'function')) {
+        throw new TypeError('UiSurface requires mount, render, and unmount functions');
+    }
+    return Object.freeze({ mount, render, unmount });
+}
+
+function createSurfaceSnapshot(value = {}) {
+    assertSerializableUiValue(value);
+    return freezeUiValue(cloneUiValue(value));
+}
+
+function createHostSurfaceAdapter({ connect, refresh, mountOwnedRoot, invokeNative, dispose }) {
+    if (![connect, refresh, mountOwnedRoot, invokeNative, dispose].every((entry) => typeof entry === 'function')) {
+        throw new TypeError('HostSurfaceAdapter requires connect, refresh, mountOwnedRoot, invokeNative, and dispose functions');
+    }
+    return Object.freeze({ connect, refresh, mountOwnedRoot, invokeNative, dispose });
+}
+
+function createHostSurfacePort({ findAnchor, invokeNative }) {
+    if (typeof findAnchor !== 'function' || typeof invokeNative !== 'function') {
+        throw new TypeError('HostSurfacePort requires findAnchor and invokeNative functions');
+    }
+    return Object.freeze({ findAnchor, invokeNative });
+}
+
+function createUiPortRuntime(initialSnapshot = {}) {
+    let snapshot = createSurfaceSnapshot({ revision: 0, ...cloneUiValue(initialSnapshot) });
+    const listeners = new Set();
+    const handlers = new Map();
+
+    const getSnapshot = () => snapshot;
+    const subscribe = (listener) => {
+        if (typeof listener !== 'function') throw new TypeError('UiPort.subscribe requires a function');
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+    };
+    const commit = (patch, reason = 'commit') => {
+        const candidate = { ...cloneUiValue(snapshot), ...cloneUiValue(patch || {}) };
+        delete candidate.revision;
+        if (comparableSnapshot(snapshot) === JSON.stringify(candidate)) {
+            return Object.freeze({ changed: false, reason, snapshot });
+        }
+        snapshot = createSurfaceSnapshot({ revision: snapshot.revision + 1, ...candidate });
+        listeners.forEach((listener) => {
+            try { listener(snapshot, Object.freeze({ reason })); }
+            catch (error) { console.warn('[DCUF UI] subscriber failed:', error); }
+        });
+        return Object.freeze({ changed: true, reason, snapshot });
+    };
+    const registerIntentHandler = (type, handler) => {
+        if (!Object.values(UI_INTENT_TYPES).includes(type)) throw new Error(`Unknown UiIntent type: ${type}`);
+        if (typeof handler !== 'function') throw new TypeError(`UiIntent handler must be a function: ${type}`);
+        if (handlers.has(type)) throw new Error(`UiIntent handler already registered: ${type}`);
+        handlers.set(type, handler);
+        let active = true;
+        return () => {
+            if (!active) return false;
+            active = false;
+            return handlers.delete(type);
+        };
+    };
+    const execute = async (intent) => {
+        if (!intent || typeof intent !== 'object' || !Object.values(UI_INTENT_TYPES).includes(intent.type)) {
+            return createCommandResult(false, 'invalid-intent');
+        }
+        const handler = handlers.get(intent.type);
+        if (!handler) return createCommandResult(false, 'unsupported-intent');
+        const before = snapshot;
+        const value = await handler(freezeUiValue(cloneUiValue(intent)), Object.freeze({ getSnapshot, commit }));
+        if (value?.ok === false) return createCommandResult(false, value.code || 'rejected');
+        return createCommandResult(true, value?.code || 'committed', snapshot !== before ? snapshot : null);
+    };
+    const dispatch = (intent) => execute(intent);
+
+    return Object.freeze({
+        port: Object.freeze({ getSnapshot, subscribe, dispatch }),
+        control: Object.freeze({
+            commit,
+            registerIntentHandler,
+            get listenerCount() { return listeners.size; },
+            get handlerCount() { return handlers.size; },
+        }),
+    });
+}
+
+function createDisposableScope(label = 'ui-surface') {
+    const disposers = [];
+    let disposed = false;
+    const own = (disposer) => {
+        if (typeof disposer !== 'function') throw new TypeError(`${label}: disposer must be a function`);
+        if (disposed) {
+            disposer();
+            return () => {};
+        }
+        disposers.push(disposer);
+        let active = true;
+        return () => {
+            if (!active) return;
+            active = false;
+            const index = disposers.indexOf(disposer);
+            if (index >= 0) disposers.splice(index, 1);
+            disposer();
+        };
+    };
+    const listen = (target, type, listener, options) => {
+        if (!target || typeof target.addEventListener !== 'function') throw new TypeError(`${label}: invalid event target`);
+        target.addEventListener(type, listener, options);
+        return own(() => target.removeEventListener(type, listener, options));
+    };
+    const timeout = (listener, delay) => {
+        const id = globalThis.setTimeout(listener, delay);
+        return own(() => globalThis.clearTimeout(id));
+    };
+    const observeOwnedRoot = (root, listener, options) => {
+        if (!(root instanceof Node)) throw new TypeError(`${label}: observer root must be a Node`);
+        const observer = new MutationObserver(listener);
+        observer.observe(root, options);
+        own(() => observer.disconnect());
+        return observer;
+    };
+    const dispose = () => {
+        if (disposed) return;
+        disposed = true;
+        while (disposers.length) {
+            try { disposers.pop()(); }
+            catch (error) { console.warn(`[DCUF UI] ${label} disposal failed:`, error); }
+        }
+    };
+    return Object.freeze({
+        own,
+        listen,
+        timeout,
+        observeOwnedRoot,
+        dispose,
+        get disposed() { return disposed; },
+        get size() { return disposers.length; },
+    });
+}
+
+    const DCUF_UI_CONTRACTS = Object.freeze({
+        UI_INTENT_TYPES,
+        createCommandResult,
+        createDisposableScope,
+        createSurfaceSnapshot,
+        createUiSurface,
+        createHostSurfaceAdapter,
+        createHostSurfacePort,
+        createUiPortRuntime,
+    });
+
+    const __dcufUiRuntime = DCUF_UI_CONTRACTS.createUiPortRuntime({
+        palette: Object.freeze({ value: 'blue', status: 'idle' }),
+        filterSettings: null,
+        personalBlock: null,
+        surfaces: Object.freeze({}),
+    });
+    const __dcufUiPort = __dcufUiRuntime.port;
+    const __dcufUiApplication = __dcufUiRuntime.control;
+    const __dcufPaletteStorageKey = 'dcuf_mobile_ui_palette';
+    const __dcufValidUiString = (value) => typeof value === 'string' && value.trim().length > 0;
+    let __dcufPaletteWriteRevision = 0;
+
+    __dcufUiApplication.registerIntentHandler(DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_LOAD, async (intent, context) => {
+        const revisionAtStart = __dcufPaletteWriteRevision;
+        const value = await GM_getValue(__dcufPaletteStorageKey, intent.defaultValue || 'blue');
+        if (__dcufPaletteWriteRevision !== revisionAtStart) {
+            return { ok: true, code: 'palette-load-superseded' };
+        }
+        context.commit({ palette: { value, status: 'ready' } }, 'palette-load');
+        return { ok: true, code: 'palette-loaded' };
+    });
+    __dcufUiApplication.registerIntentHandler(DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_COMMIT, async (intent, context) => {
+        if (!__dcufValidUiString(intent.value)) return { ok: false, code: 'invalid-palette' };
+        await GM_setValue(__dcufPaletteStorageKey, intent.value);
+        __dcufPaletteWriteRevision += 1;
+        context.commit({ palette: { value: intent.value, status: 'ready' } }, 'palette-commit');
+        return { ok: true, code: 'palette-committed' };
+    });
+    __dcufUiApplication.registerIntentHandler(DCUF_UI_CONTRACTS.UI_INTENT_TYPES.SURFACE_OPEN, async (intent, context) => {
+        if (!__dcufValidUiString(intent.surface)) return { ok: false, code: 'invalid-surface' };
+        const surfaces = { ...(context.getSnapshot().surfaces || {}), [intent.surface]: true };
+        context.commit({ surfaces }, `surface-open:${intent.surface}`);
+        return { ok: true, code: 'surface-opened' };
+    });
+    __dcufUiApplication.registerIntentHandler(DCUF_UI_CONTRACTS.UI_INTENT_TYPES.SURFACE_CLOSE, async (intent, context) => {
+        if (!__dcufValidUiString(intent.surface)) return { ok: false, code: 'invalid-surface' };
+        const surfaces = { ...(context.getSnapshot().surfaces || {}), [intent.surface]: false };
+        context.commit({ surfaces }, `surface-close:${intent.surface}`);
+        return { ok: true, code: 'surface-closed' };
+    });
+
+    window.__dcufUiPort = __dcufUiPort;
+    if (__dcufRoot.__DCUF_TESTBED_CONFIG__) {
+        window.__dcufUiPortDebug = Object.freeze({
+            listenerCount: () => __dcufUiApplication.listenerCount,
+            handlerCount: () => __dcufUiApplication.handlerCount,
+            createDisposableScope: DCUF_UI_CONTRACTS.createDisposableScope,
+            createUiSurface: DCUF_UI_CONTRACTS.createUiSurface,
+        });
+    }
+
+    const __dcufThemeHost = DCUF_UI_CONTRACTS.createHostSurfacePort({
+        findAnchor(name) {
+            if (name === 'root') return document.documentElement;
+            if (name === 'head') return document.head;
+            if (name === 'body') return document.body;
+            if (name === 'mount') return document.body || document.documentElement;
+            if (name === 'active-element') return document.activeElement;
+            return null;
+        },
+        invokeNative(action, value, options = null) {
+            if (action === 'get-by-id') return document.getElementById(value);
+            if (action === 'create-element') return document.createElement(value);
+            if (action === 'mark-owned-surface') {
+                const { element, surface, role, state = 'open', presentation = '' } = value || {};
+                if (!(element instanceof Element)) throw new TypeError('mark-owned-surface requires an element');
+                element.setAttribute('data-dcuf-surface', String(surface));
+                element.setAttribute('data-dcuf-role', String(role));
+                element.setAttribute('data-dcuf-state', String(state));
+                if (presentation) element.setAttribute('data-dcuf-presentation', String(presentation));
+                return element;
+            }
+            if (action === 'on-dom-ready') {
+                document.addEventListener('DOMContentLoaded', value, options || { once: true });
+                return () => document.removeEventListener('DOMContentLoaded', value, options || { once: true });
+            }
+            if (action === 'palette-change') {
+                window.__dcufActivePalette = value.id;
+                window.dispatchEvent(new CustomEvent('dcuf:palette-change', { detail: value }));
+                return true;
+            }
+            throw new Error(`Unsupported theme host action: ${action}`);
+        },
+    });
+
+    const __dcufPopupGeometryHostAdapter = (() => {
+        const bindings = new WeakMap();
+
+        const connect = (target, options = {}) => {
+            if (!target || typeof target.addEventListener !== 'function') {
+                throw new TypeError('PopupGeometryHostAdapter.connect requires an element');
+            }
+            const existing = bindings.get(target);
+            if (existing) return existing;
+
+            const scope = DCUF_UI_CONTRACTS.createDisposableScope('popup-pinch-resize');
+            const baseMinWidth = Number(options.minWidth) || 320;
+            const baseMinHeight = Number(options.minHeight) || 260;
+            const maxWidthOption = Number(options.maxWidth) || 0;
+            const maxHeightOption = Number(options.maxHeight) || 0;
+            let isPinching = false;
+            let startDistance = 0;
+            let startWidth = 0;
+            let startHeight = 0;
+            let startAnchorX = 0.5;
+            let startAnchorY = 0.5;
+            let lastMoveTs = 0;
+            let lastMoveDistance = -1;
+            let pointerInteraction = null;
+            let pointerPoint = null;
+            let pointerFrameId = 0;
+
+            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
+            const getDistance = (first, second) => Math.hypot(first.clientX - second.clientX, first.clientY - second.clientY);
+            const getMidpoint = (first, second) => ({ x: (first.clientX + second.clientX) / 2, y: (first.clientY + second.clientY) / 2 });
+            const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
+            const normalizeFixedPosition = () => {
+                const rect = target.getBoundingClientRect();
+                const computedStyle = window.getComputedStyle(target);
+                if (computedStyle.transform && computedStyle.transform !== 'none') {
+                    target.style.setProperty('transform', 'none', 'important');
+                    target.style.setProperty('left', `${rect.left}px`, 'important');
+                    target.style.setProperty('top', `${rect.top}px`, 'important');
+                }
+                target.style.setProperty('box-sizing', 'border-box', 'important');
+                target.style.setProperty('width', `${rect.width}px`, 'important');
+                target.style.setProperty('height', `${rect.height}px`, 'important');
+                return target.getBoundingClientRect();
+            };
+            const isTouchInsideRect = (touch, rect, padding = 24) => (
+                touch.clientX >= rect.left - padding
+                && touch.clientX <= rect.right + padding
+                && touch.clientY >= rect.top - padding
+                && touch.clientY <= rect.bottom + padding
+            );
+            const canStartPinch = (touches, rect) => {
+                if (!touches || touches.length < 2) return false;
+                const first = touches[0];
+                const second = touches[1];
+                if (!isTouchInsideRect(first, rect) || !isTouchInsideRect(second, rect)) return false;
+                const midpoint = getMidpoint(first, second);
+                return isTouchInsideRect({ clientX: midpoint.x, clientY: midpoint.y }, rect, 48);
+            };
+            const startPinch = (touches) => {
+                const rect = normalizeFixedPosition();
+                if (!canStartPinch(touches, rect)) return;
+                const distance = getDistance(touches[0], touches[1]);
+                if (!distance || !Number.isFinite(distance)) return;
+                isPinching = true;
+                startDistance = distance;
+                startWidth = rect.width;
+                startHeight = rect.height;
+                const midpoint = getMidpoint(touches[0], touches[1]);
+                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
+                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
+                lastMoveTs = 0;
+                lastMoveDistance = -1;
+            };
+            const onTouchStart = (event) => {
+                if (!target.isConnected || !event.touches || event.touches.length < 2) return;
+                startPinch(event.touches);
+                if (!isPinching) return;
+                if (event.cancelable) event.preventDefault();
+                event.stopPropagation();
+            };
+            const onTouchMove = (event) => {
+                if (!target.isConnected || !isPinching) return;
+                if (!event.touches || event.touches.length < 2) {
+                    isPinching = false;
+                    return;
+                }
+                const distance = getDistance(event.touches[0], event.touches[1]);
+                if (!distance || !Number.isFinite(distance)) return;
+                const now = Date.now();
+                if (lastMoveDistance >= 0 && Math.abs(distance - lastMoveDistance) < 0.0001 && now - lastMoveTs < 6) {
+                    if (event.cancelable) event.preventDefault();
+                    event.stopPropagation();
+                    return;
+                }
+                lastMoveDistance = distance;
+                lastMoveTs = now;
+                const midpoint = getMidpoint(event.touches[0], event.touches[1]);
+                const viewport = viewportSize();
+                const maxViewportWidth = Math.max(120, viewport.width - 8);
+                const maxViewportHeight = Math.max(120, viewport.height - 8);
+                const dynamicMinWidth = Math.max(120, Math.min(baseMinWidth, Math.max(120, viewport.width - 12)));
+                const dynamicMinHeight = Math.max(120, Math.min(baseMinHeight, Math.max(120, viewport.height - 12)));
+                const configuredMaxWidth = maxWidthOption > 0 ? Math.min(maxWidthOption, maxViewportWidth) : maxViewportWidth;
+                const configuredMaxHeight = maxHeightOption > 0 ? Math.min(maxHeightOption, maxViewportHeight) : maxViewportHeight;
+                const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
+                const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
+                const requestedScale = distance / startDistance;
+                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
+                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
+                const scale = clamp(requestedScale, minScale, maxScale);
+                const nextWidth = startWidth * scale;
+                const nextHeight = startHeight * scale;
+                const gap = 4;
+                const rawLeft = midpoint.x - nextWidth * startAnchorX;
+                const rawTop = midpoint.y - nextHeight * startAnchorY;
+                const nextLeft = clamp(rawLeft, gap, Math.max(gap, viewport.width - nextWidth - gap));
+                const nextTop = clamp(rawTop, gap, Math.max(gap, viewport.height - nextHeight - gap));
+                for (const [property, value] of [
+                    ['min-width', dynamicMinWidth], ['min-height', dynamicMinHeight],
+                    ['max-width', maxWidth], ['max-height', maxHeight],
+                    ['width', nextWidth], ['height', nextHeight], ['left', nextLeft], ['top', nextTop],
+                ]) target.style.setProperty(property, `${value}px`, 'important');
+                if (event.cancelable) event.preventDefault();
+                event.stopPropagation();
+            };
+            const onTouchEnd = () => { isPinching = false; };
+
+            const pointerDragSelector = typeof options.pointerDragSelector === 'string'
+                ? options.pointerDragSelector : '';
+            const pointerResizeSelector = typeof options.pointerResizeSelector === 'string'
+                ? options.pointerResizeSelector : '';
+            const pointerInteractiveSelector = typeof options.pointerInteractiveSelector === 'string'
+                ? options.pointerInteractiveSelector : 'button, input, label, a';
+            const viewportGap = Number.isFinite(Number(options.viewportGap)) ? Number(options.viewportGap) : 4;
+            const applyPointerGeometry = () => {
+                pointerFrameId = 0;
+                if (!pointerInteraction || !pointerPoint) return;
+                const point = pointerPoint;
+                pointerPoint = null;
+                const viewport = viewportSize();
+                if (pointerInteraction.mode === 'drag') {
+                    const maxLeft = Math.max(viewportGap, viewport.width - pointerInteraction.width - viewportGap);
+                    const maxTop = Math.max(viewportGap, viewport.height - pointerInteraction.height - viewportGap);
+                    target.style.setProperty('left', `${clamp(point.x - pointerInteraction.offsetX, viewportGap, maxLeft)}px`, 'important');
+                    target.style.setProperty('top', `${clamp(point.y - pointerInteraction.offsetY, viewportGap, maxTop)}px`, 'important');
+                    return;
+                }
+                const maxWidth = Math.max(120, viewport.width - pointerInteraction.left - viewportGap);
+                const maxHeight = Math.max(120, viewport.height - pointerInteraction.top - viewportGap);
+                const minWidth = Math.min(baseMinWidth, maxWidth);
+                const minHeight = Math.min(baseMinHeight, maxHeight);
+                const nextWidth = clamp(pointerInteraction.width + point.x - pointerInteraction.startX, minWidth, maxWidth);
+                const nextHeight = clamp(pointerInteraction.height + point.y - pointerInteraction.startY, minHeight, maxHeight);
+                for (const [property, value] of [
+                    ['min-width', minWidth], ['min-height', minHeight],
+                    ['max-width', maxWidth], ['max-height', maxHeight],
+                    ['width', nextWidth], ['height', nextHeight],
+                ]) target.style.setProperty(property, `${value}px`, 'important');
+            };
+            const finishPointerInteraction = (event) => {
+                if (!pointerInteraction || (event && event.pointerId !== pointerInteraction.pointerId)) return;
+                if (pointerFrameId) cancelAnimationFrame(pointerFrameId);
+                applyPointerGeometry();
+                if (target.hasPointerCapture?.(pointerInteraction.pointerId)) target.releasePointerCapture(pointerInteraction.pointerId);
+                pointerInteraction = null;
+                pointerPoint = null;
+                target.removeAttribute('data-dcuf-pointer-interacting');
+            };
+            const onPointerDown = (event) => {
+                if (pointerInteraction || event.button !== 0 || event.isPrimary === false) return;
+                const eventTarget = event.target instanceof Element ? event.target : null;
+                if (!eventTarget) return;
+                const resizeHandle = pointerResizeSelector ? eventTarget.closest(pointerResizeSelector) : null;
+                const dragHandle = pointerDragSelector ? eventTarget.closest(pointerDragSelector) : null;
+                if (!resizeHandle && (!dragHandle || eventTarget.closest(pointerInteractiveSelector))) return;
+                const rect = normalizeFixedPosition();
+                pointerInteraction = {
+                    mode: resizeHandle ? 'resize' : 'drag',
+                    pointerId: event.pointerId,
+                    startX: event.clientX,
+                    startY: event.clientY,
+                    offsetX: event.clientX - rect.left,
+                    offsetY: event.clientY - rect.top,
+                    left: rect.left,
+                    top: rect.top,
+                    width: rect.width,
+                    height: rect.height,
+                };
+                target.setAttribute('data-dcuf-pointer-interacting', 'true');
+                target.setPointerCapture?.(event.pointerId);
+                event.preventDefault();
+            };
+            const onPointerMove = (event) => {
+                if (!pointerInteraction || event.pointerId !== pointerInteraction.pointerId) return;
+                pointerPoint = { x: event.clientX, y: event.clientY };
+                if (!pointerFrameId) pointerFrameId = requestAnimationFrame(applyPointerGeometry);
+                event.preventDefault();
+            };
+            const keepInsideViewport = () => {
+                if (!target.isConnected) return;
+                const rect = normalizeFixedPosition();
+                const viewport = viewportSize();
+                const width = Math.min(rect.width, Math.max(120, viewport.width - (viewportGap * 2)));
+                const height = Math.min(rect.height, Math.max(120, viewport.height - (viewportGap * 2)));
+                target.style.setProperty('width', `${width}px`, 'important');
+                target.style.setProperty('height', `${height}px`, 'important');
+                target.style.setProperty('left', `${clamp(rect.left, viewportGap, Math.max(viewportGap, viewport.width - width - viewportGap))}px`, 'important');
+                target.style.setProperty('top', `${clamp(rect.top, viewportGap, Math.max(viewportGap, viewport.height - height - viewportGap))}px`, 'important');
+            };
+
+            if (!target.hasAttribute('data-dcuf-role')) target.setAttribute('data-dcuf-role', 'resizable-popup');
+            target.setAttribute('data-dcuf-resizable', 'true');
+            target.setAttribute('data-dcuf-pinch-resize-bound', '1');
+            scope.listen(target, 'touchstart', onTouchStart, { passive: false });
+            scope.listen(target, 'touchmove', onTouchMove, { passive: false });
+            scope.listen(target, 'touchend', onTouchEnd, { passive: true });
+            scope.listen(target, 'touchcancel', onTouchEnd, { passive: true });
+            if (pointerDragSelector || pointerResizeSelector) {
+                target.setAttribute('data-dcuf-pointer-geometry-bound', '1');
+                scope.listen(target, 'pointerdown', onPointerDown);
+                scope.listen(target, 'pointermove', onPointerMove);
+                scope.listen(target, 'pointerup', finishPointerInteraction);
+                scope.listen(target, 'pointercancel', finishPointerInteraction);
+                scope.listen(window, 'resize', keepInsideViewport, { passive: true });
+                if (window.visualViewport) scope.listen(window.visualViewport, 'resize', keepInsideViewport, { passive: true });
+                scope.own(() => {
+                    if (pointerFrameId) cancelAnimationFrame(pointerFrameId);
+                    pointerFrameId = 0;
+                });
+            }
+            const connection = Object.freeze({
+                target,
+                refresh: () => target.getBoundingClientRect(),
+                dispose: () => {
+                    if (bindings.get(target) !== connection) return;
+                    scope.dispose();
+                    target.removeAttribute('data-dcuf-pinch-resize-bound');
+                    target.removeAttribute('data-dcuf-pointer-geometry-bound');
+                    target.removeAttribute('data-dcuf-pointer-interacting');
+                    target.removeAttribute('data-dcuf-resizable');
+                    bindings.delete(target);
+                },
+            });
+            bindings.set(target, connection);
+            return connection;
+        };
+
+        return DCUF_UI_CONTRACTS.createHostSurfaceAdapter({
+            connect,
+            refresh(target) { return bindings.get(target)?.refresh() || null; },
+            mountOwnedRoot(target) { return target; },
+            invokeNative(action, target, options) {
+                if (action === 'connect-pinch-resize') return connect(target, options);
+                if (action === 'get-binding') return bindings.get(target) || null;
+                throw new Error(`Unsupported popup geometry host action: ${action}`);
+            },
+            dispose(target) { bindings.get(target)?.dispose(); },
+        });
+    })();
 
 
 const modeToTier = (mode) => {
@@ -977,26 +1876,129 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
 
     if (!/\/board\/write(?:\/|$)/.test(window.location.pathname || '')) return;
 
-    const activatePumx = () => {
-        const button = document.getElementById('btn_pumx');
-        if (!(button instanceof HTMLButtonElement)) return false;
-        if (button.dataset.dcufPumxDefaultActivated === '1') return true;
+    const MARKER = 'dcufPumxDefaultActivated';
+    const RETRY_INTERVAL_MS = 250;
+    const DEADLINE_MS = 2000;
+    const now = () => (typeof performance?.now === 'function' ? performance.now() : Date.now());
+    const isPumxActive = (button) => button instanceof HTMLElement
+        && (button.classList.contains('on') || button.getAttribute('aria-pressed') === 'true');
 
-        button.dataset.dcufPumxDefaultActivated = '1';
-        button.click();
+    const hasReadyNativeHandler = (button) => {
+        if (!(button instanceof HTMLElement)) return false;
+        const inlineSource = button.getAttribute('onclick') || '';
+        const namedHandler = inlineSource.match(/^\s*([A-Za-z_$][\w$]*)\s*\(/)?.[1];
+        if (namedHandler) return typeof root[namedHandler] === 'function';
+        return typeof button.onclick === 'function';
+    };
+
+    const stopRetry = (state) => {
+        if (!state || state.stopped) return;
+        state.stopped = true;
+        if (state.timer) window.clearTimeout(state.timer);
+        state.timer = 0;
+        state.observer?.disconnect?.();
+        state.unsubscribe?.();
+        if (root.__dcufPumxDefaultState === state) root.__dcufPumxDefaultState = null;
+    };
+
+    const complete = (state, button) => {
+        if (!(button instanceof HTMLElement) || !isPumxActive(button)) return false;
+        button.dataset[MARKER] = '1';
+        root.__dcufPumxDefaultCompletedButton = button;
+        stopRetry(state);
         return true;
     };
 
-    const start = () => {
-        if (activatePumx()) return;
-
-        const observer = new MutationObserver(() => {
-            if (activatePumx()) observer.disconnect();
-        });
-        observer.observe(document.documentElement, { childList: true, subtree: true });
-        window.addEventListener('pagehide', () => observer.disconnect(), { once: true });
+    const scheduleAttempt = (state, delay = RETRY_INTERVAL_MS) => {
+        if (state.stopped || state.timer) return;
+        const remaining = Math.max(0, state.deadlineAt - now());
+        if (remaining <= 0) {
+            stopRetry(state);
+            return;
+        }
+        state.timer = window.setTimeout(() => {
+            state.timer = 0;
+            attempt(state);
+        }, Math.min(delay, remaining));
     };
 
+    const attempt = (state) => {
+        if (!state || state.stopped) return;
+        const currentTime = now();
+        if (currentTime >= state.deadlineAt) {
+            stopRetry(state);
+            return;
+        }
+        if (currentTime - state.lastAttemptAt < RETRY_INTERVAL_MS) {
+            scheduleAttempt(state, RETRY_INTERVAL_MS - (currentTime - state.lastAttemptAt));
+            return;
+        }
+
+        state.lastAttemptAt = currentTime;
+        const button = document.getElementById('btn_pumx');
+        state.button = button instanceof HTMLElement ? button : null;
+        if (complete(state, state.button)) return;
+        if (state.button && state.clickedButton !== state.button && hasReadyNativeHandler(state.button)) {
+            state.clickedButton = state.button;
+            state.button.click();
+            if (complete(state, state.button)) return;
+        }
+        scheduleAttempt(state);
+    };
+
+    const observeActivation = () => {
+        const previous = root.__dcufPumxDefaultState;
+        if (previous) stopRetry(previous);
+
+        const state = {
+            deadlineAt: now() + DEADLINE_MS,
+            lastAttemptAt: -Infinity,
+            timer: 0,
+            observer: null,
+            unsubscribe: null,
+            button: null,
+            clickedButton: null,
+            stopped: false,
+            mutationQueued: false
+        };
+        root.__dcufPumxDefaultState = state;
+
+        const notifyMutation = () => {
+            if (state.stopped || state.mutationQueued) return;
+            state.mutationQueued = true;
+            queueMicrotask(() => {
+                state.mutationQueued = false;
+                attempt(state);
+            });
+        };
+
+        const coordinator = root.__dcufRuntimeCoordinator;
+        if (coordinator && typeof coordinator.subscribeMutations === 'function') {
+            state.unsubscribe = coordinator.subscribeMutations('write-pumx-defaults', notifyMutation);
+        } else if (document.documentElement) {
+            state.observer = new MutationObserver(notifyMutation);
+            state.observer.observe(document.documentElement, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['class', 'aria-pressed', 'id', 'onclick']
+            });
+        }
+
+        attempt(state);
+    };
+
+    const start = () => {
+        const button = document.getElementById('btn_pumx');
+        if (button instanceof HTMLElement && isPumxActive(button)) {
+            button.dataset[MARKER] = '1';
+            root.__dcufPumxDefaultCompletedButton = button;
+            return;
+        }
+        observeActivation();
+    };
+
+    window.addEventListener('pagehide', () => stopRetry(root.__dcufPumxDefaultState), { once: true });
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', start, { once: true });
     } else {
@@ -1011,1718 +2013,443 @@ function evaluateSyncBlockDecision({ subject, settings, matches = {}, blockedUid
     // extracts those sections verbatim so the two targets cannot drift.
     // Add rules here only for a verified PC host-DOM difference; do not copy
     // shared filter UI declarations back into this file.
-    // Extracted verbatim from the mobile-owned filter UI style rail.
-    GM_addStyle(`
-#dc-personal-block-controls {
-            --dcuf-fab-width: 152px;
-            --dcuf-fab-height: 76px;
-            --dcuf-fab-padding-x: 28px;
-            --dcuf-fab-font-size: 32px;
-            position: fixed;
-            z-index: 2147483640;
-            width: max-content;
-            height: var(--dcuf-fab-height);
-            overflow: visible;
-        }
-        #dc-personal-block-fab {
-            box-sizing: border-box;
-            appearance: none;
-            width: auto !important;
-            min-width: var(--dcuf-fab-width) !important;
-            height: var(--dcuf-fab-height) !important;
-            padding: 0 var(--dcuf-fab-padding-x);
-            background: linear-gradient(180deg, #fbfcfe 0%, #f1f4f8 100%) !important;
-            color: #4d5e76;
-            border-radius: 999px;
-            border: 1px solid #c7d2df;
-            box-shadow: 0 6px 16px rgba(36, 49, 72, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: var(--dcuf-fab-font-size) !important;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            line-height: 1;
-            white-space: nowrap;
-            word-break: keep-all;
-            cursor: pointer;
-            user-select: none;
-            touch-action: none;
-            font-family: inherit;
-            transition: transform 0.18s ease-out, box-shadow 0.18s ease-out, border-color 0.18s ease-out, background-color 0.18s ease-out;
-        }
-        #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #ffffff 0%, #eef2f7 100%) !important;
-            border-color: #b6c2d1;
-            box-shadow: 0 8px 18px rgba(36, 49, 72, 0.14);
-        }
-        #dc-personal-block-fab:active {
-            cursor: grabbing;
-            transform: scale(0.97);
-            box-shadow: 0 4px 10px rgba(36, 49, 72, 0.1);
-        }
-        #dc-personal-block-fab:focus-visible {
-            outline: 3px solid rgba(59, 113, 253, 0.36);
-            outline-offset: 2px;
-        }
-        #dc-personal-block-drawer {
-            position: absolute;
-            z-index: 2147483641;
-            box-sizing: border-box;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            width: max-content;
-            min-width: 164px;
-            padding: 6px;
-            background: #fff;
-            border: 1px solid #c7d2df;
-            border-radius: 12px;
-            box-shadow: 0 12px 28px rgba(36, 49, 72, 0.2);
-        }
-        #dc-personal-block-drawer[hidden] {
-            display: none !important;
-        }
-        #dc-personal-block-drawer button {
-            box-sizing: border-box;
-            appearance: none;
-            width: 100%;
-            min-height: 40px;
-            padding: 8px 12px;
-            background: transparent;
-            color: #34445a;
-            border: 0;
-            border-radius: 8px;
-            text-align: left;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 700;
-            line-height: 1.2;
-            white-space: nowrap;
-            cursor: pointer;
-        }
-        #dc-personal-block-drawer button:hover,
-        #dc-personal-block-drawer button:focus-visible {
-            background: #edf2f8;
-            color: #24364f;
-            outline: none;
-        }
-        /* DCUF_FAB_SHELL_END */
-        #dc-personal-block-size-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2147483644;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            background: rgba(18, 25, 35, 0.45);
-        }
-        #dc-personal-block-size-panel {
-            box-sizing: border-box;
-            width: min(360px, calc(100vw - 32px));
-            padding: 20px;
-            background: #fff;
-            color: #34445a;
-            border: 1px solid #c7d2df;
-            border-radius: 14px;
-            box-shadow: 0 18px 48px rgba(36, 49, 72, 0.28);
-        }
-        #dc-personal-block-size-panel h3 {
-            margin: 0 0 8px;
-            color: inherit;
-            font-size: 19px;
-        }
-        #dc-personal-block-size-panel .dcuf-fab-size-description {
-            margin: 0 0 16px;
-            color: #66758a;
-            font-size: 13px;
-            line-height: 1.45;
-        }
-        #dc-personal-block-size-panel .dcuf-fab-size-value {
-            display: block;
-            margin-bottom: 8px;
-            color: #33445b;
-            text-align: center;
-            font-size: 18px;
-            font-weight: 800;
-        }
-        #dc-personal-block-size-panel input[type="range"] {
-            width: 100%;
-            min-height: 36px;
-            margin: 0;
-            cursor: pointer;
-        }
-        #dc-personal-block-size-panel .dcuf-fab-size-bounds {
-            display: flex;
-            justify-content: space-between;
-            margin-top: -2px;
-            color: #7b8798;
-            font-size: 11px;
-        }
-        #dc-personal-block-size-panel .dcuf-fab-size-actions {
-            display: flex;
-            gap: 8px;
-            margin-top: 18px;
-        }
-        #dc-personal-block-size-panel .dcuf-fab-size-actions button {
-            flex: 1;
-            min-height: 42px;
-            padding: 8px;
-            background: #edf2f8;
-            color: #34445a;
-            border: 0;
-            border-radius: 9px;
-            font-family: inherit;
-            font-size: 14px;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
-            background: #3b71fd;
-            color: #fff;
-        }
-        #dc-selection-popup {
-            position: fixed;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 2147483641;
-            background: #fff;
-            border: 1px solid #ccc;
-            border-radius: 12px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            min-width: 320px;
-            text-align: center;
-        }
-        #dc-selection-popup h4 { margin: 0 0 20px 0; font-size: 18px; font-weight: 600; }
-        #dc-selection-popup .block-options { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-        #dc-selection-popup .block-option { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 12px; border-radius: 8px; }
-        #dc-selection-popup .block-option span { font-size: 15px; color: #333; word-break: break-all; margin-right: 15px; }
-        #dc-selection-popup .block-option button { font-size: 14px; padding: 6px 12px; cursor: pointer; border: none; border-radius: 6px; background-color: var(--dcuf-theme-accent-strong, #4263eb); color: var(--dcuf-theme-on-accent, #fff); font-weight: 500; }
-        /* [v2.5.7 추가] 차단 해제 버튼 스타일 */
-        #dc-selection-popup .block-option button.btn-unblock { background-color: #e03131; }
-        #dc-selection-popup .popup-buttons button { width: 100%; font-size: 16px; padding: 10px; cursor: pointer; border: none; border-radius: 8px; background-color: #e9ecef; color: #555; }
-        body.selection-mode-active .gall_writer,
-        body.selection-mode-active .ub-writer {
-            cursor: pointer !important;
-        }
+    // Reuse only the existing value factory; no Mobile host selectors.
+    const __dcufBuildTargetThemeCss = (ROOT_ATTRIBUTE) => __dcufBuildB1MaterialCss(ROOT_ATTRIBUTE);
+const __dcufSettingsPresenter = (() => {
+    const VERSION = 'modern-fluid-tactile-v1';
 
+    const escapeHtml = (value) => String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
 
-        #dc-block-management-panel-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2147483645;
-        }
-        #dc-block-management-panel {
-            position: fixed;
-            background: #f9f9f9;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 2147483646;
-            display: flex;
-            flex-direction: column;
-            min-width: 350px; min-height: 300px;
-            resize: both;
-            overflow: hidden;
-        }
-        #dc-block-management-panel .panel-header {
-            display: flex;  align-items: center;
-            padding: 10px 15px;
-            background: #eee;
-            border-bottom: 1px solid #ccc;
-            cursor: move;
-            user-select: none;
-        }
-        #dc-block-management-panel .panel-header h3 { margin: 0; font-size: 16px; }
-        #dc-block-management-panel .panel-close-btn { font-size: 20px; cursor: pointer; border: none; background: none; margin-left: auto;}
-        #dc-block-management-panel .panel-tabs { display: flex; border-bottom: 1px solid #ccc; background: #fff; }
-        #dc-block-management-panel .panel-tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; border-right: 1px solid #eee; }
-        #dc-block-management-panel .panel-tab:last-child { border-right: none; }
-        #dc-block-management-panel .panel-tab.active { background: #3b71fd; color: #fff; font-weight: bold; }
-        #dc-block-management-panel .panel-body { flex-grow: 1; display: flex; flex-direction: column; overflow: hidden; background: #fff; }
-        #dc-block-management-panel .panel-list-controls { padding: 8px 10px; border-bottom: 1px solid #eee; text-align: left; }
-        #dc-block-management-panel .select-all-btn,
-        #dc-block-management-panel .select-all-global-btn,
-        #dc-block-management-panel .panel-backup-btn { /* [수정] 백업 버튼 공통 스타일 적용 */
-            font-size: 13px; padding: 4px 8px; cursor: pointer;
-            border: 1px solid #ccc; background: #f1f3f5; border-radius: 4px; margin-left: 5px;
-        }
-        #dc-block-management-panel .panel-content { flex-grow: 1; overflow-y: auto; }
-        #dc-block-management-panel .blocked-list { list-style: none; margin: 0; padding: 10px; }
-        #dc-block-management-panel .blocked-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 5px; border-bottom: 1px solid #f0f0f0; }
-        #dc-block-management-panel .blocked-item.item-to-delete { text-decoration: line-through; opacity: 0.5; }
-        #dc-block-management-panel .item-name { font-size: 14px; word-break: break-all; }
-        #dc-block-management-panel .delete-item-btn { cursor: pointer; color: #e03131; font-weight: bold; padding: 0 5px; }
-        #dc-block-management-panel .panel-footer {
-            display: flex; /* [수정] Flexbox 레이아웃으로 변경 */
-            justify-content: space-between; /* [수정] 양쪽 끝으로 요소 배치 */
-            align-items: center; /* [수정] 세로 중앙 정렬 */
-            padding: 10px;
-            border-top: 1px solid #ccc;
-            background: #f9f9f9;
-        }
-        #dc-block-management-panel .panel-footer-left {
-            display: flex;
-            align-items: center;
-        }
-        #dc-block-management-panel .panel-save-btn { padding: 8px 16px; font-size: 14px; background: #3b71fd; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
-        #dc-block-management-panel .panel-resize-handle {
-            position: absolute;
-            right: 0; bottom: 0;
-            width: 15px; height: 15px;
-            cursor: nwse-resize;
-            background: repeating-linear-gradient(135deg, #ccc, #ccc 1px, transparent 1px, transparent 3px);
-        }
+    const checked = (value) => value ? ' checked' : '';
+    const disabled = (value) => value ? ' disabled' : '';
+    const switchMarkup = ({ id, value, label, compact = false }) => `
+        <label class="switch dcuf-switch${compact ? ' dcuf-switch--compact' : ''}" for="${escapeHtml(id)}">
+            <input class="dcuf-switch-input" id="${escapeHtml(id)}" type="checkbox"${checked(value)}>
+            <span class="switch-slider dcuf-switch-track" aria-hidden="true"></span>
+            <span class="dcuf-switch-label">${escapeHtml(label)}</span>
+        </label>`;
 
-        /* [신규] 개인 차단 On/Off 스위치 UI */
-        #dc-block-management-panel .switch-container { display: flex; align-items: center; margin-left: 15px; }
-        #dcinside-filter-setting .switch,
-        #dc-block-management-panel .switch { position: relative; display: inline-block; width: 40px; height: 22px; }
-        #dcinside-filter-setting .switch input,
-        #dc-block-management-panel .switch input { opacity: 0; width: 0; height: 0; }
-        #dcinside-filter-setting .switch-slider,
-        #dc-block-management-panel .switch-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; box-sizing: border-box; border: 1px solid transparent; background-color: #ccc; transition: .25s; border-radius: 22px; }
-        #dcinside-filter-setting .switch-slider:before,
-        #dc-block-management-panel .switch-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 2px; bottom: 2px; background-color: white; transition: .25s; border-radius: 50%; box-shadow: 0 1px 4px rgba(15, 23, 42, .38); }
-        #dcinside-filter-setting input:checked + .switch-slider,
-        #dc-block-management-panel input:checked + .switch-slider { background-color: #3b71fd; }
-        #dcinside-filter-setting input:checked + .switch-slider:before,
-        #dc-block-management-panel input:checked + .switch-slider:before { transform: translateX(18px); }
+    const renderFilterSettings = ({ ids, settings, shortcut, proxyModes }) => {
+        const proxyButtons = proxyModes.map(({ mode, label, active }) => `
+            <button type="button" class="dcuf-segment-button" data-proxy-mode="${escapeHtml(mode)}" aria-pressed="${String(Boolean(active))}">${escapeHtml(label)}</button>
+        `).join('');
+        return `
+            <header class="dcuf-panel-header dcuf-settings-header">
+                <div class="dcuf-panel-title-group">
+                    <span class="dcuf-panel-kicker">FILTER CONTROL</span>
+                    <h2 id="dcuf-filter-settings-title" class="dcuf-panel-title">글·댓글 필터 설정</h2>
+                </div>
+                <button type="button" id="${escapeHtml(ids.CLOSE_BUTTON)}" class="dcuf-icon-button dcuf-settings-close" aria-label="필터 설정 닫기">×</button>
+            </header>
+            <div id="${escapeHtml(ids.SETTINGS_CONTAINER)}" class="dcuf-panel-body dcuf-settings-body" data-dcuf-state="${settings.masterDisabled ? 'disabled' : 'enabled'}">
+                <section class="dcuf-settings-section dcuf-settings-overview" data-dcuf-role="group">
+                    <div class="dcuf-settings-switch-grid">
+                        ${switchMarkup({ id: ids.MASTER_DISABLE_CHECKBOX, value: settings.masterDisabled, label: '모든 필터 기능 끄기' })}
+                        ${switchMarkup({ id: ids.EXCLUDE_RECOMMENDED_CHECKBOX, value: settings.excludeRecommended, label: '개념글 제외' })}
+                    </div>
+                    <p class="dcuf-settings-help">마스터 스위치는 필터 판단만 중지하며 모바일 편의기능에는 영향을 주지 않습니다.</p>
+                </section>
+                <section class="dcuf-settings-section dcuf-settings-threshold" data-dcuf-role="group">
+                    <div class="dcuf-settings-copy">
+                        <span class="dcuf-settings-eyebrow">ACTIVITY</span>
+                        <h3 class="dcuf-settings-section-title">글+댓글 합 기준값</h3>
+                        <p class="dcuf-settings-help">입력값 이하인 작성자를 차단합니다. 0 또는 빈칸이면 비활성화됩니다.</p>
+                    </div>
+                    <label class="dcuf-number-field" for="${escapeHtml(ids.THRESHOLD_INPUT)}">
+                        <span class="dcuf-field-label">기준값</span>
+                        <input class="dcuf-field dcuf-field--number" id="${escapeHtml(ids.THRESHOLD_INPUT)}" type="number" min="0" inputmode="numeric" value="${escapeHtml(settings.threshold)}">
+                    </label>
+                </section>
+                <section class="dcuf-settings-section dcuf-settings-guest-controls" data-dcuf-role="group">
+                    <div class="dcuf-settings-copy">
+                        <span class="dcuf-settings-eyebrow">NETWORK IDENTITY</span>
+                        <h3 class="dcuf-settings-section-title">유동·네트워크 필터</h3>
+                    </div>
+                    <div class="dcuf-settings-switch-grid">
+                        ${switchMarkup({ id: ids.BLOCK_GUEST_CHECKBOX, value: settings.blockGuestEnabled, label: '유동 전체 차단', compact: true })}
+                        ${switchMarkup({ id: ids.TELECOM_BLOCK_CHECKBOX, value: settings.telecomBlockEnabled, label: '통신사 IP 차단', compact: true })}
+                    </div>
+                    <div class="dcuf-proxy-control">
+                        <div class="dcuf-field-label">우회 IP 차단 <span class="dcuf-field-note">오탐 위험 있음</span></div>
+                        <div id="${escapeHtml(ids.PROXY_BLOCK_MODE_GROUP)}" class="dcuf-segment-group" role="group" aria-label="우회 IP 차단 강도">${proxyButtons}</div>
+                        <p class="dcuf-proxy-mode-desc dcuf-settings-help">끔 · 확실한 우회만 · 공격적 탐지</p>
+                    </div>
+                </section>
+                <section class="dcuf-settings-section dcuf-settings-ratio" id="${escapeHtml(ids.RATIO_SECTION)}" data-dcuf-role="group" data-dcuf-state="${settings.ratioEnabled ? 'enabled' : 'disabled'}">
+                    <div class="dcuf-settings-section-heading">
+                        ${switchMarkup({ id: ids.RATIO_ENABLE_CHECKBOX, value: settings.ratioEnabled, label: '글/댓글 비율 필터 사용' })}
+                    </div>
+                    <div class="dcuf-ratio-grid">
+                        <label class="dcuf-number-field" for="${escapeHtml(ids.RATIO_MIN_INPUT)}">
+                            <span class="dcuf-field-label">댓글/글 비율</span>
+                            <span class="dcuf-field-note">댓글만 많은 작성자</span>
+                            <input class="dcuf-field dcuf-field--number" id="${escapeHtml(ids.RATIO_MIN_INPUT)}" type="number" step="any" inputmode="decimal" placeholder="예: 10" value="${escapeHtml(settings.ratioMin)}">
+                        </label>
+                        <label class="dcuf-number-field" for="${escapeHtml(ids.RATIO_MAX_INPUT)}">
+                            <span class="dcuf-field-label">글/댓글 비율</span>
+                            <span class="dcuf-field-note">글만 많은 작성자</span>
+                            <input class="dcuf-field dcuf-field--number" id="${escapeHtml(ids.RATIO_MAX_INPUT)}" type="number" step="any" inputmode="decimal" placeholder="예: 1" value="${escapeHtml(settings.ratioMax)}">
+                        </label>
+                    </div>
+                    <p class="dcuf-settings-help">입력값과 같거나 큰 비율의 작성자를 차단합니다.</p>
+                </section>
+                <section class="dcuf-settings-section dcuf-settings-pum" data-dcuf-role="group">
+                    ${switchMarkup({ id: ids.BLOCK_PUM_POSTS_CHECKBOX, value: settings.blockPumPosts, label: '펌 게시물 차단' })}
+                </section>
+                <button type="button" id="${escapeHtml(ids.HEADTEXT_MANAGER_BUTTON)}" class="dcuf-button dcuf-button--secondary dcuf-button--wide">갤러리별 말머리 차단 관리</button>
+            </div>
+            <footer class="dcuf-panel-footer dcuf-settings-footer">
+                <div class="dcuf-shortcut-summary">
+                    <span class="dcuf-field-note">창 여닫는 단축키</span>
+                    <strong id="${escapeHtml(ids.SHORTCUT_DISPLAY)}" class="dcuf-keycap">${escapeHtml(shortcut)}</strong>
+                    <a href="#" id="${escapeHtml(ids.CHANGE_SHORTCUT_BTN)}" class="dcuf-text-action">변경</a>
+                </div>
+                <button type="button" id="${escapeHtml(ids.SAVE_BUTTON)}" class="dcuf-button dcuf-button--primary">저장 &amp; 실행</button>
+            </footer>`;
+    };
 
-        /* [신규] 백업/복원 팝업 UI */
-        #dc-backup-popup-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            z-index: 2147483647;
-        }
-        #dc-backup-popup {
-            position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: #fff; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            z-index: 2147483647; padding: 20px; min-width: 350px;
-        }
-        #dc-backup-popup .popup-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #eee; }
-        #dc-backup-popup .popup-header h4 { margin: 0; font-size: 16px; }
-        #dc-backup-popup .popup-close-btn { font-size: 20px; background: none; border: none; cursor: pointer; color: #888; }
-        #dc-backup-popup .popup-content { display: flex; flex-direction: column; gap: 15px; }
-        #dc-backup-popup .export-section, #dc-backup-popup .import-section { display: flex; flex-direction: column; gap: 8px; }
-        #dc-backup-popup label { font-size: 14px; font-weight: bold; }
-        #dc-backup-popup .description { font-size: 12px; color: #666; }
-        /* [수정] import-controls를 세로 정렬로 변경 */
-        #dc-backup-popup .import-controls { display: flex; flex-direction: column; gap: 8px; }
-        /* [추가] 파일 입력(<input type="file">) 스타일 */
-        #dc-backup-popup .import-file-input {
-            font-size: 14px;
-            padding: 5px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background-color: #f8f9fa;
-        }
-        #dc-backup-popup textarea { flex-grow: 1; height: 80px; resize: vertical; padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; font-family: monospace; }
-        #dc-backup-popup button { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        /* [수정] 기존 버튼들에 flex 속성 추가 */
-        #dc-backup-popup .export-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; flex: 1; }
-        /* [추가] '파일로 다운로드' 버튼 전용 스타일 */
-        #dc-backup-popup .export-btn-download { background-color: #ffffff; color: #374151; border: 1px solid #d4dbe8; flex: 1; }
-        /* [수정] 불러오기 버튼 스타일 조정 */
-        #dc-backup-popup .import-btn { background-color: #3b71fd; color: #fff; border: 1px solid #3b71fd; width: 100%; margin-top: 8px; }
+    const renderConvenienceSettings = (settings) => {
+        const rows = [
+            ['recentHighlight', '마지막으로 열어본 글 표시', '뒤로 돌아왔을 때 해당 글을 테마색으로 표시'],
+            ['draftRecovery', '글쓰기 초안 저장·복구', '제목·본문·말머리만 저장'],
+            ['postPreview', '글 미리보기', '마우스 대기 또는 터치 길게 누르기'],
+        ].map(([key, name, detail]) => `
+            <label class="dcuf-convenience-row dcuf-settings-section dcuf-option-row">
+                <span class="dcuf-convenience-copy dcuf-option-copy"><strong>${escapeHtml(name)}</strong><small>${escapeHtml(detail)}</small></span>
+                <input type="checkbox" class="dcuf-convenience-toggle dcuf-toggle" data-dcuf-setting-key="${key}" aria-label="${escapeHtml(name)}"${checked(settings[key])}>
+            </label>`).join('');
+        return `
+            <header class="dcuf-convenience-head dcuf-settings-header dcuf-panel-header">
+                <div class="dcuf-panel-title-group"><span class="dcuf-panel-kicker">MOBILE TOOLS</span><strong id="dcuf-convenience-title" class="dcuf-convenience-title dcuf-panel-title">모바일 편의기능 설정</strong></div>
+                <button type="button" class="dcuf-convenience-close dcuf-icon-button" aria-label="편의기능 설정 닫기">×</button>
+            </header>
+            <div class="dcuf-convenience-body dcuf-settings-body dcuf-panel-body">${rows}
+                <p class="dcuf-convenience-note dcuf-settings-help">필터의 ‘모든 기능 끄기’는 편의 기능 설정에 영향을 주지 않습니다.</p>
+            </div>
+            <footer class="dcuf-convenience-actions dcuf-settings-footer dcuf-panel-footer">
+                <button type="button" class="dcuf-convenience-clear dcuf-button dcuf-button--secondary">저장된 초안 삭제</button>
+                <button type="button" class="dcuf-convenience-save dcuf-button dcuf-button--primary">저장</button>
+            </footer>`;
+    };
 
-        /* Popup refresh */
-        #dcinside-filter-setting,
-        #dc-selection-popup,
-        #dc-backup-popup,
-        #dc-block-management-panel {
-            box-sizing: border-box !important;
-            border: 1px solid #d9dee7 !important;
-            border-radius: 14px !important;
-            box-shadow: 0 18px 42px rgba(26, 39, 60, 0.18) !important;
-        }
-        #dcinside-filter-setting,
-        #dc-selection-popup,
-        #dc-backup-popup {
-            animation: dcuf-popup-center-in 0.16s ease-out;
-        }
-        #dc-block-management-panel {
-            animation: dcuf-popup-fade-in 0.16s ease-out;
-            min-width: 460px !important;
-            min-height: 340px !important;
-            background: #f7f9fc !important;
-        }
-        #dcinside-filter-setting {
-            min-width: 540px !important;
-            max-width: min(92vw, 680px) !important;
-            padding: 18px !important;
-            cursor: default !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-header {
-            margin-bottom: 12px !important;
-            padding: 0 0 12px !important;
-            border-bottom: 1px solid #e5e9f1 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            gap: 10px !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-header > div:first-child {
-            display: flex !important;
-            flex-wrap: wrap !important;
-            gap: 10px !important;
-            align-items: center !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-header > div:first-child > div {
-            border-left: 0 !important;
-            padding-left: 0 !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-body {
-            display: flex !important;
-            flex-direction: column !important;
-            gap: 10px !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-body > hr {
-            display: none !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-section {
-            border: 1px solid #e5e9f1 !important;
-            background: #fbfcff !important;
-            border-radius: 10px !important;
-            padding: 12px !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-threshold {
-            display: flex !important;
-            gap: 12px !important;
-            align-items: stretch !important;
-            justify-content: space-between !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child {
-            flex: 0 1 280px !important;
-            min-width: 0 !important;
-            display: flex !important;
-            flex-direction: column !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > h3 {
-            width: 100% !important;
-            text-align: center !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > input {
-            margin: 0 auto !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-threshold > div:first-child > div {
-            width: auto !important;
-            min-height: 0 !important;
-            max-width: 100% !important;
-            border: 0 !important;
-            background: transparent !important;
-            padding: 0 !important;
-            text-align: center !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child {
-            flex: 0 0 auto !important;
-            border: 0 !important;
-            border-radius: 10px !important;
-            background: #fff !important;
-            padding: 10px !important;
-            box-shadow: none !important;
-        }
-        #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
-            display: grid !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            gap: 10px !important;
-            align-items: stretch !important;
-        }
-        #dcinside-filter-setting #dcinside-ratio-section > div:last-child {
-            text-align: center !important;
-        }
-        #dcinside-filter-setting #dcinside-threshold-input,
-        #dcinside-filter-setting #dcinside-ratio-min,
-        #dcinside-filter-setting #dcinside-ratio-max {
-            min-height: 40px !important;
-            border: 1px solid #cfd7e6 !important;
-            border-radius: 8px !important;
-            padding: 6px 10px !important;
-            box-sizing: border-box !important;
-            background: #fff !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-footer {
-            margin-top: 11px !important;
-            padding-top: 11px !important;
-            border-top: 1px solid #e5e9f1 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            gap: 10px !important;
-        }
-        #dcinside-filter-setting #dcinside-threshold-save {
-            background: #3b71fd !important;
-            color: #fff !important;
-            border: 1px solid #3b71fd !important;
-            border-radius: 9px !important;
-            min-height: 42px !important;
-            padding: 0 16px !important;
-            font-weight: 700 !important;
-        }
-        #dcinside-filter-setting #dcinside-filter-close,
-        #dc-backup-popup .popup-close-btn,
-        #dc-block-management-panel .panel-close-btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            text-align: center !important;
-            padding: 0 !important;
-            line-height: 1 !important;
-        }
-        #dcinside-filter-setting #dcinside-filter-close {
-            width: 30px !important;
-            height: 30px !important;
-            border-radius: 999px !important;
-        }
+    const renderManagementPanel = ({ blocks, enabled }) => `
+        <header class="panel-header dcuf-panel-header">
+            <div class="panel-title-group dcuf-panel-title-group"><span class="panel-kicker dcuf-panel-kicker">PERSONAL BLOCK</span><h3 class="dcuf-panel-title">차단 유저 관리</h3></div>
+            <div class="panel-header-actions dcuf-panel-header-actions">
+                <button type="button" class="panel-add-btn dcuf-button dcuf-button--quiet">＋ 직접 추가</button>
+                <label class="switch dcuf-switch dcuf-switch--icon" aria-label="개인 차단 기능 사용"><input class="dcuf-switch-input" type="checkbox" id="personal-block-toggle"${checked(enabled)}><span class="switch-slider dcuf-switch-track" aria-hidden="true"></span></label>
+                <button type="button" class="panel-close-btn dcuf-icon-button" aria-label="차단 유저 관리 닫기">×</button>
+            </div>
+        </header>
+        <div class="panel-tabs dcuf-segment-group dcuf-management-tabs" role="tablist" aria-label="차단 정보 종류">
+            <button type="button" class="panel-tab dcuf-segment-button active" role="tab" aria-selected="true" data-type="uids">식별 번호 <span class="panel-tab-count dcuf-count">${blocks.uids.length}</span></button>
+            <button type="button" class="panel-tab dcuf-segment-button" role="tab" aria-selected="false" data-type="nicknames">닉네임 <span class="panel-tab-count dcuf-count">${blocks.nicknames.length}</span></button>
+            <button type="button" class="panel-tab dcuf-segment-button" role="tab" aria-selected="false" data-type="ips">아이피 <span class="panel-tab-count dcuf-count">${blocks.ips.length}</span></button>
+        </div>
+        <div class="panel-body dcuf-panel-body dcuf-management-body">
+            <div class="panel-list-controls dcuf-management-tools">
+                <label class="panel-search dcuf-search-field"><span class="dcuf-search-icon" aria-hidden="true">⌕</span><input type="search" class="panel-search-input dcuf-field" placeholder="현재 탭에서 검색" autocomplete="off" aria-label="차단 목록 검색"></label>
+                <button type="button" class="select-all-btn dcuf-button dcuf-button--secondary">해당 탭 전체 선택</button>
+                <span class="panel-list-summary dcuf-settings-help" aria-live="polite"></span>
+            </div>
+            <div class="panel-content dcuf-management-content"><ul class="blocked-list dcuf-blocked-list"></ul></div>
+        </div>
+        <footer class="panel-footer dcuf-panel-footer">
+            <div class="panel-footer-left dcuf-footer-actions"><button type="button" class="select-all-global-btn dcuf-button dcuf-button--secondary">모든 탭 전체 선택</button><button type="button" class="panel-backup-btn dcuf-button dcuf-button--secondary">백업</button></div>
+            <button type="button" class="panel-save-btn dcuf-button dcuf-button--primary">변경 저장</button>
+        </footer>
+        <div class="panel-resize-handle dcuf-resize-handle" role="separator" aria-label="차단 유저 관리 창 크기 조절"></div>`;
 
-        #dc-block-management-panel .panel-header {
-            background: #f3f6fc !important;
-            border-bottom: 1px solid #e3e8f2 !important;
-            padding: 12px 14px !important;
-        }
-        #dc-block-management-panel .panel-close-btn {
-            width: 28px !important;
-            height: 28px !important;
-            border-radius: 999px !important;
-            color: #4b5563 !important;
-        }
-        #dc-block-management-panel .panel-close-btn:hover {
-            background: #e9eef8 !important;
-        }
-        #dc-block-management-panel .panel-tabs {
-            background: #f8faff !important;
-            border-bottom: 1px solid #e5e9f1 !important;
-            padding: 6px !important;
-            gap: 6px !important;
-        }
-        #dc-block-management-panel .panel-tab {
-            border-right: 0 !important;
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            color: #4b5563 !important;
-            padding: 10px 8px !important;
-            position: relative !important;
-        }
-        #dc-block-management-panel .panel-tab.active {
-            background: #eaf1ff !important;
-            color: #1d4ed8 !important;
-            font-weight: 700 !important;
-        }
-        #dc-block-management-panel .panel-tab.active::after {
-            content: '';
-            position: absolute;
-            left: 12px;
-            right: 12px;
-            bottom: 6px;
-            height: 2px;
-            border-radius: 999px;
-            background: #3b71fd;
-        }
-        #dc-block-management-panel .select-all-btn,
-        #dc-block-management-panel .select-all-global-btn,
-        #dc-block-management-panel .panel-backup-btn {
-            min-height: 36px !important;
-            border: 1px solid #d4dbe8 !important;
-            border-radius: 8px !important;
-            background: #fff !important;
-            color: #374151 !important;
-            font-weight: 600 !important;
-            transition: background-color 0.14s ease, border-color 0.14s ease;
-        }
-        #dc-block-management-panel .select-all-btn:hover,
-        #dc-block-management-panel .select-all-global-btn:hover,
-        #dc-block-management-panel .panel-backup-btn:hover {
-            background: #f6f9ff !important;
-            border-color: #b8c8ea !important;
-        }
-        #dc-block-management-panel .panel-save-btn {
-            min-height: 38px !important;
-            border-radius: 9px !important;
-            padding: 0 18px !important;
-            font-weight: 700 !important;
-            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.24) !important;
-        }
-        #dc-block-management-panel .blocked-list {
-            padding: 6px 10px 12px !important;
-        }
-        #dc-block-management-panel .blocked-item {
-            min-height: 44px !important;
-            padding: 10px 8px !important;
-            border-bottom: 1px solid #edf1f7 !important;
-            transition: background-color 0.14s ease, opacity 0.14s ease;
-        }
-        #dc-block-management-panel .blocked-item:hover {
-            background: #f6f9ff !important;
-        }
-        #dc-block-management-panel .blocked-item.item-to-delete {
-            background: #fff5f6 !important;
-            opacity: 0.5 !important;
-        }
-        #dc-block-management-panel .delete-item-btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 24px !important;
-            height: 24px !important;
-            border-radius: 999px !important;
-            background: #ffe9ec !important;
-            color: #e03131 !important;
-            font-size: 14px !important;
-            line-height: 1 !important;
-            padding: 0 !important;
-            transition: background-color 0.14s ease;
-        }
-        #dc-block-management-panel .delete-item-btn:hover {
-            background: #ffd4dc !important;
-        }
+    const renderBackupPopup = () => `
+        <header class="popup-header dcuf-panel-header"><div class="dcuf-panel-title-group"><span class="dcuf-panel-kicker">PORTABLE DATA</span><h4 class="dcuf-panel-title">차단 목록 백업·복원</h4></div><button type="button" class="popup-close-btn dcuf-icon-button" aria-label="차단 목록 백업 창 닫기">×</button></header>
+        <div class="popup-content dcuf-panel-body dcuf-backup-body">
+            <section class="export-section dcuf-settings-section"><span class="dcuf-settings-eyebrow">EXPORT</span><strong class="dcuf-settings-section-title">내보내기</strong><span class="description dcuf-settings-help">현재 차단 목록 전체를 파일로 저장하거나 클립보드에 복사합니다.</span><div class="dcuf-inline-actions"><button type="button" class="export-btn-download dcuf-button dcuf-button--secondary">파일로 다운로드</button><button type="button" class="export-btn dcuf-button dcuf-button--primary">클립보드에 복사</button></div></section>
+            <section class="import-section dcuf-settings-section"><span class="dcuf-settings-eyebrow">IMPORT</span><strong class="dcuf-settings-section-title">불러오기</strong><span class="description dcuf-settings-help">백업 파일을 선택하거나 아래 텍스트 영역에 붙여넣으세요.</span><div class="import-controls dcuf-import-controls"><input type="file" class="import-file-input dcuf-field dcuf-file-field" accept=".json,.txt"><textarea class="dcuf-field dcuf-textarea" placeholder="또는, 백업 데이터를 여기에 붙여넣으세요..."></textarea></div><button type="button" class="import-btn dcuf-button dcuf-button--primary dcuf-button--wide">불러오기</button></section>
+        </div>`;
 
-        #dc-backup-popup {
-            min-width: 420px !important;
-            max-width: min(92vw, 560px) !important;
-            padding: 18px !important;
-        }
-        #dc-backup-popup .popup-header {
-            margin-bottom: 12px !important;
-            padding-bottom: 10px !important;
-            border-bottom: 1px solid #e5e9f1 !important;
-        }
-        #dc-backup-popup .popup-close-btn {
-            width: 28px !important;
-            height: 28px !important;
-            border-radius: 999px !important;
-        }
-        #dc-backup-popup .popup-close-btn:hover {
-            background: #eef3fb !important;
-        }
-        #dc-backup-popup .export-btn,
-        #dc-backup-popup .export-btn-download,
-        #dc-backup-popup .import-btn {
-            min-height: 40px !important;
-            border-radius: 8px !important;
-            font-weight: 700 !important;
-            transition: background-color 0.14s ease, border-color 0.14s ease, color 0.14s ease !important;
-        }
-        #dc-backup-popup .export-btn {
-            background: #3b71fd !important;
-            border: 1px solid #3b71fd !important;
-            color: #fff !important;
-        }
-        #dc-backup-popup .export-btn:hover {
-            background: #2f63ea !important;
-            border-color: #2f63ea !important;
-        }
-        #dc-backup-popup .export-btn-download {
-            background: #eef4ff !important;
-            border: 1px solid #c8d8ff !important;
-            color: #315fc2 !important;
-        }
-        #dc-backup-popup .export-btn-download:hover {
-            background: #e2edff !important;
-            border-color: #b4cbff !important;
-        }
-        #dc-backup-popup .import-btn {
-            background: #3b71fd !important;
-            border: 1px solid #3b71fd !important;
-            color: #fff !important;
-            box-shadow: 0 6px 16px rgba(59, 113, 253, 0.22) !important;
-        }
-        #dc-backup-popup .import-btn:hover {
-            background: #2f63ea !important;
-            border-color: #2f63ea !important;
-        }
-        #dc-backup-popup .import-file-input,
-        #dc-backup-popup textarea {
-            border: 1px solid #d2dae8 !important;
-            border-radius: 8px !important;
-            background: #fff !important;
-        }
+    const renderFabScalePanel = ({ value, min, max }) => `
+        <span class="dcuf-panel-kicker">QUICK MENU</span><h3 class="dcuf-panel-title" id="dc-personal-block-size-title">메뉴 버튼 크기 조절</h3>
+        <p class="dcuf-fab-size-description dcuf-settings-help">버튼과 글자 크기가 같은 비율로 조절됩니다.</p>
+        <output class="dcuf-fab-size-value" for="dc-personal-block-size-range">${escapeHtml(value)}%</output>
+        <input class="dcuf-range" id="dc-personal-block-size-range" type="range" min="${escapeHtml(min)}" max="${escapeHtml(max)}" step="5" value="${escapeHtml(value)}" aria-label="메뉴 버튼 크기 비율">
+        <div class="dcuf-fab-size-bounds dcuf-field-note"><span>${escapeHtml(min)}%</span><span>${escapeHtml(max)}%</span></div>
+        <div class="dcuf-fab-size-actions dcuf-inline-actions"><button type="button" class="dcuf-button dcuf-button--secondary" data-dcuf-fab-size-action="reset">기본값</button><button type="button" class="dcuf-button dcuf-button--secondary" data-dcuf-fab-size-action="cancel">취소</button><button type="button" class="dcuf-button dcuf-button--primary" data-dcuf-fab-size-action="save">저장</button></div>`;
 
-        #dcinside-filter-setting,
-        #dc-backup-popup,
-        #dc-block-management-panel {
-            touch-action: pan-x pan-y !important;
-        }
+    const renderManualBlockPanel = () => `
+        <header class="dcuf-manual-header dcuf-panel-header"><div class="dcuf-panel-title-group"><span class="dcuf-manual-kicker dcuf-panel-kicker">PERSONAL BLOCK</span><h3 class="dcuf-panel-title" id="dc-manual-block-title">직접 차단</h3></div><button type="button" class="dcuf-manual-close dcuf-icon-button" aria-label="직접 차단 닫기">×</button></header>
+        <form class="dcuf-manual-form dcuf-panel-body">
+            <div class="dcuf-manual-type-tabs dcuf-segment-group" role="group" aria-label="차단 정보 종류"><button type="button" class="dcuf-segment-button" data-manual-block-type="uid">식별번호</button><button type="button" class="dcuf-segment-button" data-manual-block-type="nickname">닉네임</button><button type="button" class="dcuf-segment-button" data-manual-block-type="ip">아이피</button></div>
+            <label class="dcuf-manual-field dcuf-field-stack" for="dc-manual-block-value"><span id="dc-manual-block-value-label" class="dcuf-field-label">닉네임</span><input class="dcuf-field" id="dc-manual-block-value" type="text" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+            <label class="dcuf-manual-field dcuf-manual-display-field dcuf-field-stack" for="dc-manual-block-display" hidden><span class="dcuf-field-label">닉네임 / 표시 이름 <small class="dcuf-field-note">(선택)</small></span><input class="dcuf-field" id="dc-manual-block-display" type="text" autocomplete="off" spellcheck="false" placeholder="예: 홍길동"></label>
+            <p class="dcuf-manual-hint dcuf-settings-help"></p><p class="dcuf-manual-status dcuf-status" role="status" aria-live="polite"></p>
+            <div class="dcuf-manual-actions dcuf-inline-actions"><button type="button" class="dcuf-button dcuf-button--secondary" data-manual-block-action="close">닫기</button><button type="submit" class="dcuf-button dcuf-button--primary" data-manual-block-action="add">차단 추가</button></div>
+        </form>`;
 
-        #dcinside-filter-setting,
-        #dc-backup-popup {
-            overflow: hidden !important;
-            resize: both !important;
-        }
-        #dcinside-filter-setting {
-            min-height: 360px !important;
-        }
-        #dc-backup-popup {
-            min-height: 320px !important;
-        }
+    const renderShortcutModal = (ids) => `
+        <span class="dcuf-panel-kicker">KEYBOARD</span><h4 class="dcuf-panel-title">새로운 단축키 입력</h4><p class="dcuf-settings-help">문자·숫자·기능키와 보조키를 함께 누르세요. 최대 3개까지 지원합니다.</p>
+        <output id="${escapeHtml(ids.NEW_SHORTCUT_PREVIEW)}" class="dcuf-shortcut-preview" aria-live="polite">입력 대기 중...</output>
+        <div class="dcuf-inline-actions"><button type="button" id="${escapeHtml(ids.SAVE_SHORTCUT_BTN)}" class="dcuf-button dcuf-button--primary">변경</button><button type="button" id="${escapeHtml(ids.CANCEL_SHORTCUT_BTN)}" class="dcuf-button dcuf-button--secondary">취소</button></div>`;
 
-        #dcinside-filter-setting .dcuf-settings-body {
-            max-height: calc(92vh - 156px) !important;
-            overflow-y: auto !important;
-            padding-right: 2px !important;
-        }
+    const renderHeadtextManager = ({ currentKey, discovered, current, others }) => `
+        <header class="dcuf-panel-header"><div class="dcuf-panel-title-group"><span class="dcuf-panel-kicker">GALLERY RULES</span><strong class="dcuf-panel-title">갤러리별 말머리 차단</strong></div><button type="button" class="dcuf-icon-button" data-dcuf-headtext-action="close" aria-label="말머리 차단 관리 닫기">×</button></header>
+        <div class="dcuf-panel-body dcuf-headtext-body"><p class="dcuf-settings-help">${escapeHtml(currentKey ? `현재 갤러리: ${currentKey}` : '현재 페이지의 갤러리를 확인할 수 없습니다.')}</p>
+            <div class="dcuf-headtext-choices">${discovered.length ? discovered.map((value) => `<label class="dcuf-choice-chip"><input class="dcuf-choice-input" type="checkbox" data-dcuf-headtext-value="${escapeHtml(value)}"${checked(current.has(value))}${disabled(!currentKey)}><span>${escapeHtml(value)}</span></label>`).join('') : '<p class="dcuf-settings-help dcuf-grid-empty">현재 목록에서 발견한 말머리가 없습니다.</p>'}</div>
+            <div class="dcuf-headtext-manual"><input class="dcuf-field dcuf-grow" type="text" data-dcuf-headtext-manual placeholder="목록에 없는 말머리"${disabled(!currentKey)}><button type="button" class="dcuf-button dcuf-button--secondary" data-dcuf-headtext-action="add"${disabled(!currentKey)}>추가</button></div>
+            <button type="button" class="dcuf-button dcuf-button--quiet dcuf-button--wide" data-dcuf-headtext-action="clear"${disabled(!currentKey || !current.size)}>현재 갤러리 전체 해제</button>
+            <h3 class="dcuf-settings-section-title">저장된 다른 갤러리</h3><div class="dcuf-headtext-saved">${others.length ? others.map(([key, values]) => `<div class="dcuf-saved-rule"><span>${escapeHtml(`${key}: ${values.join(', ')}`)}</span><button type="button" class="dcuf-button dcuf-button--danger" data-dcuf-headtext-remove="${escapeHtml(key)}">삭제</button></div>`).join('') : '<p class="dcuf-settings-help">다른 갤러리에 저장된 항목이 없습니다.</p>'}</div>
+        </div>`;
 
-        #dc-backup-popup .popup-content {
-            max-height: calc(92vh - 96px) !important;
-            overflow-y: auto !important;
-            padding-right: 2px !important;
-        }
+    const renderPalettePanel = (presets) => `
+        <header class="dcuf-palette-header dcuf-panel-header"><div class="dcuf-panel-title-group"><span class="dcuf-panel-kicker">APPEARANCE</span><h2 class="dcuf-panel-title" id="dcuf-palette-title">UI 색상 설정</h2></div><button type="button" class="dcuf-palette-close dcuf-icon-button" aria-label="UI 색상 설정 닫기">×</button></header>
+        <div class="dcuf-palette-body dcuf-panel-body"><p class="dcuf-palette-description dcuf-settings-help">색상을 선택해 미리 본 뒤 저장하세요.</p><div class="dcuf-palette-options" role="radiogroup" aria-label="UI 색상 프리셋">${presets.map((preset) => `<button type="button" class="dcuf-palette-option dcuf-option-card" role="radio" aria-checked="false" data-palette-id="${escapeHtml(preset.id)}"><span class="dcuf-palette-swatch" aria-hidden="true"><span style="--dcuf-swatch:${escapeHtml(preset.light[0])}"></span><span style="--dcuf-swatch:${escapeHtml(preset.light[1])}"></span><span style="--dcuf-swatch:${escapeHtml(preset.light[2])}"></span></span><span class="dcuf-palette-name">${escapeHtml(preset.label)}</span></button>`).join('')}</div><p class="dcuf-palette-status dcuf-status" role="status" aria-live="polite"></p><div class="dcuf-palette-actions dcuf-inline-actions"><button type="button" class="dcuf-button dcuf-button--secondary" data-dcuf-palette-action="default">기본값</button><button type="button" class="dcuf-button dcuf-button--secondary" data-dcuf-palette-action="cancel">취소</button><button type="button" class="dcuf-button dcuf-button--primary" data-dcuf-palette-action="save">저장</button></div></div><div class="dcuf-palette-resize-handle dcuf-resize-handle" role="separator" aria-label="UI 색상 설정 크기 조절"></div>`;
 
+    const BASE_CSS = `
+        [data-dcuf-surface] { --dcuf-motion-press:100ms;--dcuf-motion-state:160ms;--dcuf-motion-panel:210ms;--dcuf-radius-panel:14px;--dcuf-radius-group:10px;--dcuf-radius-control:8px;--dcuf-space-1:4px;--dcuf-space-2:8px;--dcuf-space-3:12px;--dcuf-space-4:16px;--dcuf-space-5:20px;box-sizing:border-box;color:var(--dcuf-theme-fg,#27313f);font:500 14px/1.45 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:-.012em; }
+        [data-dcuf-surface] .dcuf-panel-title { margin:0;color:var(--dcuf-theme-fg,#27313f);font-size:var(--dcuf-panel-title-size,18px);font-weight:820;line-height:1.25;letter-spacing:-.035em; }
+        [data-dcuf-surface] .dcuf-panel-kicker,[data-dcuf-surface] .dcuf-settings-eyebrow { display:var(--dcuf-panel-kicker-display,block);margin:0 0 3px;color:var(--dcuf-theme-accent-ink,#4263eb);font-size:10px;font-weight:850;line-height:1.2;letter-spacing:.12em; }
+        [data-dcuf-surface] .dcuf-panel-title-group { min-width:0; }
+        [data-dcuf-surface] .dcuf-panel-header { display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:var(--dcuf-space-3);box-sizing:border-box;padding:14px 16px;border-bottom:1px solid var(--dcuf-theme-border,#d9dde3);background:var(--dcuf-panel-header-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));cursor:move;touch-action:none;user-select:none; }
+        [data-dcuf-surface] .dcuf-panel-body { min-height:0;box-sizing:border-box;padding:12px;overflow:auto;overscroll-behavior:contain;background:var(--dcuf-panel-body-background,var(--dcuf-theme-canvas,#f6f7f9)); }
+        [data-dcuf-surface] .dcuf-panel-footer { display:flex;flex:0 0 auto;align-items:center;justify-content:space-between;gap:10px;box-sizing:border-box;padding:12px;border-top:1px solid var(--dcuf-theme-border,#d9dde3);background:var(--dcuf-panel-footer-background,var(--dcuf-theme-surface-raised,#f7f8fa)); }
+        [data-dcuf-surface] .dcuf-icon-button,[data-dcuf-surface] .dcuf-button { appearance:none;box-sizing:border-box;min-height:44px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:var(--dcuf-radius-control);font:inherit;font-weight:780;cursor:pointer;transition:transform var(--dcuf-motion-press) ease,background-color var(--dcuf-motion-state) ease,border-color var(--dcuf-motion-state) ease,box-shadow var(--dcuf-motion-state) ease; }
+        [data-dcuf-surface] .dcuf-icon-button { display:grid;flex:0 0 44px;place-items:center;width:44px;position:var(--dcuf-panel-close-position,static);padding:0;border-color:var(--dcuf-panel-close-border,var(--dcuf-control-rim,transparent));background:var(--dcuf-panel-close-background,var(--dcuf-control-secondary-bg,transparent));box-shadow:var(--dcuf-panel-close-shadow,var(--dcuf-control-shadow,none));color:var(--dcuf-theme-fg-muted,#687384);font-size:var(--dcuf-panel-close-font-size,24px);line-height:1; }
+        [data-dcuf-surface] .dcuf-icon-button::before { content:var(--dcuf-panel-close-content,none);position:absolute;top:50%;left:50%;width:14px;height:14px;transform:translate(-50%,-50%);background:currentColor;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='m4 4 8 8M12 4l-8 8' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E") center/contain no-repeat; }
+        [data-dcuf-surface] .dcuf-icon-button:hover { background:var(--dcuf-panel-close-hover,var(--dcuf-control-secondary-bg,transparent)); }
+        [data-dcuf-surface] .dcuf-button { padding:9px 14px;background:var(--dcuf-control-secondary-bg,var(--dcuf-theme-surface-input,#fff));border-color:var(--dcuf-control-rim,var(--dcuf-theme-border-strong,#cbd2db));box-shadow:var(--dcuf-control-shadow,none);color:var(--dcuf-theme-fg,#27313f); }
+        [data-dcuf-surface] .dcuf-button--primary { border-color:var(--dcuf-control-primary-rim,var(--dcuf-theme-accent-ink,#315fdb));background-color:var(--dcuf-control-primary-fill,var(--dcuf-theme-accent-strong,#315fdb));background-image:var(--dcuf-control-glaze,none);color:var(--dcuf-theme-on-accent,#fff);box-shadow:var(--dcuf-control-shadow,0 7px 16px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.24))); }
+        [data-dcuf-surface] .dcuf-button--secondary { border-color:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3));background-color:var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-theme-accent-ink,#315fdb); }
+        [data-dcuf-surface] .dcuf-button--quiet { background:var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-theme-accent-ink,#315fdb); }
+        [data-dcuf-surface] .dcuf-button--danger { min-height:36px;padding:6px 10px;border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff)));color:var(--dcuf-panel-status-error,color-mix(in srgb,#c43249 82%,var(--dcuf-theme-fg,#27313f))); }
+        [data-dcuf-surface] .dcuf-button--wide { width:100%; }
+        [data-dcuf-surface] .dcuf-button:active,[data-dcuf-surface] .dcuf-icon-button:active,[data-dcuf-surface] .dcuf-option-card:active { transform:translateY(1px) scale(.985); }
+        [data-dcuf-surface] .dcuf-button:disabled,[data-dcuf-surface] .dcuf-icon-button:disabled { opacity:.56;cursor:wait; }
+        [data-dcuf-surface] .dcuf-settings-section { box-sizing:border-box;margin:0 0 10px;padding:12px;border:var(--dcuf-panel-section-border,1px solid var(--dcuf-theme-border,#d9dde3));border-bottom:var(--dcuf-panel-section-divider,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-panel-section-radius,var(--dcuf-radius-group));background-color:var(--dcuf-panel-section-background,var(--dcuf-theme-card-top,#fff));background-image:none;box-shadow:none; }
+        [data-dcuf-surface] .dcuf-settings-section-title { display:block;margin:0 0 6px;color:var(--dcuf-theme-fg,#27313f);font-size:14px;font-weight:800;line-height:1.3; }
+        [data-dcuf-surface] .dcuf-settings-help,[data-dcuf-surface] .dcuf-field-note { margin:4px 0 0;color:var(--dcuf-panel-help-ink,var(--dcuf-theme-fg-muted,#687384));font-size:11.5px;font-weight:520;line-height:1.42; }
+        [data-dcuf-surface] .dcuf-field-label { color:var(--dcuf-theme-fg,#27313f);font-size:12px;font-weight:760; }
+        [data-dcuf-surface] .dcuf-field { appearance:none;box-sizing:border-box;width:100%;min-height:44px;padding:9px 11px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:var(--dcuf-radius-control);background:var(--dcuf-theme-surface-input,#fff);color:var(--dcuf-theme-fg,#27313f);font:inherit; }
+        [data-dcuf-surface] .dcuf-field:focus-visible { border-color:var(--dcuf-theme-accent-ink,#4263eb); }
+        [data-dcuf-surface] .dcuf-field--number { width:96px;text-align:center; }
+        [data-dcuf-surface] .dcuf-field-stack,[data-dcuf-surface] .dcuf-number-field { display:grid;gap:5px; }
+        [data-dcuf-surface] .dcuf-grow { flex:1 1 auto;min-width:0; }
+        [data-dcuf-surface] .dcuf-switch { display:flex;position:relative;align-items:center;gap:9px;min-height:44px;cursor:pointer; }
+        [data-dcuf-surface] .dcuf-switch-input { position:absolute;width:1px;height:1px;opacity:0;pointer-events:none; }
+        [data-dcuf-surface] .dcuf-switch-track,[data-dcuf-surface] .dcuf-toggle { appearance:none;position:relative;flex:0 0 42px;box-sizing:border-box;width:42px;height:24px;margin:0;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:999px;background-color:var(--dcuf-theme-surface-muted,#eef1f5);transition:background-color var(--dcuf-motion-state) ease,border-color var(--dcuf-motion-state) ease; }
+        [data-dcuf-surface] .dcuf-switch-track::before,[data-dcuf-surface] .dcuf-toggle::before { content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--dcuf-panel-switch-thumb,var(--dcuf-theme-card-top,#fff));box-shadow:0 2px 5px rgba(0,0,0,.24);transition:transform var(--dcuf-motion-state) cubic-bezier(.2,.8,.2,1); }
+        [data-dcuf-surface] .dcuf-switch-input:checked + .dcuf-switch-track,[data-dcuf-surface] .dcuf-toggle:checked { border-color:var(--dcuf-theme-accent-ink,#315fdb);background-color:var(--dcuf-theme-accent-strong,#315fdb);background-image:none; }
+        [data-dcuf-surface] .dcuf-switch-input:checked + .dcuf-switch-track::before,[data-dcuf-surface] .dcuf-toggle:checked::before { transform:translateX(18px);background:var(--dcuf-theme-on-accent,#fff); }
+        [data-dcuf-surface] .dcuf-switch-label { color:var(--dcuf-theme-fg,#27313f);font-weight:720; }
+        [data-dcuf-surface] .dcuf-switch--icon { width:44px; }
+        [data-dcuf-surface] .dcuf-switch--icon .dcuf-switch-label { display:none; }
+        [data-dcuf-surface] .dcuf-segment-group { display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:3px;padding:3px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:14px;background:var(--dcuf-theme-surface-muted,#eef1f5); }
+        [data-dcuf-surface] .dcuf-segment-button { appearance:none;min-height:38px;padding:7px 9px;border:1px solid transparent;border-radius:10px;background:var(--dcuf-control-secondary-bg,transparent);box-shadow:var(--dcuf-control-shadow,none);color:var(--dcuf-theme-fg-muted,#687384);font:inherit;font-size:12px;font-weight:760;cursor:pointer;transition:background-color var(--dcuf-motion-state) ease,color var(--dcuf-motion-state) ease,transform var(--dcuf-motion-press) ease; }
+        [data-dcuf-surface] .dcuf-segment-button[aria-pressed="true"],[data-dcuf-surface] .dcuf-segment-button[aria-selected="true"],[data-dcuf-surface] .dcuf-segment-button.active { border-color:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 30%,var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-theme-accent-ink,#315fdb);box-shadow:var(--dcuf-control-shadow,0 3px 8px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent)); }
+        [data-dcuf-surface] .dcuf-inline-actions,[data-dcuf-surface] .dcuf-footer-actions { display:flex;align-items:center;gap:8px; }
+        [data-dcuf-surface] .dcuf-inline-actions > .dcuf-button { flex:var(--dcuf-inline-actions-flex,1 1 0); }
+        [data-dcuf-surface] .dcuf-status { min-height:20px;margin:8px 0;color:var(--dcuf-panel-status-error,#c43249);font-size:12px;font-weight:720; }
+        [data-dcuf-surface] .dcuf-resize-handle { position:absolute;right:5px;bottom:5px;width:34px;height:28px;border-radius:9px;background:linear-gradient(135deg,transparent 50%,var(--dcuf-theme-border-strong,#cbd2db) 51% 57%,transparent 58%) 11px 5px/16px 16px no-repeat;cursor:nwse-resize;touch-action:none; }
+        [data-dcuf-surface] :focus-visible { outline:3px solid var(--dcuf-theme-focus-ring,rgba(63,109,224,.2));outline-offset:2px; }
+        [data-dcuf-surface][data-dcuf-role="panel"] { position:fixed;z-index:2147483646;left:50%;top:50%;display:flex;flex-direction:column;width:min(var(--dcuf-panel-width,540px),calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden;border:1px solid var(--dcuf-panel-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:var(--dcuf-radius-panel);background:var(--dcuf-panel-background,var(--dcuf-theme-canvas,#f6f7f9));backdrop-filter:var(--dcuf-panel-backdrop,none);box-shadow:var(--dcuf-panel-shadow,var(--dcuf-theme-panel-shadow,0 20px 60px #0005));transform:translate(-50%,-50%);animation:dcuf-modern-panel-in var(--dcuf-motion-panel) cubic-bezier(.2,.8,.2,1); }
+        [data-dcuf-surface][data-dcuf-role="overlay"] { position:fixed;z-index:2147483646;inset:0;background:var(--dcuf-panel-scrim,rgba(18,25,35,.56));animation:dcuf-modern-overlay-in var(--dcuf-motion-panel) ease; }
+        [data-dcuf-surface].dcuf-pop-leave { opacity:0;transform:translate(-50%,calc(-50% + 8px));transition:opacity var(--dcuf-motion-panel) ease,transform var(--dcuf-motion-panel) ease; }
+        [data-dcuf-surface].dcuf-overlay-leave { opacity:0;transition:opacity var(--dcuf-motion-panel) ease; }
+        @keyframes dcuf-modern-panel-in { from { opacity:0;transform:translate(-50%,calc(-50% + 10px)); } }
+        @keyframes dcuf-modern-overlay-in { from { opacity:0; } }
+        @media (prefers-reduced-motion:reduce) { [data-dcuf-surface],[data-dcuf-surface] * { animation-duration:0s;transition-duration:0s;scroll-behavior:auto; } }
+    `;
 
-        #dc-selection-popup {
-            min-width: 360px !important;
-            max-width: min(92vw, 520px) !important;
-            padding: 18px !important;
-        }
-        #dc-selection-popup .block-option {
-            border: 1px solid #e4e9f3 !important;
-            background: #f8fbff !important;
-            border-radius: 9px !important;
-        }
+    const PERSONAL_MENU_CSS = `
+        [data-dcuf-surface="personal-menu"] { position:fixed;z-index:2147483640;width:max-content;height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));overflow:visible; }
+        [data-dcuf-surface="personal-menu"] .dcuf-fab-button { display:inline-flex;align-items:center;justify-content:center;appearance:none;box-sizing:border-box;min-width:calc(var(--dcuf-fab-width,152px) * var(--dcuf-menu-button-width-ratio,1));height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));padding:0 calc(var(--dcuf-fab-padding-x,28px) * var(--dcuf-menu-button-padding-ratio,1));padding-block:var(--dcuf-menu-button-padding-block,0);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-menu-button-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:calc(var(--dcuf-fab-font-size,32px) * var(--dcuf-menu-button-font-ratio,1));font-weight:var(--dcuf-menu-button-weight,800);line-height:1;cursor:pointer;touch-action:none; }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-menu-background,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-menu-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));backdrop-filter:var(--dcuf-menu-backdrop,none); }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] { display:none; }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-item { display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;min-height:56px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dcuf-theme-fg,#27313f);text-align:left;cursor:pointer; }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-item:hover,[data-dcuf-surface="personal-menu"] .dcuf-menu-item:focus-visible { background:var(--dcuf-personal-menu-hover,transparent); }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-icon { display:grid;width:34px;height:34px;place-items:center;border-radius:10px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-item strong,[data-dcuf-surface="personal-menu"] .dcuf-menu-item small { display:block; }
+        [data-dcuf-surface="personal-menu"] .dcuf-menu-item small { margin-top:2px;color:var(--dcuf-theme-fg-muted,#687384);font-size:11px; }
+    `;
 
-        #dc-block-management-panel-overlay,
-        #dc-backup-popup-overlay {
-            backdrop-filter: blur(2px);
-        }
+    const FAB_SHELL_CSS = `${BASE_CSS}${PERSONAL_MENU_CSS}`;
 
-        @keyframes dcuf-popup-center-in {
-            from { opacity: 0; transform: translate(-50%, -48%) scale(0.985); }
-            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-        @keyframes dcuf-popup-fade-in {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        @keyframes dcuf-popup-out {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        @keyframes dcuf-overlay-out {
-            from { opacity: 1; }
-            to { opacity: 0; }
-        }
-        #dcinside-filter-setting.dcuf-pop-leave,
-        #dc-selection-popup.dcuf-pop-leave,
-        #dc-backup-popup.dcuf-pop-leave,
-        #dc-block-management-panel.dcuf-pop-leave {
-            animation: dcuf-popup-out 0.13s ease-in forwards !important;
-            pointer-events: none !important;
-        }
-        #dc-block-management-panel-overlay.dcuf-overlay-leave,
-        #dc-backup-popup-overlay.dcuf-overlay-leave {
-            animation: dcuf-overlay-out 0.13s ease-in forwards !important;
-            pointer-events: none !important;
-        }
+    const CHILD_PRIMARY_STYLE = `min-width:var(--dcuf-child-primary-width,auto);min-height:var(--dcuf-child-primary-height,44px);padding:var(--dcuf-child-primary-padding,9px 14px);border-radius:var(--dcuf-child-control-radius,var(--dcuf-radius-control));border-color:var(--dcuf-child-primary-rim,var(--dcuf-control-primary-rim,var(--dcuf-theme-accent-ink,#315fdb)));background:var(--dcuf-child-primary-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-primary-fill,var(--dcuf-theme-accent-strong,#315fdb)));color:var(--dcuf-child-primary-ink,var(--dcuf-theme-on-accent,#fff));box-shadow:var(--dcuf-child-primary-shadow,var(--dcuf-control-shadow,0 7px 16px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.24))));font-weight:var(--dcuf-child-control-weight,780);`;
 
-        @media (max-width: 640px) {
-            #dcinside-filter-setting { min-width: auto !important; width: min(96vw, 640px) !important; }
-            #dcinside-filter-setting #dcinside-ratio-section > div:first-child {
-                grid-template-columns: 1fr !important;
-            }
-            #dc-block-management-panel { min-width: min(96vw, 520px) !important; }
-            #dc-backup-popup { min-width: auto !important; width: min(96vw, 560px) !important; }
-        }
+    const SHARED_CSS = `
+        /* DCUF_SHARED_FILTER_UI_START */${BASE_CSS}
+        [data-dcuf-surface="filter-settings"][data-dcuf-role="panel"] { --dcuf-panel-width:580px;--dcuf-child-primary-width:auto; }
+        [data-dcuf-surface="filter-settings"] .dcuf-settings-body[data-dcuf-state="disabled"] > :not(.dcuf-settings-overview) { opacity:.48;pointer-events:none; }
+        [data-dcuf-surface="filter-settings"] .dcuf-settings-switch-grid { display:grid;gap:4px; }
+        [data-dcuf-surface="filter-settings"] .dcuf-settings-threshold { display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px; }
+        [data-dcuf-surface="filter-settings"] .dcuf-settings-guest-controls { display:grid;gap:10px; }
+        [data-dcuf-surface="filter-settings"] .dcuf-ratio-grid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px; }
+        [data-dcuf-surface="filter-settings"] .dcuf-number-field .dcuf-field { width:100%; }
+        [data-dcuf-surface="filter-settings"] .dcuf-settings-ratio[data-dcuf-state="disabled"] > :not(.dcuf-settings-section-heading) { opacity:.46; }
+        [data-dcuf-surface="filter-settings"] .dcuf-shortcut-summary { display:flex;flex-wrap:wrap;align-items:center;gap:7px;min-width:0; }
+        [data-dcuf-surface="filter-settings"] .dcuf-keycap { padding:4px 8px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:8px;background:var(--dcuf-theme-surface-input,#fff);font-size:12px; }
+        [data-dcuf-surface="filter-settings"] .dcuf-text-action { color:var(--dcuf-theme-accent-ink,#315fdb);font-size:12px;font-weight:760; }
+        [data-dcuf-surface="filter-settings"] .dcuf-settings-body { background:var(--dcuf-filter-reading,var(--dcuf-panel-body-background,var(--dcuf-theme-canvas,#f6f7f9))); }
+        [data-dcuf-surface="filter-settings"] .dcuf-segment-group { border:var(--dcuf-filter-segment-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-filter-segment-radius,14px);background:var(--dcuf-filter-segment-bg,var(--dcuf-theme-surface-muted,#eef1f5)); }
+        [data-dcuf-surface="filter-settings"] .dcuf-segment-button { border:var(--dcuf-filter-segment-border,1px solid transparent);border-radius:var(--dcuf-filter-segment-radius,10px);background:var(--dcuf-filter-segment-item-bg,var(--dcuf-control-secondary-bg,transparent));box-shadow:var(--dcuf-filter-segment-shadow,var(--dcuf-control-shadow,none));color:var(--dcuf-filter-segment-ink,var(--dcuf-theme-fg-muted,#687384)); }
+        [data-dcuf-surface="filter-settings"] .dcuf-segment-button[aria-pressed="true"] { border-color:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 30%,var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-filter-segment-selected,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff)));color:var(--dcuf-filter-segment-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-filter-segment-shadow,var(--dcuf-control-shadow,0 3px 8px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent))); }
+        [data-dcuf-surface="filter-settings"] .dcuf-button--wide,[data-dcuf-surface="headtext-settings"] [data-dcuf-headtext-action="clear"] { width:var(--dcuf-filter-utility-width,100%);display:var(--dcuf-filter-utility-display,inline-block); }
+        [data-dcuf-surface="filter-settings"] .dcuf-button--secondary,[data-dcuf-surface="headtext-settings"] .dcuf-button--secondary,[data-dcuf-surface="headtext-settings"] .dcuf-button--quiet,[data-dcuf-surface="shortcut-settings"] .dcuf-button--secondary { min-height:var(--dcuf-personal-utility-height,44px);padding:var(--dcuf-personal-utility-padding,9px 14px);border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff)));color:var(--dcuf-personal-quiet-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,780); }
+        [data-dcuf-surface="filter-settings"] .dcuf-button--secondary:hover,[data-dcuf-surface="filter-settings"] .dcuf-button--secondary:focus-visible,[data-dcuf-surface="headtext-settings"] .dcuf-button--secondary:hover,[data-dcuf-surface="headtext-settings"] .dcuf-button--secondary:focus-visible,[data-dcuf-surface="headtext-settings"] .dcuf-button--quiet:hover,[data-dcuf-surface="headtext-settings"] .dcuf-button--quiet:focus-visible,[data-dcuf-surface="shortcut-settings"] .dcuf-button--secondary:hover,[data-dcuf-surface="shortcut-settings"] .dcuf-button--secondary:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-button--quiet { border-color:var(--dcuf-child-quiet-rim,var(--dcuf-control-rim,var(--dcuf-theme-border-strong,#cbd2db)));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="shortcut-settings"] .dcuf-inline-actions { justify-content:var(--dcuf-child-actions-justify,normal); }
+        [data-dcuf-surface="shortcut-settings"] .dcuf-inline-actions > .dcuf-button { flex:var(--dcuf-child-actions-flex,1 1 0); }
+        [data-dcuf-surface="convenience-settings"][data-dcuf-role="panel"] { --dcuf-panel-width:440px;--dcuf-child-primary-width:auto; }
+        [data-dcuf-surface="convenience-settings"] .dcuf-panel-header { cursor:var(--dcuf-convenience-header-cursor,move); }
+        [data-dcuf-surface="convenience-settings"] .dcuf-panel-body { background:var(--dcuf-filter-reading,var(--dcuf-panel-body-background,var(--dcuf-theme-canvas,#f6f7f9))); }
+        [data-dcuf-surface="convenience-settings"] .dcuf-convenience-actions > .dcuf-button--primary { ${CHILD_PRIMARY_STYLE} }
+        [data-dcuf-surface="convenience-settings"] .dcuf-convenience-clear { min-height:var(--dcuf-personal-utility-height,44px);padding:var(--dcuf-personal-utility-padding,9px 14px);border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff)));color:var(--dcuf-personal-quiet-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,780); }
+        [data-dcuf-surface="convenience-settings"] .dcuf-convenience-clear:hover,[data-dcuf-surface="convenience-settings"] .dcuf-convenience-clear:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="convenience-settings"] .dcuf-option-row { display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:68px;cursor:pointer; }
+        [data-dcuf-surface="convenience-settings"] .dcuf-option-copy { min-width:0; }
+        [data-dcuf-surface="convenience-settings"] .dcuf-option-copy strong,[data-dcuf-surface="convenience-settings"] .dcuf-option-copy small { display:block; }
+        [data-dcuf-surface="convenience-settings"] .dcuf-option-copy small { margin-top:3px;color:var(--dcuf-panel-help-ink,var(--dcuf-theme-fg-muted,#687384));font-size:11.5px; }
+        [data-dcuf-surface="personal-management"][data-dcuf-role="panel"] { --dcuf-panel-width:600px;--dcuf-radius-panel:var(--dcuf-management-panel-radius,14px);height:min(700px,calc(100dvh - 24px)); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-header { padding:14px var(--dcuf-management-inset,16px); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-title { font-size:var(--dcuf-management-title-size,var(--dcuf-panel-title-size,18px));font-weight:var(--dcuf-management-title-weight,820); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-header-actions { display:flex;align-items:center;gap:7px; }
+        [data-dcuf-surface="personal-management"] .dcuf-management-tabs { display:var(--dcuf-management-tabs-display,grid);flex:0 0 auto;gap:var(--dcuf-management-tabs-gap,3px);margin:var(--dcuf-management-tabs-margin,10px 12px 0);padding:var(--dcuf-management-tabs-padding,3px);border:var(--dcuf-management-tabs-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-management-quiet-radius,14px);background:var(--dcuf-management-quiet-bg,var(--dcuf-theme-surface-muted,#eef1f5)); }
+        [data-dcuf-surface="personal-management"] .panel-tab { min-height:var(--dcuf-management-tab-height,38px);padding:var(--dcuf-management-tab-padding,7px 9px);border-color:var(--dcuf-management-quiet-rim,transparent);border-radius:var(--dcuf-management-quiet-radius,10px);background:var(--dcuf-management-quiet-bg,var(--dcuf-control-secondary-bg,transparent));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-size:var(--dcuf-management-tab-size,12px); }
+        [data-dcuf-surface="personal-management"] .panel-tab[aria-selected="true"] { border-color:var(--dcuf-management-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 30%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-management-tab-selected-shadow,var(--dcuf-control-shadow,0 3px 8px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent))); }
+        [data-dcuf-surface="personal-management"] .dcuf-count { display:inline-grid;min-width:20px;place-items:center;margin-left:4px;padding:2px 5px;border-radius:999px;background:color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent);font-size:10px; }
+        [data-dcuf-surface="personal-management"] .dcuf-management-body { display:flex;flex:var(--dcuf-management-body-flex,0 1 auto);flex-direction:column;padding:12px var(--dcuf-management-inset,12px); }
+        [data-dcuf-surface="personal-management"] .dcuf-management-tools { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;padding:var(--dcuf-management-tools-padding,10px);border:var(--dcuf-management-tools-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-management-quiet-radius,14px);background-color:var(--dcuf-management-quiet-bg,var(--dcuf-theme-card-top,#fff));background-image:none; }
+        [data-dcuf-surface="personal-management"] .dcuf-search-field { display:flex;align-items:center;gap:7px;padding-left:11px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:var(--dcuf-radius-control);background:var(--dcuf-theme-surface-input,#fff); }
+        [data-dcuf-surface="personal-management"] .dcuf-search-field .dcuf-field { border:0;background-color:var(--dcuf-theme-surface-input,#fff);background-image:none;outline:0; }
+        [data-dcuf-surface="personal-management"] .dcuf-management-content { flex:1 1 auto;min-height:0;overflow:auto;margin-top:var(--dcuf-management-list-offset,0);padding:var(--dcuf-management-list-padding,0);border:var(--dcuf-management-list-border,0);border-radius:var(--dcuf-management-list-radius,0);background:var(--dcuf-management-reading,transparent); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-list { display:grid;gap:var(--dcuf-management-list-gap,7px);margin:var(--dcuf-management-list-margin,10px 0 0);padding:0;list-style:none; }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item { display:flex;box-sizing:var(--dcuf-management-row-sizing,content-box);align-items:center;justify-content:space-between;gap:9px;min-height:var(--dcuf-management-row-height,50px);padding:var(--dcuf-management-row-padding,8px 10px);border:1px solid var(--dcuf-management-quiet-rim,var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-management-quiet-radius,13px);background:var(--dcuf-management-quiet-bg,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-management-row-divider,none); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item:last-child { box-shadow:none; }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete { border-color:color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3));background:color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff));opacity:var(--dcuf-panel-pending-opacity,.72); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-item.item-to-delete .dcuf-item-name { text-decoration:var(--dcuf-panel-pending-decoration,none); }
+        [data-dcuf-surface="personal-management"] .dcuf-item-name { min-width:0;overflow-wrap:anywhere; }
+        [data-dcuf-surface="personal-management"] .panel-add-btn { border-color:var(--dcuf-management-quiet-rim,var(--dcuf-control-rim,var(--dcuf-theme-border-strong,#cbd2db)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-management-action-weight,780); }
+        [data-dcuf-surface="personal-management"] .select-all-btn,[data-dcuf-surface="personal-management"] .select-all-global-btn,[data-dcuf-surface="personal-management"] .panel-backup-btn { border-color:var(--dcuf-management-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-secondary-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-management-action-weight,780); }
+        [data-dcuf-surface="personal-management"] .dcuf-delete-item { flex:0 0 auto;min-height:var(--dcuf-management-delete-height,36px);border-color:var(--dcuf-management-quiet-rim,color-mix(in srgb,#c43249 45%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-management-quiet-bg,var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff))));box-shadow:var(--dcuf-management-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-management-action-weight,780); }
+        [data-dcuf-surface="personal-management"] .panel-add-btn:hover,[data-dcuf-surface="personal-management"] .panel-add-btn:focus-visible { background:var(--dcuf-management-action-hover,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-management"] .select-all-btn:hover,[data-dcuf-surface="personal-management"] .select-all-btn:focus-visible,[data-dcuf-surface="personal-management"] .select-all-global-btn:hover,[data-dcuf-surface="personal-management"] .select-all-global-btn:focus-visible,[data-dcuf-surface="personal-management"] .panel-backup-btn:hover,[data-dcuf-surface="personal-management"] .panel-backup-btn:focus-visible { background:var(--dcuf-management-action-hover,var(--dcuf-control-secondary-bg,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-management"] .dcuf-delete-item:hover,[data-dcuf-surface="personal-management"] .dcuf-delete-item:focus-visible { background:var(--dcuf-management-danger-hover,var(--dcuf-control-danger-bg,color-mix(in srgb,#c43249 12%,var(--dcuf-theme-card-top,#fff)))); }
+        [data-dcuf-surface="personal-management"] .dcuf-panel-footer { padding:12px var(--dcuf-management-inset,12px);padding-right:var(--dcuf-management-resize-clearance,var(--dcuf-management-inset,12px)); }
+        [data-dcuf-surface="personal-management"] .panel-save-btn { min-width:var(--dcuf-management-primary-width,auto);border-radius:var(--dcuf-management-primary-radius,var(--dcuf-radius-control));border-color:var(--dcuf-management-primary-rim,var(--dcuf-control-primary-rim,var(--dcuf-theme-accent-ink,#315fdb)));background:var(--dcuf-management-primary-bg,var(--dcuf-theme-accent-strong,#315fdb));color:var(--dcuf-management-primary-ink,var(--dcuf-theme-on-accent,#fff));box-shadow:var(--dcuf-management-primary-shadow,var(--dcuf-control-shadow,0 7px 16px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.24))));font-weight:var(--dcuf-management-primary-weight,780); }
+        [data-dcuf-surface="personal-management"] .dcuf-blocked-empty { display:grid;min-height:120px;place-items:center;color:var(--dcuf-panel-empty-ink,var(--dcuf-theme-fg-muted,#687384));text-align:center; }
+        [data-dcuf-surface="personal-manual"] .dcuf-button--primary,[data-dcuf-surface="personal-backup"] .dcuf-button--primary,[data-dcuf-surface="personal-selection"] .dcuf-button--primary,[data-dcuf-surface="personal-size"] .dcuf-button--primary,[data-dcuf-surface="filter-settings"] .dcuf-button--primary,[data-dcuf-surface="shortcut-settings"] .dcuf-button--primary { ${CHILD_PRIMARY_STYLE} }
+        [data-dcuf-surface="personal-manual"] .dcuf-inline-actions,[data-dcuf-surface="personal-backup"] .dcuf-inline-actions { justify-content:var(--dcuf-child-actions-justify,normal); }
+        [data-dcuf-surface="personal-manual"] .dcuf-inline-actions > .dcuf-button,[data-dcuf-surface="personal-backup"] .dcuf-inline-actions > .dcuf-button { flex:var(--dcuf-child-actions-flex,1 1 0); }
+        [data-dcuf-surface="personal-manual"] [data-manual-block-action="close"],[data-dcuf-surface="personal-backup"] .export-btn-download { border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));border-radius:var(--dcuf-child-quiet-radius,var(--dcuf-radius-control));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,780); }
+        [data-dcuf-surface="personal-manual"] [data-manual-block-action="close"]:hover,[data-dcuf-surface="personal-manual"] [data-manual-block-action="close"]:focus-visible,[data-dcuf-surface="personal-backup"] .export-btn-download:hover,[data-dcuf-surface="personal-backup"] .export-btn-download:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-backup"][data-dcuf-role="panel"] { --dcuf-panel-width:560px;--dcuf-child-primary-width:var(--dcuf-child-backup-primary-width,auto);--dcuf-child-primary-height:var(--dcuf-child-backup-primary-height,44px);--dcuf-child-primary-padding:var(--dcuf-child-backup-primary-padding,9px 14px); }
+        [data-dcuf-surface="personal-backup"] .dcuf-backup-body { display:grid;gap:10px; }
+        [data-dcuf-surface="personal-backup"] .dcuf-settings-section { padding:var(--dcuf-child-section-padding,12px); }
+        [data-dcuf-surface="personal-backup"] .dcuf-inline-actions { margin:var(--dcuf-child-export-margin,0); }
+        [data-dcuf-surface="personal-backup"] .import-btn { display:var(--dcuf-child-import-display,inline-block);width:var(--dcuf-child-import-width,100%);margin:var(--dcuf-child-import-margin,0); }
+        [data-dcuf-surface="personal-backup"] .dcuf-import-controls { display:grid;gap:8px; }
+        [data-dcuf-surface="personal-backup"] .dcuf-file-field { padding:7px; }
+        [data-dcuf-surface="personal-backup"] .dcuf-textarea { min-height:108px;resize:vertical;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px; }
+        [data-dcuf-surface="personal-size"][data-dcuf-role="panel"] { --dcuf-panel-width:380px;--dcuf-child-primary-width:auto;--dcuf-child-primary-height:var(--dcuf-personal-utility-height,44px);--dcuf-child-primary-padding:var(--dcuf-personal-utility-padding,9px 14px);padding:18px; }
+        [data-dcuf-surface="personal-size"] .dcuf-fab-size-value { display:block;margin:16px 0 4px;color:var(--dcuf-theme-accent-ink,#315fdb);font-size:28px;font-weight:850;text-align:center; }
+        [data-dcuf-surface="personal-size"] .dcuf-range { width:100%;height:var(--dcuf-personal-range-height,auto);margin:var(--dcuf-panel-range-margin,2px);accent-color:var(--dcuf-theme-accent-ink,#315fdb); }
+        [data-dcuf-surface="personal-size"] .dcuf-fab-size-bounds { display:flex;justify-content:space-between; }
+        [data-dcuf-surface="personal-size"] .dcuf-fab-size-actions { margin-top:18px;justify-content:var(--dcuf-child-actions-justify,normal); }
+        [data-dcuf-surface="personal-size"] .dcuf-inline-actions > .dcuf-button { flex:var(--dcuf-child-actions-flex,1 1 0); }
+        [data-dcuf-surface="personal-size"] [data-dcuf-fab-size-action="reset"] { margin-right:var(--dcuf-personal-reset-spacer,0); }
+        [data-dcuf-surface="personal-manual"][data-dcuf-role="panel"] { --dcuf-panel-width:440px; }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-form { display:grid;gap:12px; }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-type-tabs { padding:var(--dcuf-child-tabs-padding,3px);border:var(--dcuf-child-tabs-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-child-quiet-radius,14px);background:var(--dcuf-child-quiet-bg,var(--dcuf-theme-surface-muted,#eef1f5)); }
+        [data-dcuf-surface="personal-manual"] [data-manual-block-type] { min-height:var(--dcuf-child-tab-height,38px);border-radius:var(--dcuf-child-quiet-radius,10px);background:var(--dcuf-child-quiet-bg,var(--dcuf-control-secondary-bg,transparent));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,760); }
+        [data-dcuf-surface="personal-manual"] [data-manual-block-type][aria-pressed="true"] { border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 30%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff)));box-shadow:var(--dcuf-child-tab-selected-shadow,var(--dcuf-control-shadow,0 3px 8px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 12%,transparent))); }
+        [data-dcuf-surface="personal-manual"] [data-manual-block-type]:not([aria-pressed="true"]):hover,[data-dcuf-surface="personal-manual"] [data-manual-block-type]:not([aria-pressed="true"]):focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-secondary-bg,transparent)); }
+        [data-dcuf-surface="personal-manual"] [data-manual-block-type][aria-pressed="true"]:hover,[data-dcuf-surface="personal-manual"] [data-manual-block-type][aria-pressed="true"]:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-selected-bg,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-field[hidden] { display:none; }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="success"] { color:var(--dcuf-panel-status-success,#16835f); }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="error"] { color:var(--dcuf-panel-status-error,#c43249); }
+        [data-dcuf-surface="personal-manual"] .dcuf-manual-status[data-state="info"] { color:var(--dcuf-panel-status-info,#c43249); }
+        [data-dcuf-surface="personal-selection"] { --dcuf-child-primary-width:auto;--dcuf-child-primary-height:var(--dcuf-personal-utility-height,44px);--dcuf-child-primary-padding:var(--dcuf-personal-utility-padding,9px 14px);position:fixed;z-index:2147483646;left:50%;top:18px;width:min(460px,calc(100vw - 24px));padding:12px;border:1px solid var(--dcuf-selection-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-selection-background,linear-gradient(145deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-card-bottom,#fafbfc)));backdrop-filter:var(--dcuf-selection-backdrop,none);box-shadow:var(--dcuf-selection-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));transform:translateX(-50%); }
+        [data-dcuf-surface="personal-selection"] > h4 { font-size:var(--dcuf-selection-title-size,1em);margin:var(--dcuf-selection-title-margin,1.33em 0); }
+        [data-dcuf-surface="personal-selection"] .cancel-btn,[data-dcuf-surface="personal-size"] .dcuf-button--secondary { min-height:var(--dcuf-personal-utility-height,44px);padding:var(--dcuf-personal-utility-padding,9px 14px);border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));border-radius:var(--dcuf-child-quiet-radius,var(--dcuf-radius-control));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff)));color:var(--dcuf-personal-quiet-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,780); }
+        [data-dcuf-surface="personal-selection"] .cancel-btn:hover,[data-dcuf-surface="personal-selection"] .cancel-btn:focus-visible,[data-dcuf-surface="personal-size"] .dcuf-button--secondary:hover,[data-dcuf-surface="personal-size"] .dcuf-button--secondary:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="personal-selection"].dcuf-selection-prompt { display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px; }
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-icon { display:grid;width:36px;height:36px;place-items:center;border-radius:11px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-copy h4,[data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-copy p { margin:0; }
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-copy p { color:var(--dcuf-theme-fg-muted,#687384);font-size:11.5px; }
+        [data-dcuf-surface="personal-selection"] .block-options { padding:var(--dcuf-selection-group-padding,0);border:var(--dcuf-selection-group-rim,0);border-radius:var(--dcuf-selection-group-radius,0);background:var(--dcuf-selection-reading,transparent); }
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-option { display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:var(--dcuf-selection-row-margin,8px);padding:var(--dcuf-selection-row-padding,9px);border:var(--dcuf-selection-row-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:var(--dcuf-selection-row-radius,12px);background:var(--dcuf-selection-row-bg,var(--dcuf-theme-surface-input,#fff));box-shadow:var(--dcuf-selection-row-divider,none); }
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-option:last-child { box-shadow:none; }
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-copy { min-width:0;overflow-wrap:anywhere; }
+        [data-dcuf-surface="personal-selection"] .dcuf-popup-actions { display:flex;justify-content:flex-end;margin-top:10px; }
+        ${PERSONAL_MENU_CSS}
+        [data-dcuf-surface="headtext-settings"][data-dcuf-role="panel"] { --dcuf-panel-width:460px;height:var(--dcuf-filter-headtext-height,min(680px,calc(100dvh - 24px))); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-manual { display:flex;align-items:center;gap:8px; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-manual > .dcuf-field { flex:1 1 0;width:0;min-width:0; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-manual > .dcuf-button { flex:0 0 auto;white-space:nowrap; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-choices { display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin:10px 0; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-choice-chip { display:flex;align-items:center;gap:7px;min-height:44px;padding:7px 9px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:11px;background:var(--dcuf-theme-card-top,#fff);cursor:pointer; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-choice-input { accent-color:var(--dcuf-theme-accent-ink,#315fdb); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-grid-empty { grid-column:1/-1; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-saved { display:grid;gap:7px; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-saved-rule { display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--dcuf-theme-border,#d9dde3);border-radius:11px;background:var(--dcuf-theme-card-top,#fff); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-saved-rule > span { flex:1 1 auto;min-width:0;overflow-wrap:anywhere;font-size:12px; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-saved-rule > .dcuf-button,
+        [data-dcuf-surface="personal-selection"] .dcuf-selection-option > .dcuf-button { flex:0 0 auto;white-space:nowrap; }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-manual { margin:var(--dcuf-filter-manual-margin,0); }
+        [data-dcuf-surface="headtext-settings"] [data-dcuf-headtext-action="clear"] { margin:var(--dcuf-filter-clear-margin,0); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-body > .dcuf-settings-section-title { margin:var(--dcuf-filter-heading-margin,0 0 6px); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-choices { grid-template-columns:repeat(auto-fit,minmax(var(--dcuf-filter-choice-min,110px),1fr));padding:var(--dcuf-filter-choice-padding,0);border-radius:var(--dcuf-filter-segment-radius,0);background:var(--dcuf-filter-reading,transparent); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-choice-chip { border:var(--dcuf-filter-choice-border,1px solid var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-filter-choice-bg,var(--dcuf-theme-card-top,#fff)); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-choice-chip:has(.dcuf-choice-input:checked) { background:var(--dcuf-filter-choice-selected,var(--dcuf-theme-card-top,#fff)); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-headtext-saved { gap:var(--dcuf-filter-rule-gap,7px);padding:var(--dcuf-filter-rule-padding,0);border-radius:var(--dcuf-filter-segment-radius,0);background:var(--dcuf-filter-reading,transparent); }
+        [data-dcuf-surface="headtext-settings"] .dcuf-saved-rule { border:var(--dcuf-filter-choice-border,1px solid var(--dcuf-theme-border,#d9dde3));background:var(--dcuf-filter-choice-bg,var(--dcuf-theme-card-top,#fff)); }
+        [data-dcuf-surface="shortcut-settings"][data-dcuf-role="panel"] { --dcuf-panel-width:380px;--dcuf-child-primary-width:auto;--dcuf-child-primary-height:var(--dcuf-personal-utility-height,44px);--dcuf-child-primary-padding:var(--dcuf-personal-utility-padding,9px 14px);padding:18px;text-align:center; }
+        [data-dcuf-surface="shortcut-settings"] .dcuf-shortcut-preview { display:grid;min-height:52px;place-items:center;margin:16px 0;padding:8px;border:1px solid var(--dcuf-theme-border-strong,#cbd2db);border-radius:13px;background:var(--dcuf-theme-surface-input,#fff);font-size:18px;font-weight:820; }
+        @media (max-width:460px) { [data-dcuf-surface="filter-settings"] .dcuf-settings-threshold { grid-template-columns:1fr; }[data-dcuf-surface="filter-settings"] .dcuf-settings-threshold .dcuf-number-field { grid-template-columns:1fr auto;align-items:center; }[data-dcuf-surface="filter-settings"] .dcuf-settings-threshold .dcuf-field { width:96px; }[data-dcuf-surface="personal-management"] .dcuf-panel-header { align-items:flex-start; }[data-dcuf-surface="personal-management"] .dcuf-panel-header-actions { flex-wrap:wrap;justify-content:flex-end; }[data-dcuf-surface="personal-management"] .dcuf-panel-header-actions .dcuf-button { min-height:38px;padding:7px 9px;font-size:0; }[data-dcuf-surface="personal-management"] .dcuf-panel-header-actions .dcuf-button::after { content:"추가";font-size:12px; }[data-dcuf-surface="personal-management"] .dcuf-management-tools { grid-template-columns:1fr; }[data-dcuf-surface="personal-management"] .dcuf-panel-footer { align-items:stretch;flex-direction:column; }[data-dcuf-surface="personal-management"] .dcuf-footer-actions { display:grid;grid-template-columns:1fr 1fr; }[data-dcuf-surface="personal-management"] .dcuf-panel-footer > .dcuf-button { width:100%; }[data-dcuf-surface="filter-settings"] .dcuf-panel-footer { align-items:stretch;flex-direction:column; } }
+        [data-dcuf-surface="personal-selection-target"][data-dcuf-state="active"] { outline:2px solid color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 65%,transparent);outline-offset:2px;background:color-mix(in srgb,var(--dcuf-theme-accent-soft,#e9efff) 55%,transparent);cursor:pointer; }
+        /* DCUF_SHARED_FILTER_UI_END */
+        /* DCUF_SHARED_FILTER_UI_DARK_START */
+        /* DCUF_SHARED_FILTER_UI_DARK_END */`;
 
-        @media (prefers-reduced-motion: reduce) {
-            #dcinside-filter-setting,
-            #dc-selection-popup,
-            #dc-backup-popup,
-            #dc-block-management-panel,
-            #dcinside-filter-setting.dcuf-pop-leave,
-            #dc-selection-popup.dcuf-pop-leave,
-            #dc-backup-popup.dcuf-pop-leave,
-            #dc-block-management-panel.dcuf-pop-leave,
-            #dc-block-management-panel-overlay.dcuf-overlay-leave,
-            #dc-backup-popup-overlay.dcuf-overlay-leave {
-                animation: none !important;
-                transition: none !important;
-            }
-        }
+    const PALETTE_CSS = `${BASE_CSS}
+        [data-dcuf-surface="palette"][data-dcuf-role="overlay"] { display:flex;align-items:center;justify-content:center;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left)); }
+        [data-dcuf-surface="palette"][data-dcuf-role="panel"] { --dcuf-panel-width:540px;--dcuf-child-primary-width:auto;--dcuf-child-primary-height:var(--dcuf-personal-utility-height,44px);--dcuf-child-primary-padding:var(--dcuf-personal-utility-padding,9px 14px);height:min(680px,calc(100dvh - 24px)); }
+        [data-dcuf-surface="palette"] .dcuf-palette-body { display:flex;flex:1 1 auto;flex-direction:column;overflow:hidden; }
+        [data-dcuf-surface="palette"] .dcuf-palette-options { display:grid;flex:1 1 auto;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;min-height:0;gap:8px;padding:var(--dcuf-palette-options-padding,2px 3px 6px 1px);border-radius:var(--dcuf-palette-options-radius,0);background:var(--dcuf-palette-reading,transparent);overflow:hidden auto;overscroll-behavior:contain;scrollbar-gutter:stable;touch-action:pan-y; }
+        [data-dcuf-surface="palette"] .dcuf-option-card { appearance:none;display:grid;grid-template-columns:48px minmax(0,1fr);align-items:center;gap:10px;min-height:var(--dcuf-palette-option-height,64px);padding:9px;border:var(--dcuf-palette-option-border,1px solid var(--dcuf-theme-border,#d9dde3));border-radius:14px;background:var(--dcuf-palette-option-bg,var(--dcuf-theme-surface-input,#fff));color:var(--dcuf-theme-fg,#27313f);font:inherit;text-align:left;cursor:pointer;transition:transform var(--dcuf-motion-press) ease,background-color var(--dcuf-motion-state) ease,border-color var(--dcuf-motion-state) ease,box-shadow var(--dcuf-motion-state) ease; }
+        [data-dcuf-surface="palette"] .dcuf-option-card[aria-checked="true"] { border-color:var(--dcuf-theme-accent-ink,#4263eb);background:var(--dcuf-palette-option-selected-bg,var(--dcuf-theme-accent-soft,#e9efff));color:var(--dcuf-palette-option-selected-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-palette-option-selected-shadow,0 0 0 2px color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 16%,transparent)); }
+        [data-dcuf-surface="palette"] .dcuf-palette-swatch { display:grid;grid-template-columns:repeat(3,1fr);width:46px;height:36px;overflow:hidden;border:1px solid color-mix(in srgb,var(--dcuf-theme-fg,#27313f) 12%,transparent);border-radius:10px; }
+        [data-dcuf-surface="palette"] .dcuf-palette-swatch > span { display:block;background:var(--dcuf-swatch); }
+        [data-dcuf-surface="palette"] .dcuf-palette-name { font-weight:var(--dcuf-palette-name-weight,800); }
+        [data-dcuf-surface="palette"] .dcuf-palette-actions { --dcuf-inline-actions-flex:var(--dcuf-child-actions-flex,1 1 0);flex:0 0 auto;margin-top:2px;padding-right:var(--dcuf-palette-resize-clearance,0); }
+        [data-dcuf-surface="palette"] .dcuf-palette-actions > .dcuf-button--primary { ${CHILD_PRIMARY_STYLE} }
+        [data-dcuf-surface="palette"] .dcuf-palette-actions > .dcuf-button--secondary { min-height:var(--dcuf-personal-utility-height,44px);padding:var(--dcuf-personal-utility-padding,9px 14px);border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff)));color:var(--dcuf-personal-quiet-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,780); }
+        [data-dcuf-surface="palette"] .dcuf-palette-actions > .dcuf-button--secondary:hover,[data-dcuf-surface="palette"] .dcuf-palette-actions > .dcuf-button--secondary:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff))); }
+        [data-dcuf-surface="palette"] [data-dcuf-palette-action="default"] { margin-right:var(--dcuf-palette-default-spacer,0); }
+        [data-dcuf-surface="palette"][data-dcuf-state="interacting"] { animation:none;transition:none; }
+        @media (max-width:440px) { [data-dcuf-surface="palette"] .dcuf-palette-options { grid-template-columns:1fr; } }
+    `;
 
-        /* [v1.9.9] Script-owned soft-depth control surfaces */
-        #dc-personal-block-fab {
-            background: linear-gradient(180deg, #fff 0%, #eef4ff 100%) !important;
-            color: #29466f !important;
-            border: 1px solid rgba(127,154,196,.46) !important;
-            box-shadow: 0 14px 30px rgba(40,68,112,.2), 0 3px 8px rgba(40,68,112,.12), inset 0 1px 0 #fff !important;
-        }
-        #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #fff 0%, #e7f0ff 100%) !important;
-            border-color: rgba(86,124,185,.56) !important;
-            box-shadow: 0 17px 34px rgba(40,68,112,.24), inset 0 1px 0 #fff !important;
-        }
-        #dc-personal-block-fab:active {
-            transform: translateY(2px) scale(.98) !important;
-            box-shadow: 0 7px 16px rgba(40,68,112,.17), inset 0 1px 3px rgba(40,68,112,.12) !important;
-        }
-        #dc-personal-block-drawer {
-            width: 260px !important;
-            min-width: 260px !important;
-            max-height: min(440px, calc(100dvh - 24px)) !important;
-            gap: 6px !important;
-            padding: 9px !important;
-            overflow-y: auto !important;
-            border: 1px solid rgba(151,171,202,.5) !important;
-            border-radius: 18px !important;
-            background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(241,246,255,.98)) !important;
-            box-shadow: 0 22px 48px rgba(35,55,91,.25), 0 6px 16px rgba(35,55,91,.12), inset 0 1px 0 #fff !important;
-        }
-        #dc-personal-block-drawer button {
-            display: grid !important;
-            grid-template-columns: 36px minmax(0,1fr) !important;
-            align-items: center !important;
-            gap: 10px !important;
-            min-height: 58px !important;
-            padding: 8px 10px !important;
-            border: 1px solid transparent !important;
-            border-radius: 13px !important;
-            white-space: normal !important;
-            transition: transform .14s ease, background .14s ease, border-color .14s ease, box-shadow .14s ease !important;
-        }
-        #dc-personal-block-drawer button:hover,
-        #dc-personal-block-drawer button:focus-visible {
-            background: linear-gradient(180deg,#fff,#eaf2ff) !important;
-            border-color: #cfddf2 !important;
-            box-shadow: 0 7px 16px rgba(52,83,132,.12), inset 0 1px 0 #fff !important;
-        }
-        #dc-personal-block-drawer button:active { transform: translateY(1px) !important; }
-        #dc-personal-block-drawer .dcuf-menu-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 34px;
-            height: 34px;
-            border: 1px solid #cedbf0;
-            border-radius: 11px;
-            background: linear-gradient(145deg,#fff,#e6efff);
-            color: #3b71fd;
-            font-size: 19px;
-            font-weight: 800;
-            box-shadow: 0 5px 11px rgba(59,113,253,.13), inset 0 1px 0 #fff;
-        }
-        #dc-personal-block-drawer button > span:last-child { min-width: 0; }
-        #dc-personal-block-drawer strong,
-        #dc-personal-block-drawer small { display: block; }
-        #dc-personal-block-drawer strong { color: #263b5a; font-size: 14px; line-height: 1.25; }
-        #dc-personal-block-drawer small { margin-top: 3px; color: #71819a; font-size: 11px; font-weight: 500; line-height: 1.25; }
-
-        #dc-manual-block-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 2147483647;
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 16px;
-            background: rgba(20,31,50,.48);
-            backdrop-filter: blur(3px);
-        }
-        #dc-manual-block-panel {
-            box-sizing: border-box;
-            width: min(430px, calc(100vw - 32px));
-            max-height: calc(100dvh - 32px);
-            overflow: hidden auto;
-            border: 1px solid rgba(151,171,202,.56);
-            border-radius: 22px;
-            background: linear-gradient(155deg,#fff,#f3f7ff);
-            color: #20334f;
-            box-shadow: 0 28px 70px rgba(18,34,60,.32), 0 8px 24px rgba(18,34,60,.14), inset 0 1px 0 #fff;
-            animation: dcuf-popup-fade-in .18s ease-out;
-        }
-        #dc-manual-block-panel .dcuf-manual-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            min-height: 68px;
-            padding: 14px 14px 13px 20px;
-            border-bottom: 1px solid #dce5f3;
-            background: linear-gradient(135deg,#eff5ff,#fff);
-        }
-        #dc-manual-block-panel .dcuf-manual-kicker,
-        #dc-block-management-panel .panel-kicker {
-            display: block;
-            margin-bottom: 3px;
-            color: #6684b4;
-            font-size: 9px;
-            font-weight: 900;
-            letter-spacing: .14em;
-        }
-        #dc-manual-block-panel h3 { margin: 0; color: #1f3555; font-size: 20px; line-height: 1.15; }
-        #dc-manual-block-panel .dcuf-manual-close,
-        #dc-block-management-panel .panel-close-btn,
-        #dc-backup-popup .popup-close-btn,
-        #dcinside-filter-setting #dcinside-filter-close {
-            box-sizing: border-box !important;
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 44px !important;
-            min-width: 44px !important;
-            height: 44px !important;
-            min-height: 44px !important;
-            padding: 0 !important;
-            border: 1px solid transparent !important;
-            border-radius: 13px !important;
-            background: transparent !important;
-            color: #61728d !important;
-            font-size: 23px !important;
-            line-height: 1 !important;
-        }
-        #dc-manual-block-panel .dcuf-manual-close:hover,
-        #dc-block-management-panel .panel-close-btn:hover,
-        #dc-backup-popup .popup-close-btn:hover,
-        #dcinside-filter-setting #dcinside-filter-close:hover {
-            border-color: #d8e2f0 !important;
-            background: #edf3fb !important;
-            color: #29405f !important;
-        }
-        #dc-manual-block-panel .dcuf-manual-form { padding: 18px 20px 20px; }
-        #dc-manual-block-panel .dcuf-manual-type-tabs {
-            display: grid;
-            grid-template-columns: repeat(3,1fr);
-            gap: 4px;
-            padding: 4px;
-            border: 1px solid #d6e0ef;
-            border-radius: 14px;
-            background: #eaf0f8;
-            box-shadow: inset 0 2px 5px rgba(48,72,111,.08);
-        }
-        #dc-manual-block-panel [data-manual-block-type] {
-            min-height: 42px;
-            padding: 8px 6px;
-            border: 1px solid transparent;
-            border-radius: 10px;
-            background: transparent;
-            color: #65758d;
-            font: 700 13px/1.2 inherit;
-            cursor: pointer;
-        }
-        #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
-            border-color: #ccdaf0;
-            background: linear-gradient(180deg,#fff,#edf4ff);
-            color: #3265d2;
-            box-shadow: 0 5px 12px rgba(46,81,139,.16), inset 0 1px 0 #fff;
-        }
-        #dc-manual-block-panel .dcuf-manual-field {
-            display: grid;
-            gap: 7px;
-            margin-top: 17px;
-            color: #314867;
-            font-size: 13px;
-            font-weight: 800;
-        }
-        #dc-manual-block-panel .dcuf-manual-field[hidden] { display: none !important; }
-        #dc-manual-block-panel .dcuf-manual-field small { color: #8a98ac; font-weight: 500; }
-        #dc-manual-block-panel .dcuf-manual-field input {
-            box-sizing: border-box;
-            width: 100%;
-            min-height: 48px;
-            padding: 11px 13px;
-            border: 1px solid #cad7e9;
-            border-radius: 12px;
-            outline: 0;
-            background: #fff;
-            color: #1d2f49;
-            font: 600 15px/1.3 inherit;
-            box-shadow: inset 0 2px 5px rgba(37,60,96,.08), 0 1px 0 #fff;
-        }
-        #dc-manual-block-panel .dcuf-manual-field input:focus {
-            border-color: #7199f5;
-            box-shadow: 0 0 0 3px rgba(59,113,253,.15), inset 0 1px 3px rgba(37,60,96,.08);
-        }
-        #dc-manual-block-panel .dcuf-manual-hint {
-            min-height: 34px;
-            margin: 10px 2px 0;
-            color: #6d7d94;
-            font-size: 12px;
-            line-height: 1.45;
-        }
-        #dc-manual-block-panel .dcuf-manual-status {
-            min-height: 20px;
-            margin: 4px 2px 0;
-            color: #65758d;
-            font-size: 12px;
-            font-weight: 700;
-            line-height: 1.4;
-        }
-        #dc-manual-block-panel .dcuf-manual-status[data-state="success"] { color: #16835f; }
-        #dc-manual-block-panel .dcuf-manual-status[data-state="error"] { color: #d7485a; }
-        #dc-manual-block-panel .dcuf-manual-status[data-state="info"] { color: #3b68c6; }
-        #dc-manual-block-panel .dcuf-manual-actions {
-            display: grid;
-            grid-template-columns: .75fr 1.25fr;
-            gap: 9px;
-            margin-top: 10px;
-        }
-        #dc-manual-block-panel .dcuf-manual-actions button {
-            min-height: 46px;
-            border: 1px solid #ccd8e8;
-            border-radius: 12px;
-            background: linear-gradient(180deg,#fff,#edf2f8);
-            color: #53657e;
-            font: 800 14px/1 inherit;
-            box-shadow: 0 5px 12px rgba(35,56,89,.1), inset 0 1px 0 #fff;
-            cursor: pointer;
-        }
-        #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
-            border-color: #3b71fd;
-            background: linear-gradient(180deg,#5687ff,#376af0);
-            color: #fff;
-            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.34);
-        }
-        #dc-manual-block-panel .dcuf-manual-actions button:active { transform: translateY(1px); }
-        #dc-manual-block-panel .dcuf-manual-actions button:disabled { opacity: .65; cursor: wait; }
-
-
-        @keyframes dcuf-selection-prompt-in {
-            from { opacity: 0; transform: translate(-50%,-8px) scale(.98); }
-            to { opacity: 1; transform: translate(-50%,0) scale(1); }
-        }
-        #dc-selection-popup.dcuf-selection-prompt {
-            top: calc(env(safe-area-inset-top,0px) + 14px) !important;
-            left: 50% !important;
-            bottom: auto !important;
-            box-sizing: border-box !important;
-            display: grid !important;
-            grid-template-columns: 42px minmax(0,1fr) auto !important;
-            align-items: center !important;
-            gap: 11px !important;
-            width: min(560px,calc(100vw - 24px)) !important;
-            min-width: 0 !important;
-            max-width: calc(100vw - 24px) !important;
-            padding: 11px 12px !important;
-            border: 1px solid rgba(142,166,203,.58) !important;
-            border-radius: 18px !important;
-            transform: translateX(-50%) !important;
-            text-align: left !important;
-            background: linear-gradient(145deg,rgba(255,255,255,.98),rgba(237,244,255,.98)) !important;
-            box-shadow: 0 18px 40px rgba(31,51,83,.25), inset 0 1px 0 #fff !important;
-            animation: dcuf-selection-prompt-in .18s ease-out !important;
-        }
-        #dc-selection-popup .dcuf-selection-prompt-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            width: 40px;
-            height: 40px;
-            border-radius: 13px;
-            background: linear-gradient(145deg,#fff,#dfeaff);
-            color: #3b71fd;
-            font-size: 21px;
-            font-weight: 900;
-            box-shadow: 0 6px 14px rgba(59,113,253,.18), inset 0 1px 0 #fff;
-        }
-        #dc-selection-popup .dcuf-selection-prompt-copy h4 {
-            margin: 0 0 3px !important;
-            color: #233a5b !important;
-            font-size: 15px !important;
-            font-weight: 850 !important;
-        }
-        #dc-selection-popup .dcuf-selection-prompt-copy p {
-            margin: 0;
-            color: #71819a;
-            font-size: 12px;
-            line-height: 1.35;
-        }
-        #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
-            width: auto !important;
-            min-width: 86px;
-            min-height: 42px;
-            padding: 9px 12px !important;
-            border: 1px solid #cfdaea !important;
-            border-radius: 11px !important;
-            background: linear-gradient(180deg,#fff,#e9eff7) !important;
-            color: #50627d !important;
-            font-size: 13px !important;
-            font-weight: 800 !important;
-            box-shadow: 0 5px 12px rgba(41,62,96,.1), inset 0 1px 0 #fff;
-        }
-        body.selection-mode-active .gall_writer,
-        body.selection-mode-active .ub-writer {
-            border-radius: 6px !important;
-            outline: 2px solid rgba(59,113,253,.44) !important;
-            outline-offset: 2px !important;
-            background: rgba(59,113,253,.08) !important;
-        }
-        #dc-selection-popup:not(.dcuf-selection-prompt) {
-            border: 1px solid #d1dceb !important;
-            border-radius: 20px !important;
-            background: linear-gradient(150deg,#fff,#f3f7fd) !important;
-            box-shadow: 0 24px 58px rgba(24,42,71,.3), inset 0 1px 0 #fff !important;
-        }
-        #dc-selection-popup .block-option {
-            border-radius: 13px !important;
-            background: linear-gradient(145deg,#fff,#eef4fc) !important;
-            box-shadow: 0 6px 15px rgba(38,60,96,.09), inset 0 1px 0 #fff !important;
-        }
-        #dc-selection-popup .block-option button,
-        #dc-selection-popup .popup-buttons button { min-height: 42px; }
-
-        #dcinside-filter-setting,
-        #dc-block-management-panel,
-        #dc-backup-popup {
-            border: 1px solid rgba(149,169,201,.55) !important;
-            border-radius: 22px !important;
-            background: linear-gradient(155deg,#fff,#f4f7fc) !important;
-            box-shadow: 0 28px 68px rgba(23,39,67,.3), 0 7px 20px rgba(23,39,67,.13), inset 0 1px 0 #fff !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-header,
-        #dc-block-management-panel .panel-header,
-        #dc-backup-popup .popup-header {
-            background: linear-gradient(135deg,rgba(238,244,255,.98),rgba(255,255,255,.98)) !important;
-            border-bottom: 1px solid #dbe4f1 !important;
-        }
-        #dcinside-filter-setting .dcuf-settings-section,
-        #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
-        #dcinside-filter-setting .dcuf-settings-guest-controls {
-            border: 1px solid #dce5f1 !important;
-            border-radius: 16px !important;
-            background: linear-gradient(145deg,#fff,#f3f7fd) !important;
-            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff !important;
-        }
-        #dcinside-filter-setting input[type="number"] {
-            min-height: 44px !important;
-            border-radius: 11px !important;
-            box-shadow: inset 0 2px 5px rgba(37,60,96,.09), 0 1px 0 #fff !important;
-        }
-        #dcinside-filter-setting #dcinside-threshold-save {
-            min-height: 46px !important;
-            border-radius: 12px !important;
-            background: linear-gradient(180deg,#5687ff,#376af0) !important;
-            box-shadow: 0 9px 18px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
-        }
-
-        #dc-block-management-panel .panel-header {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            min-height: 68px !important;
-            padding: 10px 12px 10px 18px !important;
-            cursor: move;
-        }
-        #dc-block-management-panel .panel-title-group { min-width: 0; }
-        #dc-block-management-panel .panel-title-group h3 { color: #213756 !important; font-size: 18px !important; }
-        #dc-block-management-panel .panel-header-actions { display: flex; align-items: center; gap: 7px; }
-        #dc-block-management-panel .switch-container { margin-left: 0 !important; }
-        #dc-block-management-panel .panel-add-btn {
-            min-height: 40px;
-            padding: 8px 11px;
-            border: 1px solid #cbdaf0;
-            border-radius: 11px;
-            background: linear-gradient(180deg,#fff,#e8f1ff);
-            color: #3564c4;
-            font-size: 12px;
-            font-weight: 850;
-            box-shadow: 0 6px 13px rgba(47,78,128,.12), inset 0 1px 0 #fff;
-            cursor: pointer;
-        }
-        #dc-block-management-panel .panel-tabs {
-            gap: 5px !important;
-            padding: 7px !important;
-            border-bottom: 1px solid #dce4f0 !important;
-            background: #edf2f8 !important;
-            box-shadow: inset 0 2px 5px rgba(38,59,91,.06);
-        }
-        #dc-block-management-panel .panel-tab {
-            appearance: none;
-            border: 1px solid transparent !important;
-            border-radius: 11px !important;
-            background: transparent !important;
-            color: #65758d !important;
-            font-family: inherit;
-            font-weight: 750 !important;
-        }
-        #dc-block-management-panel .panel-tab.active {
-            border-color: #ccdaf0 !important;
-            background: linear-gradient(180deg,#fff,#e8f1ff) !important;
-            color: #315fc2 !important;
-            box-shadow: 0 6px 14px rgba(45,74,121,.15), inset 0 1px 0 #fff !important;
-        }
-        #dc-block-management-panel .panel-tab.active::after { display: none !important; }
-        #dc-block-management-panel .panel-tab-count {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            min-width: 20px;
-            height: 20px;
-            margin-left: 4px;
-            padding: 0 5px;
-            border-radius: 999px;
-            background: rgba(74,111,182,.12);
-            font-size: 10px;
-            font-weight: 900;
-        }
-        #dc-block-management-panel .panel-body { background: #f5f8fc !important; }
-        #dc-block-management-panel .panel-list-controls {
-            display: grid !important;
-            grid-template-columns: minmax(150px,1fr) auto !important;
-            align-items: center;
-            gap: 8px;
-            padding: 10px !important;
-            text-align: left !important;
-            background: rgba(255,255,255,.72);
-        }
-        #dc-block-management-panel .panel-search {
-            box-sizing: border-box;
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            min-height: 42px;
-            padding: 0 11px;
-            border: 1px solid #d0dbea;
-            border-radius: 11px;
-            background: #fff;
-            color: #71819a;
-            box-shadow: inset 0 2px 5px rgba(35,56,88,.07);
-        }
-        #dc-block-management-panel .panel-search-input {
-            min-width: 0;
-            width: 100%;
-            border: 0;
-            outline: 0;
-            background: transparent;
-            color: #263a58;
-            font: 600 13px/1.2 inherit;
-        }
-        #dc-block-management-panel .panel-list-summary {
-            grid-column: 1 / -1;
-            color: #7a899e;
-            font-size: 11px;
-        }
-
-
-        #dc-block-management-panel .select-all-btn,
-        #dc-block-management-panel .select-all-global-btn,
-        #dc-block-management-panel .panel-backup-btn {
-            min-height: 40px !important;
-            border-radius: 10px !important;
-            background: linear-gradient(180deg,#fff,#edf2f8) !important;
-            box-shadow: 0 5px 12px rgba(35,56,89,.09), inset 0 1px 0 #fff !important;
-        }
-        #dc-block-management-panel .blocked-list {
-            display: grid;
-            gap: 8px;
-            padding: 10px !important;
-        }
-        #dc-block-management-panel .blocked-item {
-            min-height: 52px;
-            padding: 8px 9px 8px 13px !important;
-            border: 1px solid #dce5f1 !important;
-            border-radius: 13px !important;
-            background: linear-gradient(145deg,#fff,#f0f5fb) !important;
-            box-shadow: 0 6px 15px rgba(34,55,88,.08), inset 0 1px 0 #fff;
-        }
-        #dc-block-management-panel .blocked-item.item-to-delete {
-            border-color: #f1bdc5 !important;
-            background: linear-gradient(145deg,#fff8f9,#fbecef) !important;
-            text-decoration: none !important;
-            opacity: .72 !important;
-        }
-        #dc-block-management-panel .blocked-item.item-to-delete .item-name { text-decoration: line-through; }
-        #dc-block-management-panel .delete-item-btn {
-            min-width: 52px !important;
-            min-height: 36px !important;
-            padding: 7px 9px !important;
-            border: 1px solid #ffd3da !important;
-            border-radius: 10px !important;
-            background: linear-gradient(180deg,#fff8f9,#ffe9ed) !important;
-            color: #df5366 !important;
-            font-size: 11px !important;
-            font-weight: 850 !important;
-            text-decoration: none !important;
-        }
-        #dc-block-management-panel .blocked-list-empty {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            min-height: 150px;
-            color: #8290a4;
-            font-size: 13px;
-            text-align: center;
-        }
-        #dc-block-management-panel .panel-footer {
-            min-height: 64px;
-            background: linear-gradient(180deg,rgba(250,252,255,.98),rgba(239,244,251,.98)) !important;
-        }
-        #dc-block-management-panel .panel-save-btn {
-            min-height: 44px;
-            border-radius: 11px !important;
-            background: linear-gradient(180deg,#5687ff,#376af0) !important;
-            box-shadow: 0 8px 17px rgba(59,113,253,.28), inset 0 1px 0 rgba(255,255,255,.32) !important;
-        }
-        #dc-backup-popup .popup-content { gap: 12px !important; padding: 4px 2px 2px !important; }
-        #dc-backup-popup .export-section,
-        #dc-backup-popup .import-section {
-            padding: 14px !important;
-            border: 1px solid #dce5f1;
-            border-radius: 16px;
-            background: linear-gradient(145deg,#fff,#f2f6fc);
-            box-shadow: 0 8px 20px rgba(36,58,94,.09), inset 0 1px 0 #fff;
-        }
-        #dc-backup-popup .popup-content > hr { display: none; }
-        #dc-backup-popup .export-btn,
-        #dc-backup-popup .export-btn-download,
-        #dc-backup-popup .import-btn,
-        #dc-backup-popup .import-file-input,
-        #dc-backup-popup textarea {
-            min-height: 44px;
-            border-radius: 11px !important;
-        }
-        #dc-backup-popup .export-btn,
-        #dc-backup-popup .import-btn {
-            background: linear-gradient(180deg,#5687ff,#376af0) !important;
-            box-shadow: 0 8px 17px rgba(59,113,253,.25), inset 0 1px 0 rgba(255,255,255,.3) !important;
-        }
-        #dc-manual-block-panel.dcuf-pop-leave {
-            animation: dcuf-popup-out .13s ease-in forwards !important;
-            pointer-events: none !important;
-        }
-        #dc-manual-block-overlay.dcuf-overlay-leave {
-            animation: dcuf-overlay-out .13s ease-in forwards !important;
-            pointer-events: none !important;
-        }
-        @media (max-width: 640px) {
-            #dc-manual-block-overlay {
-                align-items: flex-end;
-                padding: 10px 8px max(8px,env(safe-area-inset-bottom,0px));
-            }
-            #dc-manual-block-panel {
-                width: 100%;
-                max-height: calc(100dvh - 10px);
-                border-radius: 22px 22px 16px 16px;
-            }
-            #dc-block-management-panel .panel-header { padding-left: 14px !important; }
-            #dc-block-management-panel .panel-kicker { display: none; }
-            #dc-block-management-panel .panel-add-btn {
-                width: 44px;
-                min-width: 44px;
-                padding: 0;
-                overflow: hidden;
-                color: transparent;
-                white-space: nowrap;
-            }
-            #dc-block-management-panel .panel-add-btn::first-letter {
-                color: #3564c4;
-                font-size: 18px;
-            }
-            #dc-block-management-panel .panel-list-controls { grid-template-columns: 1fr !important; }
-            #dc-block-management-panel .panel-list-summary { grid-column: 1; }
-            #dc-selection-popup.dcuf-selection-prompt { grid-template-columns: 38px minmax(0,1fr) !important; }
-            #dc-selection-popup.dcuf-selection-prompt .popup-buttons { grid-column: 1 / -1; }
-            #dc-selection-popup.dcuf-selection-prompt .popup-buttons button { width: 100% !important; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            #dc-manual-block-panel,
-            #dc-manual-block-overlay,
-            #dc-selection-popup.dcuf-selection-prompt {
-                animation: none !important;
-                transition: none !important;
-            }
-        }
-
-
-        #dc-personal-block-drawer { background-color: #f1f6ff !important; }
-        #dc-manual-block-panel { background-color: #f3f7ff; }
-        #dc-selection-popup.dcuf-selection-prompt { background-color: #edf4ff !important; }
-        #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #f3f7fd !important; }
-        #dcinside-filter-setting,
-        #dc-block-management-panel,
-        #dc-backup-popup { background-color: #f4f7fc !important; }
-
-body.dc-filter-dark-mode #dc-personal-block-fab {
-            background: linear-gradient(180deg, #3b414b 0%, #303640 100%) !important;
-            color: #e9eef6 !important;
-            border-color: #596474 !important;
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-fab:hover {
-            background: linear-gradient(180deg, #464d58 0%, #373e49 100%) !important;
-            border-color: #6c788a !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-drawer {
-            background: #2d323a !important;
-            border-color: #596474 !important;
-            box-shadow: 0 14px 32px rgba(0, 0, 0, 0.5) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-drawer button {
-            background: transparent !important;
-            color: #e2e8f0 !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
-        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
-            background: #414956 !important;
-            color: #fff !important;
-        }
-        /* DCUF_FAB_SHELL_DARK_END */
-        body.dc-filter-dark-mode #dc-personal-block-size-overlay {
-            background: rgba(0, 0, 0, 0.62) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-size-panel {
-            background: #2d323a !important;
-            color: #e2e8f0 !important;
-            border-color: #596474 !important;
-            box-shadow: 0 20px 52px rgba(0, 0, 0, 0.58) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-description,
-        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-bounds {
-            color: #aeb9c8 !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-value {
-            color: #f2f6fb !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions button {
-            background: #4a5360 !important;
-            color: #fff !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-size-panel .dcuf-fab-size-actions [data-dcuf-fab-size-action="save"] {
-            background: var(--dcuf-theme-accent, #4d7cff) !important;
-        }
-
-        /* 5. 스크립트 팝업창 전체 다크 테마 */
-        body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dcinside-headtext-manager-panel,
-        body.dc-filter-dark-mode #dc-selection-popup,
-        body.dc-filter-dark-mode #dc-block-management-panel,
-        body.dc-filter-dark-mode #dc-backup-popup,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal {
-            background-color: #2d2d2d !important;
-            color: #e0e0e0 !important;
-            border-color: #555 !important;
-            box-shadow: 0 0 15px rgba(0,0,0,0.7) !important;
-        }
-        body.dc-filter-dark-mode #dcinside-headtext-manager-panel input,
-        body.dc-filter-dark-mode #dcinside-headtext-manager-panel button {
-            background:#343a44 !important;
-            color:#e6edf7 !important;
-            border-color:#596474 !important;
-        }
-
-        /* 팝업 내부 요소들 */
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
-            background: #252525 !important;
-            border-color: #4a4a4a !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-footer,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-header,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
-            background: transparent !important;
-            border-color: #4a4a4a !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting hr,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
-            border-color: #4a4a4a !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-body,
-        body.dc-filter-dark-mode #dc-selection-popup .block-option {
-            background: #3a3a3c !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting div,
-        body.dc-filter-dark-mode #dcinside-filter-setting label,
-        body.dc-filter-dark-mode #dcinside-filter-setting h3,
-        body.dc-filter-dark-mode #dc-selection-popup h4,
-        body.dc-filter-dark-mode #dc-selection-popup .block-option span,
-        body.dc-filter-dark-mode #dc-backup-popup .description,
-        body.dc-filter-dark-mode #dc-backup-popup h4,
-        body.dc-filter-dark-mode #dc-block-management-panel .item-name {
-            color: #e0e0e0 !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting input[type="number"],
-        body.dc-filter-dark-mode #dc-backup-popup textarea {
-            background-color: #1e1e1e !important;
-            color: #f0f0f0 !important;
-            border: 1px solid #666 !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
-            background: #007bff !important; /* 활성 탭은 색상 유지 */
-        }
-
-        /* 버튼 배경 문제 해결 (필요한 버튼만 개별 적용) */
-        body.dc-filter-dark-mode #dcinside-filter-setting button,
-        body.dc-filter-dark-mode #dc-selection-popup button,
-        body.dc-filter-dark-mode #dc-block-management-panel button,
-        body.dc-filter-dark-mode #dc-backup-popup button,
-        body.dc-filter-dark-mode #dcinside-shortcut-modal button {
-             background-color: #555 !important;
-             color: #fff !important;
-             border-color: #777 !important;
-        }
-
-        body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dc-selection-popup,
-        body.dc-filter-dark-mode #dc-backup-popup,
-        body.dc-filter-dark-mode #dc-block-management-panel {
-            border-color: #445066 !important;
-            box-shadow: 0 18px 44px rgba(0, 0, 0, 0.45) !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
-        body.dc-filter-dark-mode #dc-selection-popup .block-option {
-            background: #323845 !important;
-            border-color: #434f66 !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls {
-            background: #2b313d !important;
-            border-color: #47556f !important;
-            box-shadow: none !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls [style*="border-bottom"] {
-            border-bottom-color: #47556f !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls [style*="color:#666"],
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls .dcuf-proxy-mode-desc {
-            color: #9fb0c8 !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group {
-            background: #252b36 !important;
-            border-color: #47556f !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode] {
-            background: transparent !important;
-            color: #dbe6f5 !important;
-            border-color: transparent !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
-            background: #3b71fd !important;
-            color: #fff !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-threshold-input,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-min,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-ratio-max,
-        body.dc-filter-dark-mode #dc-backup-popup .import-file-input,
-        body.dc-filter-dark-mode #dc-backup-popup textarea {
-            background: #252b36 !important;
-            border-color: #47556f !important;
-            color: #eef3ff !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
-            background: #253556 !important;
-            color: #8db2ff !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item:hover {
-            background: #2f394b !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
-            background: #53313a !important;
-            color: #ff9fb1 !important;
-        }
-
-        body.dc-filter-dark-mode #dc-personal-block-fab {
-            background: linear-gradient(180deg,#34435b,#253247) !important;
-            color: #eef4ff !important;
-            border-color: #52657f !important;
-            box-shadow: 0 16px 34px rgba(0,0,0,.46), inset 0 1px 0 rgba(255,255,255,.1) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-drawer {
-            border-color: #465a76 !important;
-            background: linear-gradient(145deg,#27354a,#1d293b) !important;
-            box-shadow: 0 24px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
-        }
-        body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon {
-            border-color: #49617f;
-            background: linear-gradient(145deg,#344760,#25354c);
-            color: #8db2ff;
-            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        body.dc-filter-dark-mode #dc-personal-block-drawer strong { color: #edf3ff; }
-        body.dc-filter-dark-mode #dc-personal-block-drawer small { color: #9fb0c8; }
-        body.dc-filter-dark-mode #dc-personal-block-drawer button:hover,
-        body.dc-filter-dark-mode #dc-personal-block-drawer button:focus-visible {
-            border-color: #506987 !important;
-            background: linear-gradient(180deg,#34465e,#29394f) !important;
-        }
-        body.dc-filter-dark-mode #dc-manual-block-overlay { background: rgba(0,0,0,.68); }
-        body.dc-filter-dark-mode #dc-manual-block-panel {
-            border-color: #475a74;
-            background: linear-gradient(155deg,#26354a,#1c283a);
-            color: #edf3ff;
-            box-shadow: 0 30px 74px rgba(0,0,0,.62), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header {
-            border-color: #40536d;
-            background: linear-gradient(135deg,#2b3b52,#223047);
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel h3 { color: #f1f5ff; }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-kicker,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-kicker { color: #89a9dd; }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close {
-            background: transparent !important;
-            color: #b8c6da !important;
-            border-color: transparent !important;
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-close:hover,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-close-btn:hover,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-close-btn:hover,
-        body.dc-filter-dark-mode #dcinside-filter-setting #dcinside-filter-close:hover {
-            border-color: #4a5e79 !important;
-            background: #314159 !important;
-            color: #fff !important;
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
-            border-color: #40536d;
-            background: #172335;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,.32);
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type] {
-            background: transparent !important;
-            color: #aab8ca !important;
-            border-color: transparent !important;
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
-            border-color: #4e6685 !important;
-            background: linear-gradient(180deg,#344862,#293a52) !important;
-            color: #9fbdff !important;
-            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field { color: #dce6f5; }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field small,
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-hint { color: #9dadc2; }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-field input {
-            border-color: #465a76;
-            background: #162234;
-            color: #f2f6ff;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,.35);
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions button {
-            border-color: #465a76;
-            background: linear-gradient(180deg,#34445b,#29384e);
-            color: #dce6f5;
-            box-shadow: 0 6px 14px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"] {
-            border-color: #5e8cff;
-            background: linear-gradient(180deg,#5f8dff,#3d6de7);
-            color: #fff;
-        }
-        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
-        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) {
-            border-color: #465a76 !important;
-            background: linear-gradient(145deg,#29384e,#1d2a3d) !important;
-            box-shadow: 0 22px 52px rgba(0,0,0,.58), inset 0 1px 0 rgba(255,255,255,.08) !important;
-        }
-        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
-            background: linear-gradient(145deg,#344862,#26374f);
-            color: #8db2ff;
-            box-shadow: 0 7px 15px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08);
-        }
-        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy h4 { color: #edf3ff !important; }
-        body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-copy p { color: #9fb0c8; }
-        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt .popup-buttons button {
-            border-color: #4b607c !important;
-            background: linear-gradient(180deg,#34445b,#28384e) !important;
-            color: #dce6f5 !important;
-            box-shadow: 0 6px 13px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.08) !important;
-        }
-        body.dc-filter-dark-mode.selection-mode-active .gall_writer,
-        body.dc-filter-dark-mode.selection-mode-active .ub-writer {
-            outline-color: rgba(117,159,255,.66) !important;
-            background: rgba(92,137,241,.16) !important;
-        }
-
-
-        body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dc-block-management-panel,
-        body.dc-filter-dark-mode #dc-backup-popup {
-            border-color: #455a76 !important;
-            background: linear-gradient(155deg,#26354a,#1b2738) !important;
-            box-shadow: 0 30px 72px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.07) !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-header,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-header,
-        body.dc-filter-dark-mode #dc-backup-popup .popup-header {
-            border-color: #40536d !important;
-            background: linear-gradient(135deg,#2b3b52,#223047) !important;
-        }
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-section,
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-threshold > div:last-child,
-        body.dc-filter-dark-mode #dcinside-filter-setting .dcuf-settings-guest-controls,
-        body.dc-filter-dark-mode #dc-backup-popup .export-section,
-        body.dc-filter-dark-mode #dc-backup-popup .import-section {
-            border-color: #40536d !important;
-            background: linear-gradient(145deg,#29394f,#202e43) !important;
-            box-shadow: 0 9px 21px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.06) !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-title-group h3 { color: #edf3ff !important; }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-add-btn {
-            border-color: #4e6685 !important;
-            background: linear-gradient(180deg,#344862,#293a52) !important;
-            color: #9fbdff !important;
-            box-shadow: 0 6px 14px rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.07);
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tabs {
-            border-color: #3e5069 !important;
-            background: #172335 !important;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,.3);
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab {
-            background: transparent !important;
-            color: #aab8ca !important;
-            border-color: transparent !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-tab.active {
-            border-color: #4e6685 !important;
-            background: linear-gradient(180deg,#344862,#293a52) !important;
-            color: #9fbdff !important;
-            box-shadow: 0 6px 14px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.08) !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-body { background: #1b2738 !important; }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-list-controls {
-            border-color: #40536d !important;
-            background: rgba(28,40,58,.84);
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-search {
-            border-color: #455a76;
-            background: #162234;
-            color: #9dadc2;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,.34);
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-search-input { color: #edf3ff; }
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item {
-            border-color: #40536d !important;
-            background: linear-gradient(145deg,#29394f,#202e43) !important;
-            box-shadow: 0 7px 16px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06);
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
-            border-color: #714856 !important;
-            background: linear-gradient(145deg,#3d2b35,#34232c) !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .delete-item-btn {
-            border-color: #704653 !important;
-            background: linear-gradient(180deg,#4d303a,#402731) !important;
-            color: #ff9cad !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .select-all-global-btn,
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-backup-btn {
-            border-color: #465a76 !important;
-            background: linear-gradient(180deg,#34445b,#29384e) !important;
-            color: #dce6f5 !important;
-            box-shadow: 0 6px 14px rgba(0,0,0,.24), inset 0 1px 0 rgba(255,255,255,.06) !important;
-        }
-        body.dc-filter-dark-mode #dc-block-management-panel .panel-footer {
-            border-color: #40536d !important;
-            background: linear-gradient(180deg,#253449,#1d2a3d) !important;
-        }
-
-
-        body.dc-filter-dark-mode #dc-personal-block-drawer { background-color: #1d293b !important; }
-        body.dc-filter-dark-mode #dc-manual-block-panel { background-color: #1c283a; }
-        body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt,
-        body.dc-filter-dark-mode #dc-selection-popup:not(.dcuf-selection-prompt) { background-color: #1d2a3d !important; }
-        body.dc-filter-dark-mode #dcinside-filter-setting,
-        body.dc-filter-dark-mode #dc-block-management-panel,
-        body.dc-filter-dark-mode #dc-backup-popup { background-color: #1b2738 !important; }
-    `);
+    return Object.freeze({
+        VERSION,
+        FAB_SHELL_CSS,
+        SHARED_CSS,
+        PALETTE_CSS,
+        renderFilterSettings,
+        renderConvenienceSettings,
+        renderManagementPanel,
+        renderBackupPopup,
+        renderFabScalePanel,
+        renderManualBlockPanel,
+        renderShortcutModal,
+        renderHeadtextManager,
+        renderPalettePanel,
+        escapeHtml,
+    });
+})();
 const ThemeModule = (() => {
     const STORAGE_KEY = 'dcuf_mobile_ui_palette';
     const ROOT_ATTRIBUTE = 'data-dcuf-palette';
@@ -2730,22 +2457,7 @@ const ThemeModule = (() => {
     const OVERLAY_ID = 'dcuf-palette-overlay';
     const PANEL_ID = 'dcuf-palette-panel';
     const DEFAULT_ID = 'blue';
-    const PRESETS = Object.freeze([
-        Object.freeze({ id: 'blue', label: '기본 블루', light: ['#3f6de0', '#245bda', '#eaf1ff'], dark: ['#8cb4ff', '#3868df', '#243a64'] }),
-        Object.freeze({ id: 'purple', label: '퍼플', light: ['#7c3aed', '#6d28d9', '#f3e8ff'], dark: ['#c4b5fd', '#7c3aed', '#39275a'] }),
-        Object.freeze({ id: 'green', label: '그린', light: ['#16805d', '#047857', '#e7f7ef'], dark: ['#6ee7b7', '#047857', '#173c32'] }),
-        Object.freeze({ id: 'orange', label: '오렌지', light: ['#c2410c', '#9a3412', '#fff0e7'], dark: ['#fdba74', '#c2410c', '#4a2a1b'] }),
-        Object.freeze({ id: 'mono', label: '모노톤', light: ['#526274', '#374151', '#eef2f7'], dark: ['#cbd5e1', '#475569', '#28323f'] }),
-        Object.freeze({ id: 'indigo', label: '인디고', light: ['#4f46e5', '#4338ca', '#eef2ff'], dark: ['#4f46e5', '#3730a3', '#29274f'] }),
-        Object.freeze({ id: 'sky', label: '스카이', light: ['#0284c7', '#0369a1', '#e0f2fe'], dark: ['#0369a1', '#075985', '#17384a'] }),
-        Object.freeze({ id: 'cyan', label: '시안', light: ['#0891b2', '#0e7490', '#ecfeff'], dark: ['#0e7490', '#155e75', '#173b44'] }),
-        Object.freeze({ id: 'teal', label: '틸', light: ['#0f766e', '#115e59', '#e6f7f4'], dark: ['#0f766e', '#115e59', '#173c38'] }),
-        Object.freeze({ id: 'lime', label: '라임', light: ['#65a30d', '#4d7c0f', '#f7fee7'], dark: ['#4d7c0f', '#3f6212', '#2c3918'] }),
-        Object.freeze({ id: 'amber', label: '앰버', light: ['#d97706', '#b45309', '#fffbeb'], dark: ['#b45309', '#92400e', '#493016'] }),
-        Object.freeze({ id: 'red', label: '레드', light: ['#dc2626', '#b91c1c', '#fef2f2'], dark: ['#c62828', '#991b1b', '#4a2020'] }),
-        Object.freeze({ id: 'rose', label: '로즈', light: ['#e11d48', '#be123c', '#fff1f2'], dark: ['#cf234c', '#9f1239', '#4a202d'] }),
-        Object.freeze({ id: 'pink', label: '핑크', light: ['#db2777', '#be185d', '#fce7f3'], dark: ['#c52a72', '#9d174d', '#472138'] })
-    ]);
+    const PRESETS = __dcufGetThemePresets();
     const VALID_IDS = new Set(PRESETS.map((preset) => preset.id));
 
     let committedId = DEFAULT_ID;
@@ -2755,488 +2467,38 @@ const ThemeModule = (() => {
     let domReadyApplyScheduled = false;
 
     const normalize = (value) => typeof value === 'string' && VALID_IDS.has(value) ? value : DEFAULT_ID;
+    const markOwned = (element, role, state = 'open') => __dcufThemeHost.invokeNative('mark-owned-surface', {
+        element,
+        surface: 'palette',
+        role,
+        state,
+        presentation: __dcufSettingsPresenter.VERSION,
+    });
 
     const apply = (value, reason = 'apply') => {
         const id = normalize(value);
-        const root = document.documentElement;
+        const root = __dcufThemeHost.findAnchor('root');
         if (root) root.setAttribute(ROOT_ATTRIBUTE, id);
         else if (!domReadyApplyScheduled) {
             domReadyApplyScheduled = true;
-            document.addEventListener('DOMContentLoaded', () => {
+            __dcufThemeHost.invokeNative('on-dom-ready', () => {
                 domReadyApplyScheduled = false;
                 apply(committedId, 'dom-ready');
             }, { once: true });
         }
-        window.__dcufActivePalette = id;
-        window.dispatchEvent(new CustomEvent('dcuf:palette-change', { detail: { id, reason } }));
+        __dcufThemeHost.invokeNative('palette-change', { id, reason });
         return id;
     };
 
-    const buildPresetVariables = () => PRESETS.map((preset) => {
-        const [accent, strong, soft, onAccent = '#fff'] = preset.light;
-        const [darkAccent, darkStrong, darkSoft, darkOnAccent = '#fff'] = preset.dark;
-        return `
-            html[${ROOT_ATTRIBUTE}="${preset.id}"] {
-                --dcuf-theme-accent: ${accent};
-                --dcuf-theme-accent-strong: ${strong};
-                --dcuf-theme-accent-soft: ${soft};
-                --dcuf-theme-on-accent: ${onAccent};
-            }
-            html[${ROOT_ATTRIBUTE}="${preset.id}"].dc-filter-dark-mode,
-            html[${ROOT_ATTRIBUTE}="${preset.id}"] body.dc-filter-dark-mode {
-                --dcuf-theme-accent: ${darkAccent};
-                --dcuf-theme-accent-strong: ${darkStrong};
-                --dcuf-theme-accent-soft: ${darkSoft};
-                --dcuf-theme-on-accent: ${darkOnAccent};
-            }
-        `;
-    }).join('\n');
-
-    const buildCss = () => `
-        ${buildPresetVariables()}
-
-        html[${ROOT_ATTRIBUTE}] {
-            --dcuf-theme-fg: #27313f;
-            --dcuf-theme-fg-muted: #687384;
-            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #d9dde3);
-            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #cbd2db);
-            --dcuf-theme-page: #f6f7f9;
-            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #f7f8fa);
-            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 12%, #fbfcfd);
-            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 9%, #f1f3f6);
-            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #fff);
-            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 14%, #f6f7f9);
-            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 1%, #fff);
-            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #fafbfc);
-            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #f8f9fb);
-            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 7%, #fff);
-            --dcuf-theme-notice-surface: #f2f4f7;
-            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #f4f6f8);
-            --dcuf-theme-card-shadow: 0 1px 3px rgba(31, 41, 55, .07), 0 6px 16px rgba(31, 41, 55, .075);
-            --dcuf-theme-panel-shadow: 0 18px 42px rgba(31, 41, 55, .16), 0 3px 9px rgba(31, 41, 55, .09);
-            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 78%, white);
-            --dcuf-theme-focus-ring: color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent);
-            --dcuf-theme-accent-shadow: color-mix(in srgb, var(--dcuf-theme-accent-strong) 25%, transparent);
-        }
-        html[${ROOT_ATTRIBUTE}].dc-filter-dark-mode,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode {
-            --dcuf-theme-fg: #edf2f7;
-            --dcuf-theme-fg-muted: #aeb8c4;
-            --dcuf-theme-border: color-mix(in srgb, var(--dcuf-theme-accent) 7%, #3a4149);
-            --dcuf-theme-border-strong: color-mix(in srgb, var(--dcuf-theme-accent) 14%, #4b525b);
-            --dcuf-theme-page: #121417;
-            --dcuf-theme-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1b1f24);
-            --dcuf-theme-surface-raised: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
-            --dcuf-theme-surface-muted: color-mix(in srgb, var(--dcuf-theme-accent-soft) 6%, #1d2228);
-            --dcuf-theme-surface-input: color-mix(in srgb, var(--dcuf-theme-accent-soft) 2%, #171b20);
-            --dcuf-theme-canvas: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #171a1f);
-            --dcuf-theme-card-top: color-mix(in srgb, var(--dcuf-theme-accent-soft) 3%, #24272d);
-            --dcuf-theme-card-bottom: color-mix(in srgb, var(--dcuf-theme-accent-soft) 4%, #20242a);
-            --dcuf-theme-article-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 5%, #1a1e23);
-            --dcuf-theme-concept-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 8%, #22262c);
-            --dcuf-theme-notice-surface: #252a31;
-            --dcuf-theme-reply-surface: color-mix(in srgb, var(--dcuf-theme-accent-soft) 10%, #21262c);
-            --dcuf-theme-card-shadow: 0 1px 3px rgba(0,0,0,.28), 0 7px 18px rgba(0,0,0,.22);
-            --dcuf-theme-panel-shadow: 0 20px 46px rgba(0,0,0,.44), 0 3px 9px rgba(0,0,0,.24);
-            --dcuf-theme-primary-top: color-mix(in srgb, var(--dcuf-theme-accent) 68%, white);
-        }
-
-        /* DCUF_MOBILE_THEME_CSS_START */
-        /* Mobile host palette CSS removed by the PC port rail. */
-        /* DCUF_MOBILE_THEME_CSS_END */
-
-        /* DCUF_SHARED_PALETTE_UI_START */
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-save,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal #dcinside-save-shortcut-btn,
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel [data-dcuf-fab-size-action="save"],
-        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .block-option button:not(.btn-unblock),
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-save-btn,
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-btn, .import-btn),
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-actions [data-manual-block-action="add"],
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-proxy-ip-block-mode-group button[data-proxy-mode][aria-pressed="true"] {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
-            color: var(--dcuf-theme-on-accent) !important;
-            box-shadow: 0 7px 16px var(--dcuf-theme-accent-shadow) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background-color: var(--dcuf-theme-accent-strong) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-primary-top), var(--dcuf-theme-accent-strong)) !important;
-            box-shadow: 0 3px 9px var(--dcuf-theme-accent-shadow), inset 0 1px 0 color-mix(in srgb, white 28%, transparent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel input:checked + .switch-slider::before,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting input:checked + .switch-slider::before {
-            background: #fff !important;
-            box-shadow: 0 1px 4px rgba(15, 23, 42, .5) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab.active {
-            border-color: var(--dcuf-theme-accent) !important;
-            background-color: var(--dcuf-theme-accent-soft) !important;
-            background-image: none !important;
-            color: var(--dcuf-theme-accent-strong) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-fab {
-            border-color: var(--dcuf-theme-accent) !important;
-            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
-            color: var(--dcuf-theme-accent-strong) !important;
-            box-shadow: 0 8px 20px var(--dcuf-theme-accent-shadow) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:is(:hover, :focus-visible),
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel [data-manual-block-type][aria-pressed="true"] {
-            border-color: var(--dcuf-theme-accent) !important;
-            background: var(--dcuf-theme-accent-soft) !important;
-            color: var(--dcuf-theme-accent-strong) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
-            background: var(--dcuf-theme-accent-soft) !important;
-            color: var(--dcuf-theme-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .export-btn-download:hover {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 45%, transparent) !important;
-            background: color-mix(in srgb, var(--dcuf-theme-accent) 18%, var(--dcuf-theme-accent-soft)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-card-bottom) !important;
-            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer .dcuf-menu-icon,
-        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup .dcuf-selection-prompt-icon {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
-            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
-            color: var(--dcuf-theme-accent) !important;
-            box-shadow: 0 5px 11px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent), inset 0 1px 0 color-mix(in srgb, white 70%, transparent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-card-bottom) !important;
-            background-image: linear-gradient(155deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-header {
-            border-color: var(--dcuf-theme-border) !important;
-            background: linear-gradient(135deg, var(--dcuf-theme-accent-soft), var(--dcuf-theme-card-top)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-type-tabs {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 24%, var(--dcuf-theme-border)) !important;
-            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 68%, var(--dcuf-theme-surface-muted)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-status[data-state="info"],
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-kicker,
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-kicker {
-            color: var(--dcuf-theme-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-add-btn {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 30%, transparent) !important;
-            background: var(--dcuf-theme-accent-soft) !important;
-            color: var(--dcuf-theme-accent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn):hover,
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item:not(.item-to-delete):hover {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 28%, transparent) !important;
-            background: color-mix(in srgb, var(--dcuf-theme-accent-soft) 72%, var(--dcuf-theme-card-top)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup.dcuf-selection-prompt {
-            border-color: color-mix(in srgb, var(--dcuf-theme-accent) 34%, transparent) !important;
-            background-color: var(--dcuf-theme-card-bottom) !important;
-            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-accent-soft)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel .dcuf-manual-field input:focus {
-            border-color: var(--dcuf-theme-accent) !important;
-            box-shadow: 0 0 0 3px var(--dcuf-theme-focus-ring) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, button):focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-shortcut-modal :is(input, button):focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-size-panel :is(input, button):focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dc-personal-block-drawer button:focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dc-selection-popup button:focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dc-manual-block-panel :is(input, button):focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(input, button):focus-visible,
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(input, textarea, button):focus-visible {
-            outline: 3px solid var(--dcuf-theme-focus-ring) !important;
-            outline-offset: 2px !important;
-        }
-
-        /* Script-owned management surfaces use the same neutralized card hierarchy. */
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting,
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup,
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-canvas) !important;
-            background-image: linear-gradient(160deg, var(--dcuf-theme-card-top), var(--dcuf-theme-canvas)) !important;
-            color: var(--dcuf-theme-fg) !important;
-            box-shadow: var(--dcuf-theme-panel-shadow) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-header, .dcuf-settings-footer),
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .popup-header,
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-header, .panel-tabs, .panel-footer) {
-            border-color: var(--dcuf-theme-border) !important;
-            background-color: var(--dcuf-theme-surface-raised) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
-            color: var(--dcuf-theme-fg) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.export-section, .import-section),
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
-            border-color: var(--dcuf-theme-border) !important;
-            background-color: var(--dcuf-theme-card-top) !important;
-            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
-            color: var(--dcuf-theme-fg) !important;
-            box-shadow: 0 5px 14px color-mix(in srgb, var(--dcuf-theme-accent-strong) 5%, transparent), inset 0 1px 0 color-mix(in srgb, white 60%, transparent) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dcinside-filter-setting :is(.dcuf-settings-section, .dcuf-settings-threshold > div:last-child, .dcuf-settings-guest-controls),
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-backup-popup :is(.export-section, .import-section),
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel :is(.panel-list-controls, .blocked-item) {
-            box-shadow: 0 6px 15px rgba(0,0,0,.2), inset 0 1px 0 rgba(255,255,255,.045) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-body, .panel-content, .blocked-list) {
-            background-color: var(--dcuf-theme-canvas) !important;
-            background-image: none !important;
-            color: var(--dcuf-theme-fg) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .panel-tab:not(.active),
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.select-all-btn, .select-all-global-btn, .panel-backup-btn),
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting button:not(#dcinside-threshold-save):not([aria-pressed="true"]),
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup button:not(.export-btn):not(.export-btn-download):not(.import-btn):not(.delete-item-btn) {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-input)) !important;
-            color: var(--dcuf-theme-fg) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(input, textarea, select),
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup :is(.import-file-input, textarea),
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-search-input, input:not([type="checkbox"])) {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: none !important;
-            color: var(--dcuf-theme-fg) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-threshold-input,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-min,
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting #dcinside-ratio-max {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-surface-input) !important;
-            background-image: none !important;
-            color: var(--dcuf-theme-fg) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dcinside-filter-setting :is(.dcuf-settings-description, .dcuf-settings-help, small),
-        html[${ROOT_ATTRIBUTE}] body #dc-backup-popup .description,
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel :is(.panel-list-summary, .blocked-list-empty) {
-            color: var(--dcuf-theme-fg-muted) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body #dc-block-management-panel .blocked-item.item-to-delete {
-            border-color: #efb9c1 !important;
-            background: #fff5f6 !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-block-management-panel .blocked-item.item-to-delete {
-            border-color: #7f3d48 !important;
-            background: #372127 !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup.dcuf-selection-prompt {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background-color: var(--dcuf-theme-card-bottom) !important;
-            background-image: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-card-bottom)) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-header,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-manual-block-panel .dcuf-manual-type-tabs {
-            border-color: var(--dcuf-theme-border) !important;
-            background: var(--dcuf-theme-surface-muted) !important;
-        }
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-personal-block-drawer .dcuf-menu-icon,
-        html[${ROOT_ATTRIBUTE}] body.dc-filter-dark-mode #dc-selection-popup .dcuf-selection-prompt-icon {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background: linear-gradient(145deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
-            color: var(--dcuf-theme-accent) !important;
-        }
-        /* DCUF_SHARED_PALETTE_UI_END */
-
-        #${OVERLAY_ID} {
-            position: fixed !important;
-            inset: 0 !important;
-            z-index: 2147483646 !important;
-            box-sizing: border-box !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)) !important;
-            background: rgba(18, 25, 35, .52) !important;
-            backdrop-filter: blur(3px);
-            pointer-events: auto !important;
-        }
-        #${PANEL_ID} {
-            box-sizing: border-box !important;
-            position: fixed !important;
-            left: 50% !important;
-            top: 50% !important;
-            transform: translate(-50%, -50%);
-            display: flex !important;
-            flex-direction: column !important;
-            width: min(520px, calc(100vw - 32px)) !important;
-            height: min(680px, calc(100dvh - 32px)) !important;
-            min-width: min(300px, calc(100vw - 16px)) !important;
-            min-height: min(360px, calc(100dvh - 16px)) !important;
-            max-height: calc(100dvh - 32px) !important;
-            overflow: hidden !important;
-            padding: 0 !important;
-            border: 1px solid var(--dcuf-theme-border-strong) !important;
-            border-radius: 20px !important;
-            background: var(--dcuf-theme-card-top) !important;
-            color: var(--dcuf-theme-fg) !important;
-            box-shadow: var(--dcuf-theme-panel-shadow) !important;
-            font: 500 14px/1.45 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif !important;
-        }
-        #${PANEL_ID}[data-dcuf-palette-interacting="true"] { transition: none !important; animation: none !important; }
-        #${PANEL_ID} .dcuf-palette-header {
-            flex: 0 0 auto !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            gap: 12px !important;
-            padding: 18px 18px 14px !important;
-            border-bottom: 1px solid var(--dcuf-theme-border) !important;
-            background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important;
-            cursor: move !important;
-            touch-action: none !important;
-            user-select: none !important;
-        }
-        #${PANEL_ID} h2 { margin: 0 !important; color: inherit !important; font-size: 20px !important; line-height: 1.2 !important; }
-        #${PANEL_ID} .dcuf-palette-close {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            width: 44px !important;
-            height: 44px !important;
-            min-width: 44px !important;
-            padding: 0 !important;
-            border: 1px solid transparent !important;
-            border-radius: 12px !important;
-            background: transparent !important;
-            color: var(--dcuf-theme-fg-muted) !important;
-            font-size: 24px !important;
-            cursor: pointer !important;
-        }
-        #${PANEL_ID} .dcuf-palette-body {
-            box-sizing: border-box !important;
-            display: flex !important;
-            flex: 1 1 auto !important;
-            flex-direction: column !important;
-            min-height: 0 !important;
-            padding: 16px 18px 38px !important;
-            overflow: hidden !important;
-        }
-        #${PANEL_ID} .dcuf-palette-description { margin: 0 0 14px !important; color: var(--dcuf-theme-fg-muted) !important; }
-        #${PANEL_ID} .dcuf-palette-options {
-            display: grid !important;
-            flex: 1 1 auto !important;
-            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-            align-content: start !important;
-            min-height: 0 !important;
-            gap: 10px !important;
-            padding: 2px 4px 6px 2px !important;
-            overflow: hidden auto !important;
-            overscroll-behavior: contain !important;
-            scrollbar-gutter: stable !important;
-            touch-action: pan-y !important;
-            -webkit-overflow-scrolling: touch;
-        }
-        #${PANEL_ID} .dcuf-palette-option {
-            box-sizing: border-box !important;
-            display: grid !important;
-            grid-template-columns: 50px minmax(0, 1fr) !important;
-            align-items: center !important;
-            gap: 11px !important;
-            min-height: 70px !important;
-            padding: 10px !important;
-            border: 1px solid var(--dcuf-theme-border) !important;
-            border-radius: 14px !important;
-            background: var(--dcuf-theme-surface-input) !important;
-            color: var(--dcuf-theme-fg) !important;
-            text-align: left !important;
-            cursor: pointer !important;
-        }
-        #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] {
-            border-color: var(--dcuf-theme-accent) !important;
-            background: var(--dcuf-theme-accent-soft) !important;
-            color: var(--dcuf-theme-accent-strong) !important;
-            box-shadow: 0 0 0 2px color-mix(in srgb, var(--dcuf-theme-accent) 18%, transparent) !important;
-        }
-        #${PANEL_ID} .dcuf-palette-swatch {
-            display: grid !important;
-            grid-template-columns: repeat(3, 1fr) !important;
-            width: 48px !important;
-            height: 38px !important;
-            overflow: hidden !important;
-            border: 1px solid rgba(0,0,0,.09) !important;
-            border-radius: 10px !important;
-        }
-        #${PANEL_ID} .dcuf-palette-swatch > span { display: block !important; }
-        #${PANEL_ID} .dcuf-palette-name { font-weight: 800 !important; }
-        #${PANEL_ID} .dcuf-palette-status { min-height: 20px !important; margin: 12px 2px 0 !important; color: #d7485a !important; font-weight: 700 !important; }
-        #${PANEL_ID} .dcuf-palette-actions { display: grid !important; grid-template-columns: 1fr 1fr 1.2fr !important; gap: 9px !important; margin-top: 4px !important; }
-        #${PANEL_ID} .dcuf-palette-actions button {
-            min-height: 44px !important;
-            padding: 8px 10px !important;
-            border: 1px solid var(--dcuf-theme-border-strong) !important;
-            border-radius: 11px !important;
-            background: var(--dcuf-theme-surface-input) !important;
-            color: var(--dcuf-theme-fg) !important;
-            font-weight: 800 !important;
-            cursor: pointer !important;
-        }
-        #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] {
-            border-color: var(--dcuf-theme-accent-strong) !important;
-            background: var(--dcuf-theme-accent-strong) !important;
-            color: var(--dcuf-theme-on-accent) !important;
-        }
-        #${PANEL_ID} .dcuf-palette-resize-handle {
-            position: absolute !important;
-            right: 4px !important;
-            bottom: 4px !important;
-            width: 36px !important;
-            height: 30px !important;
-            border: 0 !important;
-            border-radius: 9px !important;
-            background:
-                linear-gradient(135deg, transparent 50%, var(--dcuf-theme-border-strong) 51%, var(--dcuf-theme-border-strong) 56%, transparent 57%) 13px 7px / 15px 15px no-repeat,
-                linear-gradient(135deg, transparent 50%, var(--dcuf-theme-accent) 51%, var(--dcuf-theme-accent) 57%, transparent 58%) 20px 14px / 10px 10px no-repeat !important;
-            cursor: nwse-resize !important;
-            touch-action: none !important;
-        }
-        #${PANEL_ID} :focus-visible { outline: 3px solid color-mix(in srgb, var(--dcuf-theme-accent) 38%, transparent) !important; outline-offset: 2px !important; }
-        #${PANEL_ID} button:disabled { opacity: .62 !important; cursor: wait !important; }
-
-        body.dc-filter-dark-mode #${PANEL_ID} {
-            border-color: var(--dcuf-theme-border-strong) !important;
-            background: var(--dcuf-theme-card-top) !important;
-            color: var(--dcuf-theme-fg) !important;
-            box-shadow: var(--dcuf-theme-panel-shadow) !important;
-        }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-header { border-color: var(--dcuf-theme-border) !important; background: linear-gradient(180deg, var(--dcuf-theme-card-top), var(--dcuf-theme-surface-raised)) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-description { color: var(--dcuf-theme-fg-muted) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-close { color: var(--dcuf-theme-fg) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option { border-color: var(--dcuf-theme-border) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-option[aria-checked="true"] { border-color: var(--dcuf-theme-accent) !important; background: var(--dcuf-theme-accent-soft) !important; color: var(--dcuf-theme-accent) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions button { border-color: var(--dcuf-theme-border-strong) !important; background: var(--dcuf-theme-surface-input) !important; color: var(--dcuf-theme-fg) !important; }
-        body.dc-filter-dark-mode #${PANEL_ID} .dcuf-palette-actions [data-dcuf-palette-action="save"] { border-color: var(--dcuf-theme-accent-strong) !important; background: var(--dcuf-theme-accent-strong) !important; color: var(--dcuf-theme-on-accent) !important; }
-
-        @media (max-width: 440px) {
-            #${PANEL_ID} .dcuf-palette-options { grid-template-columns: 1fr !important; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            #${OVERLAY_ID}, #${PANEL_ID}, #${PANEL_ID} * { scroll-behavior: auto !important; transition: none !important; animation: none !important; }
-        }
+    const buildCss = () => `${__dcufBuildThemeBaseCss(ROOT_ATTRIBUTE, PRESETS)}${__dcufBuildTargetThemeCss(ROOT_ATTRIBUTE)}
+        ${__dcufSettingsPresenter.PALETTE_CSS}
     `;
 
     const ensureStyle = () => {
-        if (document.getElementById(STYLE_ID)) return true;
-        const mount = document.head || document.documentElement;
+        if (__dcufThemeHost.invokeNative('get-by-id', STYLE_ID)) return true;
+        const mount = __dcufThemeHost.findAnchor('head') || __dcufThemeHost.findAnchor('root');
         if (!mount) return false;
-        const style = document.createElement('style');
+        const style = __dcufThemeHost.invokeNative('create-element', 'style');
         style.id = STYLE_ID;
         style.textContent = buildCss();
         mount.appendChild(style);
@@ -3247,12 +2509,14 @@ const ThemeModule = (() => {
         if (initialReadPromise) return initialReadPromise;
         const revisionAtStart = writeRevision;
         initialReadPromise = Promise.resolve()
-            .then(() => GM_getValue(STORAGE_KEY, DEFAULT_ID))
-            .then((value) => {
+            .then(() => __dcufUiPort.dispatch({ type: DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_LOAD, defaultValue: DEFAULT_ID }))
+            .then((result) => {
+                if (!result.ok) throw new Error(`palette load failed: ${result.code}`);
+                const value = result.committedSnapshot?.palette?.value ?? __dcufUiPort.getSnapshot().palette?.value ?? DEFAULT_ID;
                 initialReadSettled = true;
                 if (writeRevision !== revisionAtStart) return committedId;
                 committedId = normalize(value);
-                if (!document.getElementById(OVERLAY_ID)) apply(committedId, 'storage-load');
+                if (!__dcufThemeHost.invokeNative('get-by-id', OVERLAY_ID)) apply(committedId, 'storage-load');
                 return committedId;
             })
             .catch((error) => {
@@ -3266,136 +2530,27 @@ const ThemeModule = (() => {
     const setSelectedOption = (panel, id) => {
         const normalized = apply(id, 'preview');
         panel.dataset.selectedPalette = normalized;
-        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
-            option.setAttribute('aria-checked', option.dataset.paletteId === normalized ? 'true' : 'false');
-        });
+        panel.dataset.dcufState = 'preview';
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => option.setAttribute('aria-checked', option.dataset.paletteId === normalized ? 'true' : 'false'));
         return normalized;
     };
 
-    const attachPanelPointerGeometry = (panel) => {
-        if (!panel || panel.dataset.dcufPaletteGeometryBound === 'true') return;
-        panel.dataset.dcufPaletteGeometryBound = 'true';
-
-        const viewportGap = 4;
-        let active = null;
-        let pendingPoint = null;
-        let frameId = 0;
-
-        const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
-        const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
-        const normalizePosition = () => {
-            const rect = panel.getBoundingClientRect();
-            panel.style.setProperty('transform', 'none', 'important');
-            panel.style.setProperty('left', `${rect.left}px`, 'important');
-            panel.style.setProperty('top', `${rect.top}px`, 'important');
-            panel.style.setProperty('width', `${rect.width}px`, 'important');
-            panel.style.setProperty('height', `${rect.height}px`, 'important');
-            return panel.getBoundingClientRect();
-        };
-
-        const applyGeometry = () => {
-            frameId = 0;
-            if (!active || !pendingPoint) return;
-            const point = pendingPoint;
-            pendingPoint = null;
-            const viewport = viewportSize();
-
-            if (active.mode === 'drag') {
-                const maxLeft = Math.max(viewportGap, viewport.width - active.width - viewportGap);
-                const maxTop = Math.max(viewportGap, viewport.height - active.height - viewportGap);
-                panel.style.setProperty('left', `${clamp(point.x - active.offsetX, viewportGap, maxLeft)}px`, 'important');
-                panel.style.setProperty('top', `${clamp(point.y - active.offsetY, viewportGap, maxTop)}px`, 'important');
-                return;
-            }
-
-            const maxWidth = Math.max(120, viewport.width - active.left - viewportGap);
-            const maxHeight = Math.max(120, viewport.height - active.top - viewportGap);
-            const minWidth = Math.min(300, maxWidth);
-            const minHeight = Math.min(320, maxHeight);
-            const nextWidth = clamp(active.width + point.x - active.startX, minWidth, maxWidth);
-            const nextHeight = clamp(active.height + point.y - active.startY, minHeight, maxHeight);
-            panel.style.setProperty('min-width', `${minWidth}px`, 'important');
-            panel.style.setProperty('min-height', `${minHeight}px`, 'important');
-            panel.style.setProperty('max-width', `${maxWidth}px`, 'important');
-            panel.style.setProperty('max-height', `${maxHeight}px`, 'important');
-            panel.style.setProperty('width', `${nextWidth}px`, 'important');
-            panel.style.setProperty('height', `${nextHeight}px`, 'important');
-        };
-
-        const finishInteraction = (event) => {
-            if (!active || (event && event.pointerId !== active.pointerId)) return;
-            if (frameId) cancelAnimationFrame(frameId);
-            applyGeometry();
-            if (panel.hasPointerCapture?.(active.pointerId)) panel.releasePointerCapture(active.pointerId);
-            active = null;
-            pendingPoint = null;
-            panel.removeAttribute('data-dcuf-palette-interacting');
-        };
-
-        const onPointerDown = (event) => {
-            if (active || event.button !== 0 || event.isPrimary === false) return;
-            const target = event.target instanceof Element ? event.target : null;
-            if (!target) return;
-            const resizeHandle = target.closest('.dcuf-palette-resize-handle');
-            const dragHeader = target.closest('.dcuf-palette-header');
-            if (!resizeHandle && (!dragHeader || target.closest('button, input, label, a'))) return;
-
-            const rect = normalizePosition();
-            active = {
-                mode: resizeHandle ? 'resize' : 'drag',
-                pointerId: event.pointerId,
-                startX: event.clientX,
-                startY: event.clientY,
-                offsetX: event.clientX - rect.left,
-                offsetY: event.clientY - rect.top,
-                left: rect.left,
-                top: rect.top,
-                width: rect.width,
-                height: rect.height
-            };
-            panel.dataset.dcufPaletteInteracting = 'true';
-            panel.setPointerCapture?.(event.pointerId);
-            event.preventDefault();
-        };
-
-        const onPointerMove = (event) => {
-            if (!active || event.pointerId !== active.pointerId) return;
-            pendingPoint = { x: event.clientX, y: event.clientY };
-            if (!frameId) frameId = requestAnimationFrame(applyGeometry);
-            event.preventDefault();
-        };
-
-        const keepInsideViewport = () => {
-            if (!panel.isConnected) return;
-            const rect = normalizePosition();
-            const viewport = viewportSize();
-            const width = Math.min(rect.width, Math.max(120, viewport.width - (viewportGap * 2)));
-            const height = Math.min(rect.height, Math.max(120, viewport.height - (viewportGap * 2)));
-            panel.style.setProperty('width', `${width}px`, 'important');
-            panel.style.setProperty('height', `${height}px`, 'important');
-            panel.style.setProperty('left', `${clamp(rect.left, viewportGap, Math.max(viewportGap, viewport.width - width - viewportGap))}px`, 'important');
-            panel.style.setProperty('top', `${clamp(rect.top, viewportGap, Math.max(viewportGap, viewport.height - height - viewportGap))}px`, 'important');
-        };
-
-        panel.addEventListener('pointerdown', onPointerDown);
-        panel.addEventListener('pointermove', onPointerMove);
-        panel.addEventListener('pointerup', finishInteraction);
-        panel.addEventListener('pointercancel', finishInteraction);
-        window.addEventListener('resize', keepInsideViewport, { passive: true });
-        window.visualViewport?.addEventListener('resize', keepInsideViewport, { passive: true });
-        panel.__dcufPaletteGeometryCleanup = () => {
-            if (frameId) cancelAnimationFrame(frameId);
-            window.removeEventListener('resize', keepInsideViewport);
-            window.visualViewport?.removeEventListener('resize', keepInsideViewport);
-        };
-    };
+    const attachPanelPointerGeometry = (panel) => __dcufPopupGeometryHostAdapter.connect(panel, {
+        minWidth: 300,
+        minHeight: 320,
+        pointerDragSelector: '.dcuf-palette-header',
+        pointerResizeSelector: '.dcuf-palette-resize-handle',
+        pointerInteractiveSelector: 'button, input, label, a',
+        viewportGap: 4,
+    });
 
     const closePaletteDialog = ({ restore = true } = {}) => {
-        const overlay = document.getElementById(OVERLAY_ID);
+        const overlay = __dcufThemeHost.invokeNative('get-by-id', OVERLAY_ID);
         if (!overlay) return false;
         const returnFocus = overlay.__dcufReturnFocus;
         if (restore) apply(committedId, 'preview-cancel');
-        overlay.querySelector(`#${PANEL_ID}`)?.__dcufPaletteGeometryCleanup?.();
+        const panel = overlay.querySelector(`#${PANEL_ID}`);
+        if (panel) __dcufPopupGeometryHostAdapter.dispose(panel);
         overlay.remove();
         if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
         return true;
@@ -3403,69 +2558,36 @@ const ThemeModule = (() => {
 
     const openPaletteDialog = () => {
         ensureStyle();
-        const existing = document.getElementById(PANEL_ID);
+        const existing = __dcufThemeHost.invokeNative('get-by-id', PANEL_ID);
         if (existing) {
             existing.focus({ preventScroll: true });
             return existing;
         }
-
-        const overlay = document.createElement('div');
+        const overlay = __dcufThemeHost.invokeNative('create-element', 'div');
         overlay.id = OVERLAY_ID;
-        overlay.__dcufReturnFocus = document.activeElement;
+        overlay.__dcufReturnFocus = __dcufThemeHost.findAnchor('active-element');
+        markOwned(overlay, 'overlay');
 
-        const panel = document.createElement('section');
+        const panel = __dcufThemeHost.invokeNative('create-element', 'section');
         panel.id = PANEL_ID;
         panel.setAttribute('role', 'dialog');
         panel.setAttribute('aria-modal', 'true');
         panel.setAttribute('aria-labelledby', 'dcuf-palette-title');
         panel.tabIndex = -1;
-
-        const optionsHtml = PRESETS.map((preset) => `
-            <button type="button" class="dcuf-palette-option" role="radio" aria-checked="false" data-palette-id="${preset.id}">
-                <span class="dcuf-palette-swatch" aria-hidden="true">
-                    <span style="background:${preset.light[0]}"></span>
-                    <span style="background:${preset.light[1]}"></span>
-                    <span style="background:${preset.light[2]}"></span>
-                </span>
-                <span class="dcuf-palette-name">${preset.label}</span>
-            </button>
-        `).join('');
-
-        panel.innerHTML = `
-            <div class="dcuf-palette-header">
-                <h2 id="dcuf-palette-title">UI 색상 설정</h2>
-                <button type="button" class="dcuf-palette-close" aria-label="UI 색상 설정 닫기">×</button>
-            </div>
-            <div class="dcuf-palette-body">
-                <p class="dcuf-palette-description">색상을 선택해 미리 본 뒤 저장하세요.</p>
-                <div class="dcuf-palette-options" role="radiogroup" aria-label="UI 색상 프리셋">${optionsHtml}</div>
-                <p class="dcuf-palette-status" role="status" aria-live="polite"></p>
-                <div class="dcuf-palette-actions">
-                    <button type="button" data-dcuf-palette-action="default">기본값</button>
-                    <button type="button" data-dcuf-palette-action="cancel">취소</button>
-                    <button type="button" data-dcuf-palette-action="save">저장</button>
-                </div>
-            </div>
-            <div class="dcuf-palette-resize-handle" role="separator" aria-label="UI 색상 설정 크기 조절"></div>
-        `;
+        markOwned(panel, 'panel');
+        panel.innerHTML = __dcufSettingsPresenter.renderPalettePanel(PRESETS);
         overlay.appendChild(panel);
-        (document.body || document.documentElement).appendChild(overlay);
+        __dcufThemeHost.findAnchor('mount').appendChild(overlay);
         attachPanelPointerGeometry(panel);
-        if (typeof PersonalBlockModule !== 'undefined' && typeof PersonalBlockModule.attachPopupPinchResize === 'function') {
-            PersonalBlockModule.attachPopupPinchResize(panel, { minWidth: 300, minHeight: 320 });
-        }
         setSelectedOption(panel, committedId);
 
         const status = panel.querySelector('.dcuf-palette-status');
         const saveButton = panel.querySelector('[data-dcuf-palette-action="save"]');
         const actionButtons = Array.from(panel.querySelectorAll('button'));
-
-        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => {
-            option.addEventListener('click', () => {
-                status.textContent = '';
-                setSelectedOption(panel, option.dataset.paletteId);
-            });
-        });
+        panel.querySelectorAll('.dcuf-palette-option').forEach((option) => option.addEventListener('click', () => {
+            status.textContent = '';
+            setSelectedOption(panel, option.dataset.paletteId);
+        }));
         panel.querySelector('.dcuf-palette-close').addEventListener('click', () => closePaletteDialog({ restore: true }));
         panel.querySelector('[data-dcuf-palette-action="cancel"]').addEventListener('click', () => closePaletteDialog({ restore: true }));
         panel.querySelector('[data-dcuf-palette-action="default"]').addEventListener('click', () => {
@@ -3475,23 +2597,24 @@ const ThemeModule = (() => {
         saveButton.addEventListener('click', async () => {
             const selectedId = normalize(panel.dataset.selectedPalette);
             actionButtons.forEach((button) => { button.disabled = true; });
+            panel.dataset.dcufState = 'saving';
             status.textContent = '';
             try {
-                await GM_setValue(STORAGE_KEY, selectedId);
+                const result = await __dcufUiPort.dispatch({ type: DCUF_UI_CONTRACTS.UI_INTENT_TYPES.PALETTE_COMMIT, value: selectedId });
+                if (!result.ok) throw new Error(`palette commit failed: ${result.code}`);
                 writeRevision += 1;
                 committedId = selectedId;
                 apply(committedId, 'save');
                 closePaletteDialog({ restore: false });
             } catch (error) {
                 console.warn('[DCUF] palette storage write failed:', error);
+                panel.dataset.dcufState = 'error';
                 status.textContent = '색상 설정을 저장하지 못했습니다. 다시 시도해 주세요.';
                 actionButtons.forEach((button) => { button.disabled = false; });
                 saveButton.focus({ preventScroll: true });
             }
         });
-        overlay.addEventListener('click', (event) => {
-            if (event.target === overlay) closePaletteDialog({ restore: true });
-        });
+        overlay.addEventListener('click', (event) => { if (event.target === overlay) closePaletteDialog({ restore: true }); });
         panel.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 event.preventDefault();
@@ -3500,40 +2623,34 @@ const ThemeModule = (() => {
             }
             if (event.key !== 'Tab') return;
             const focusable = actionButtons.filter((button) => !button.disabled && button.offsetParent !== null);
-            if (focusable.length === 0) return;
+            if (!focusable.length) return;
             const first = focusable[0];
             const last = focusable[focusable.length - 1];
-            if (event.shiftKey && document.activeElement === first) {
+            if (event.shiftKey && __dcufThemeHost.findAnchor('active-element') === first) {
                 event.preventDefault();
                 last.focus();
-            } else if (!event.shiftKey && document.activeElement === last) {
+            } else if (!event.shiftKey && __dcufThemeHost.findAnchor('active-element') === last) {
                 event.preventDefault();
                 first.focus();
             }
         });
-
         panel.querySelector(`.dcuf-palette-option[data-palette-id="${committedId}"]`)?.focus({ preventScroll: true });
         return panel;
     };
 
     apply(DEFAULT_ID, 'default');
-    document.addEventListener('DOMContentLoaded', () => apply(committedId, 'dom-ready-sync'), { once: true });
-    if (!ensureStyle()) document.addEventListener('DOMContentLoaded', ensureStyle, { once: true });
+    __dcufThemeHost.invokeNative('on-dom-ready', () => apply(committedId, 'dom-ready-sync'), { once: true });
+    if (!ensureStyle()) __dcufThemeHost.invokeNative('on-dom-ready', ensureStyle, { once: true });
     beginInitialRead();
 
-    return Object.freeze({
-        STORAGE_KEY,
-        PRESETS,
-        DEFAULT_ID,
-        normalize,
-        apply,
-        openPaletteDialog,
-        closePaletteDialog,
-        getCommittedId: () => committedId,
-        isInitialReadSettled: () => initialReadSettled
-    });
+    return Object.freeze({ STORAGE_KEY, PRESETS, DEFAULT_ID, normalize, apply, openPaletteDialog, closePaletteDialog, getCommittedId: () => committedId, isInitialReadSettled: () => initialReadSettled });
 })();
-const FilterModule = {
+    // Compatibility exports for the existing mobile lazy mount and explicit PC mount.
+    // The modern settings presenter is the sole source of DCUF-owned settings CSS.
+    const __dcufSharedFilterUiCss = __dcufSettingsPresenter.SHARED_CSS;
+    const __dcufSharedFabShellCss = __dcufSettingsPresenter.FAB_SHELL_CSS;
+    GM_addStyle(__dcufSharedFilterUiCss);
+    const FilterModule = {
         TELECOM: DCUF_SHARED_IP.TELECOM,
 
         CONSTANTS: DCUF_SHARED_SCHEMA.FILTER_CONSTANTS,
@@ -3583,8 +2700,18 @@ const FilterModule = {
         PROXY_STRICT_PREFIXES: DCUF_SHARED_IP.PROXY_STRICT_PREFIXES,
         PROXY_AGGRESSIVE_EXTRA_PREFIXES: DCUF_SHARED_IP.PROXY_AGGRESSIVE_EXTRA_PREFIXES,
         KR_IP_RANGES: DCUF_SHARED_IP.KR_IP_RANGES,
+        // This source is the mobile target adapter. The PC builder rewrites this
+        // target flag to false when it ports the shared filter module.
         isMobile: () => false,
-        isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
+        isRecommendedContext(...args) { return __dcufFilterHostAdapter.invokeNative('isRecommendedContext', this, ...args); },
+        getHostCookie(...args) { return __dcufFilterHostAdapter.invokeNative('getHostCookie', this, ...args); },
+        noteBoot(...args) { return __dcufFilterHostAdapter.invokeNative('noteBoot', this, ...args); },
+        async loadDebugBlockConfig() {
+            return GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
+        },
+        async initializeFirstRunThreshold() {
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
+        },
         normalizeProxyBlockMode(value) {
             return DCUF_SHARED_STORAGE.normalizeProxyBlockModeValue(value);
         },
@@ -3717,17 +2844,7 @@ const FilterModule = {
                 return `[stringify-failed:${error?.message || 'unknown'}]`;
             }
         },
-        debugDescribeElement(element) {
-            if (!(element instanceof HTMLElement)) return { tag: null };
-            const titleNode = element.querySelector('.gall_tit a, .post-title-link, .usertxt, .gall_tit, .post-title');
-            return {
-                tag: element.tagName,
-                id: element.id || null,
-                className: typeof element.className === 'string' ? element.className : '',
-                rowId: element.getAttribute('data-custom-row-id'),
-                title: titleNode ? titleNode.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) : null
-            };
-        },
+        debugDescribeElement(...args) { return __dcufFilterHostAdapter.invokeNative('debugDescribeElement', this, ...args); },
         startDebugPass(reason, extra = {}) {
             if (!this.DEBUG_ENABLED) return;
             this.DEBUG_PASS_ID += 1;
@@ -3740,81 +2857,10 @@ const FilterModule = {
                 settings: this.debugSettingsSnapshot()
             });
         },
-        debugDecision(element, payload) {
-            if (!this.DEBUG_ENABLED) return;
-            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
-            const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
-            const identity = [
-                this.DEBUG_PASS_ID,
-                payload.branch || '',
-                payload.uid || '',
-                payload.ip || '',
-                payload.ipPrefix || '',
-                payload.isBlocked ? 'hide' : 'show',
-                reasons.join(',')
-            ].join('|');
-            if (this.DEBUG_DECISION_KEYS.has(identity)) return;
-            if (this.DEBUG_DECISION_LOG_COUNT >= this.DEBUG_MAX_DECISIONS_PER_PASS) return;
-            this.DEBUG_DECISION_KEYS.add(identity);
-            this.DEBUG_DECISION_LOG_COUNT += 1;
-            this.debugLog('decision', `${payload.branch || 'sync'} #${this.DEBUG_DECISION_LOG_COUNT}`, {
-                passId: this.DEBUG_PASS_ID,
-                element: this.debugDescribeElement(element),
-                ...payload,
-                reasons
-            });
-            console.log(
-                `[DCUF DEBUG][decision-line] pass=${this.DEBUG_PASS_ID} idx=${this.DEBUG_DECISION_LOG_COUNT} branch=${payload.branch || 'sync'} blocked=${payload.isBlocked} ` +
-                `uid=${payload.uid || '(none)'} nick=${payload.nickname || '(none)'} ip=${payload.ip || '(none)'} prefix=${payload.ipPrefix || '(none)'} ` +
-                `guest=${payload.isGuest} custom=${payload.hasCustomIpPrefixBlock} proxyMode=${payload.proxyBlockMode} proxy=${payload.proxyPrefixMatch} proxyTier=${payload.proxyMatchTier || '(none)'} telecom=${payload.telecomPrefixMatch} ` +
-                `blockedGuest=${payload.blockedGuestMatch} reasons=${reasons.join(',') || '(none)'}`
-            );
-        },
-        debugMirrorSync(originalRow, mirroredItem, nextDisplay, source) {
-            if (!this.DEBUG_ENABLED) return;
-            const prevDisplay = mirroredItem.style.display || '';
-            if (prevDisplay === nextDisplay && nextDisplay !== 'none') return;
-            this.debugLog('mirror', source, {
-                original: this.debugDescribeElement(originalRow),
-                mirrored: this.debugDescribeElement(mirroredItem),
-                originalDisplay: originalRow.style.display || '',
-                mirroredBefore: prevDisplay,
-                mirroredAfter: nextDisplay,
-                originalClassName: typeof originalRow.className === 'string' ? originalRow.className : ''
-            });
-        },
-        async debugDumpState(reason = 'manual') {
-            if (!this.DEBUG_ENABLED) return null;
-            await this.reloadSettings();
-            const rawBlockConfig = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG, {});
-            const payload = this.debugSettingsSnapshot({
-                reason,
-                rawBlockConfigIp: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip : '',
-                rawBlockConfigIpPreview: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip.split('||').slice(0, 20) : [],
-                rawBlockConfigIpCount: this.parseIpPrefixList(rawBlockConfig?.ip || '').length
-            });
-            this.debugLog('dump', reason, payload);
-            console.log(`[DCUF DEBUG][dump-line] ${this.debugStringifySafe(payload)}`);
-            return payload;
-        },
-        installDebugApi() {
-            if (window.DCUFDebug && window.DCUFDebug.__dcufInstalled) return;
-            window.DCUFDebug = {
-                __dcufInstalled: true,
-                dumpState: (reason = 'manual dumpState') => this.debugDumpState(reason),
-                inspectCurrentPage: async (reason = 'manual inspectCurrentPage') => {
-                    await this.reloadSettings();
-                    this.startDebugPass(reason, { source: 'window.DCUFDebug.inspectCurrentPage' });
-                    this.runSyncRefilterPass();
-                    return this.debugDumpState(`${reason} after runSyncRefilterPass`);
-                },
-                refilter: async (reason = 'manual refilter') => {
-                    await this.refilterAllContent(reason);
-                    return this.debugDumpState(`${reason} after refilter`);
-                }
-            };
-            this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
-        },
+        debugDecision(...args) { return __dcufFilterHostAdapter.invokeNative('debugDecision', this, ...args); },
+        debugMirrorSync(...args) { return __dcufFilterHostAdapter.invokeNative('debugMirrorSync', this, ...args); },
+        async debugDumpState(...args) { return __dcufFilterHostAdapter.invokeNative('debugDumpState', this, ...args); },
+        installDebugApi(...args) { return __dcufFilterHostAdapter.invokeNative('installDebugApi', this, ...args); },
         async cleanupLegacyManagedBlockConfig(snapshot = null) {
             const migrationDone = snapshot ? snapshot.migrationDone : await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, false);
             if (migrationDone) return;
@@ -3853,290 +2899,64 @@ const FilterModule = {
             await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_CONFIG_MIGRATION_V275_DONE, true);
             if (snapshot) { snapshot.blockConfig = conf; snapshot.migrationDone = true; }
         },
-        async showSettings() {
-            window.__dcufEnsureFilterUiStyles?.();
+        async getSettingsSurfaceSnapshot() {
             await this.reloadSettings();
-            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockPumPosts = false, blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = dcFilterSettings;
-            const currentShortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
-            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
-            const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-            if (existingDiv) existingDiv.remove();
-            const div = document.createElement('div');
-            div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
-            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: default; user-select: none;';
-            const proxyModeButtonsHtml = [
-                [this.PROXY_MODE.OFF, '끔'],
-                [this.PROXY_MODE.STRICT, '확실'],
-                [this.PROXY_MODE.AGGRESSIVE, '공격적']
-            ].map(([mode, label]) => {
-                const active = normalizedProxyBlockMode === mode;
-                return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
-            }).join('');
-            div.innerHTML = `
-                <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
-                    <div style="display:flex; align-items: center; gap: 10px;">
-                        <div style="display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" ${masterDisabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;"><b>모든 기능 끄기</b></label></div>
-                        <div style="border-left: 2px solid #ccc; padding-left: 10px; display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" ${excludeRecommended ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;cursor:pointer;"><b>개념글 제외</b></label></div>
-                    </div>
-                    <div><button id="${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button></div>
-                </div>
-                <div id="${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <div style="display: flex; flex-direction: column; align-items: center;"><h3 style="cursor: default;margin-top:0;margin-bottom:5px;">유저 글+댓글 합 기준값(이 값 이하 차단)</h3><input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;"><div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div></div>
-                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 7px; text-align:center;"><div style="display:flex; align-items:center; justify-content:center; gap:6px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;cursor:pointer;">유동 전체 차단</label></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%; text-align:center;"><div style="font-size:13px;">우회 IP 차단(오탐 위험 있음)</div><div id="${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}" style="display:flex; width:100%; max-width:220px; gap:2px; background:#edf1f5; border:1px solid #cfd6dd; border-radius:8px; padding:2px; justify-content:center;">${proxyModeButtonsHtml}</div><div class="dcuf-proxy-mode-desc" style="font-size:11px;color:#666;line-height:1.2; text-align:center;">끔 - 확실한 우회 차단 - 공격적 우회 차단</div></div><div style="display:flex; align-items:center; gap:6px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;cursor:pointer;">통신사 IP 차단</label></div></div></div>
-                    </div>
-                    <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
-                    <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;">글/댓글 비율 필터 사용</label></div>
-                    <div id="${this.CONSTANTS.UI_IDS.RATIO_SECTION}">
-                        <div style="display:flex;gap:10px;align-items:center;">
-                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
-                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
-                        </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
-                    </div>
-                    <div class="dcuf-settings-section dcuf-settings-pum" style="display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" type="checkbox" ${blockPumPosts ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" style="font-size:15px;cursor:pointer;">펌 게시물 차단</label></div>
-                    <button type="button" id="${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}" style="width:100%;margin-top:14px;padding:9px 10px;border:1px solid #9aa4b2;border-radius:7px;background:#f6f8fb;color:#222;font-weight:700;cursor:pointer;">갤러리별 말머리 차단 관리</button>
-                </div>
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
-                    <div style="font-size:15px;color:#444;text-align:left;">
-                        창 여닫는 단축키: <b id="${this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY}">${currentShortcut}</b>
-                        <a href="#" id="${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}" style="margin-left: 8px; font-size: 13px; text-decoration: underline; cursor: pointer;">(변경)</a>
-                    </div>
-                    <button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
-                </div>`;
-            document.body.appendChild(div);
-
-
-            div.classList.add('dcuf-settings-panel');
-            const settingsHeader = div.firstElementChild;
-            if (settingsHeader) settingsHeader.classList.add('dcuf-settings-header');
-            const settingsFooter = div.lastElementChild;
-            if (settingsFooter) settingsFooter.classList.add('dcuf-settings-footer');
-            const settingsMain = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
-            if (settingsMain) {
-                settingsMain.classList.add('dcuf-settings-body');
-                const thresholdSection = settingsMain.firstElementChild;
-                if (thresholdSection) {
-                    thresholdSection.classList.add('dcuf-settings-section', 'dcuf-settings-threshold');
-                    const guestControls = thresholdSection.lastElementChild;
-                    if (guestControls) guestControls.classList.add('dcuf-settings-guest-controls');
-                }
-            }
-            const ratioSectionRoot = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_SECTION);
-            if (ratioSectionRoot) ratioSectionRoot.classList.add('dcuf-settings-section', 'dcuf-settings-ratio');
-
-            try {
-                PersonalBlockModule.attachPopupPinchResize(div, { minWidth: 280, minHeight: 220 });
-            } catch (e) {
-                console.warn('DCinside User Filter: settings pinch init failed.', e);
-            }
-
-            const closeSettingsPanel = () => {
-                div.classList.add('dcuf-pop-leave');
-                window.setTimeout(() => div.remove(), 140);
-            };
-
-            const input = div.querySelector(`#${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}`);
-            const changeShortcutBtn = div.querySelector(`#${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}`);
-            const masterDisableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}`);
-            const settingsContainer = div.querySelector(`#${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}`);
-            const ratioSection = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_SECTION}`);
-            const ratioEnableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}`);
-            const ratioMinInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}`);
-            const ratioMaxInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}`);
-            const blockPumPostsCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}`);
-            const closeButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}`);
-            const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
-            const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
-            const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
-            const proxyBlockModeGroup = div.querySelector(`#${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}`);
-            const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
-            const headtextManagerButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}`);
-
-            if (input) { input.focus(); input.select(); }
-
-            if (changeShortcutBtn) {
-                changeShortcutBtn.onclick = (e) => {
-                    e.preventDefault();
-                    this.showShortcutChanger();
-                };
-            }
-
-            if (closeButton) {
-                closeButton.onclick = closeSettingsPanel;
-                closeButton.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    closeSettingsPanel();
-                }, { passive: false });
-            }
-
-            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !blockPumPostsCheckbox || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
-                console.error('DCinside User Filter: settings popup init failed - required control missing.');
-                return;
-            }
-
-            const updateMasterState = () => { const isMasterDisabled = masterDisableCheckbox.checked; settingsContainer.style.opacity = isMasterDisabled ? 0.5 : 1; settingsContainer.style.pointerEvents = isMasterDisabled ? 'none' : 'auto'; };
-            masterDisableCheckbox.addEventListener('change', updateMasterState); updateMasterState();
-            const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.style.opacity = enabled ? 1 : 0.5; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
-            ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
-            let currentProxyBlockMode = normalizedProxyBlockMode;
-            const renderProxyModeButtons = (mode) => {
-                const isDarkMode = document.body.classList.contains('dc-filter-dark-mode');
-                proxyBlockModeGroup.querySelectorAll('button[data-proxy-mode]').forEach((button) => {
-                    const buttonMode = this.normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
-                    const active = mode === buttonMode;
-                    button.setAttribute('aria-pressed', active ? 'true' : 'false');
-                    button.style.background = active ? '#3b71fd' : 'transparent';
-                    button.style.color = active ? '#fff' : (isDarkMode ? '#dbe6f5' : '#333');
-                    button.style.fontWeight = active ? '700' : '600';
-                    button.style.border = '0';
-                });
-            };
-            renderProxyModeButtons(currentProxyBlockMode);
-
-            // [v2.6.8 추가] 스위치 실시간 저장 & 필터 즉시 적용
-            const applyCheckboxChange = async (storageKey, value, extraLogic) => {
-                this.debugLog('toggle', 'applyCheckboxChange requested', { storageKey, value });
-                await GM_setValue(storageKey, value);
-                if (extraLogic) {
-                    this.debugLog('toggle', 'applyCheckboxChange running extraLogic', { storageKey, value });
-                    await extraLogic();
-                }
-                await this.debugDumpState(`after ${storageKey}=${value} before refilter`);
-                await this.refilterAllContent(`toggle ${storageKey}=${value}`);
-            };
-
-            masterDisableCheckbox.addEventListener('change', () =>
-                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked)
-            );
-            excludeRecommendedCheckbox.addEventListener('change', (e) =>
-                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, e.target.checked)
-            );
-            blockGuestCheckbox.addEventListener('change', async (e) => {
-                const checked = e.target.checked;
-                await applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, checked,
-                    checked ? null : () => this.clearBlockedGuests()
-                );
-            });
-            proxyBlockModeGroup.addEventListener('click', (e) => {
-                const targetButton = e.target.closest('button[data-proxy-mode]');
-                if (!targetButton) return;
-                const nextMode = this.normalizeProxyBlockMode(targetButton.getAttribute('data-proxy-mode'));
-                if (nextMode === currentProxyBlockMode) return;
-                currentProxyBlockMode = nextMode;
-                renderProxyModeButtons(currentProxyBlockMode);
-                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode);
-            });
-            telecomBlockCheckbox.addEventListener('change', (e) =>
-                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
-            );
-            blockPumPostsCheckbox.addEventListener('change', (e) =>
-                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, e.target.checked)
-            );
-            headtextManagerButton?.addEventListener('click', () => this.showHeadtextBlockManager());
-            ratioEnableCheckbox.addEventListener('change', (e) =>
-                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
-            );
-
-            const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
-            [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
-            let isDragging = false, offsetX, offsetY;
-            let dragWidth = 0, dragHeight = 0;
-            let dragRafId = 0, pendingDragX = null, pendingDragY = null;
-            const applyDragPosition = () => {
-                dragRafId = 0;
-                if (!isDragging || pendingDragX === null || pendingDragY === null) return;
-                let newX = pendingDragX - offsetX;
-                let newY = pendingDragY - offsetY;
-                pendingDragX = null;
-                pendingDragY = null;
-                newX = Math.max(0, Math.min(newX, window.innerWidth - dragWidth));
-                newY = Math.max(0, Math.min(newY, window.innerHeight - dragHeight));
-                div.style.left = `${newX}px`;
-                div.style.top = `${newY}px`;
-            };
-            const onDragStart = (e) => {
-                if (e.type === 'touchstart' && e.touches && e.touches.length > 1) return;
-                const startTarget = (e.target && e.target.nodeType === 1) ? e.target : e.target.parentElement;
-                if (!startTarget || !startTarget.closest('.dcuf-settings-header')) return;
-                if (startTarget.closest('button, input, label, a, .switch') || startTarget.id === FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON || startTarget.id === FilterModule.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN) return;
-                isDragging = true;
-                const rect = div.getBoundingClientRect();
-                if (div.style.transform !== 'none') { div.style.transform = 'none'; div.style.left = `${rect.left}px`; div.style.top = `${rect.top}px`; }
-                dragWidth = rect.width;
-                dragHeight = rect.height;
-                const clientX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchstart' ? e.touches[0].clientY : e.clientY;
-                offsetX = clientX - rect.left; offsetY = clientY - rect.top;
-                document.addEventListener('mousemove', onDragMove); document.addEventListener('touchmove', onDragMove, { passive: false });
-                document.addEventListener('mouseup', onDragEnd, { once: true }); document.addEventListener('touchend', onDragEnd, { once: true });
-            };
-            const onDragMove = (e) => {
-                if (!isDragging) return;
-                if (e.type === 'touchmove' && e.touches && e.touches.length > 1) return;
-                e.preventDefault();
-                const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-                const clientY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
-                pendingDragX = clientX;
-                pendingDragY = clientY;
-                if (!dragRafId) dragRafId = requestAnimationFrame(applyDragPosition);
-            };
-            const onDragEnd = () => {
-                if (dragRafId) cancelAnimationFrame(dragRafId);
-                applyDragPosition();
-                isDragging = false;
-                document.removeEventListener('mousemove', onDragMove);
-                document.removeEventListener('touchmove', onDragMove);
-            };
-            const dragHandle = settingsHeader || div;
-            try {
-                dragHandle.addEventListener('mousedown', onDragStart);
-                dragHandle.addEventListener('touchstart', onDragStart, { passive: true });
-            } catch (e) {
-                console.warn('DCinside User Filter: settings drag init failed.', e);
-            }
-            saveButton.onclick = async () => {
-                saveButton.disabled = true; saveButton.textContent = '저장 중...';
-                const blockGuestChecked = blockGuestCheckbox.checked;
-                let val = parseInt(input ? input.value : '0', 10);
-                if (isNaN(val)) val = 0;
-                const promises = [
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, excludeRecommendedCheckbox.checked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, val),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, ratioEnableCheckbox.checked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MIN, ratioMinInput.value),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.RATIO_MAX, ratioMaxInput.value),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, blockPumPostsCheckbox.checked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, blockGuestChecked),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode),
-                    GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, telecomBlockCheckbox.checked)
-                ];
-                if (!blockGuestChecked) promises.push(this.clearBlockedGuests()); try {
-                    await Promise.all(promises);
-                    await this.debugDumpState('save button before refilter');
-                    await this.refilterAllContent('save button');
-                    closeSettingsPanel();
-                } catch (error) {
-                    console.error('DCinside User Filter: Settings save failed.', error);
-                    saveButton.disabled = false;
-                    saveButton.textContent = '저장 & 실행';
-                    alert('설정 저장에 실패했습니다. 콘솔을 확인해 주세요.');
-                }
-            };
+            const settings = dcFilterSettings || {};
+            const shortcut = await GM_getValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, 'Shift+S');
+            return DCUF_UI_CONTRACTS.createSurfaceSnapshot({
+                settings: {
+                    masterDisabled: Boolean(settings.masterDisabled),
+                    excludeRecommended: Boolean(settings.excludeRecommended),
+                    threshold: Number(settings.threshold) || 0,
+                    ratioEnabled: Boolean(settings.ratioEnabled),
+                    ratioMin: settings.ratioMin ?? '',
+                    ratioMax: settings.ratioMax ?? '',
+                    blockPumPosts: Boolean(settings.blockPumPosts),
+                    blockGuestEnabled: Boolean(settings.blockGuestEnabled),
+                    proxyBlockMode: this.normalizeProxyBlockMode(settings.proxyBlockMode),
+                    telecomBlockEnabled: Boolean(settings.telecomBlockEnabled),
+                },
+                shortcut: typeof shortcut === 'string' && shortcut ? shortcut : 'Shift+S',
+            }, 'filter-settings');
         },
-        getGalleryKey(urlLike = window.location.href) {
-            try {
-                const url = new URL(urlLike, window.location.href);
-                const id = (url.searchParams.get('id') || '').trim();
-                if (!id) return null;
-                const path = url.pathname.toLowerCase();
-                const type = path.includes('/mini/') ? 'mini' : (path.includes('/mgallery/') ? 'mgallery' : 'board');
-                return `${type}:${id}`;
-            } catch {
-                return null;
+        async commitImmediateSetting(storageKey, value, { clearBlockedGuests = false } = {}) {
+            this.debugLog('toggle', 'applyCheckboxChange requested', { storageKey, value });
+            await GM_setValue(storageKey, value);
+            if (clearBlockedGuests) {
+                this.debugLog('toggle', 'applyCheckboxChange clearing blocked guests', { storageKey, value });
+                await this.clearBlockedGuests();
             }
+            await this.debugDumpState(`after ${storageKey}=${value} before refilter`);
+            await this.refilterAllContent(`toggle ${storageKey}=${value}`);
         },
+        async commitSettingsSurface(values) {
+            const keys = this.CONSTANTS.STORAGE_KEYS;
+            const blockGuestChecked = Boolean(values.blockGuestEnabled);
+            const writes = [
+                GM_setValue(keys.MASTER_DISABLED, Boolean(values.masterDisabled)),
+                GM_setValue(keys.EXCLUDE_RECOMMENDED, Boolean(values.excludeRecommended)),
+                GM_setValue(keys.THRESHOLD, Number(values.threshold) || 0),
+                GM_setValue(keys.RATIO_ENABLED, Boolean(values.ratioEnabled)),
+                GM_setValue(keys.RATIO_MIN, values.ratioMin ?? ''),
+                GM_setValue(keys.RATIO_MAX, values.ratioMax ?? ''),
+                GM_setValue(keys.BLOCK_PUM_POSTS, Boolean(values.blockPumPosts)),
+                GM_setValue(keys.BLOCK_GUEST, blockGuestChecked),
+                GM_setValue(keys.BLOCK_PROXY, this.normalizeProxyBlockMode(values.proxyBlockMode)),
+                GM_setValue(keys.BLOCK_TELECOM, Boolean(values.telecomBlockEnabled)),
+            ];
+            if (!blockGuestChecked) writes.push(this.clearBlockedGuests());
+            await Promise.all(writes);
+            await this.debugDumpState('save button before refilter');
+            await this.refilterAllContent('save button');
+        },
+        async commitShortcutSetting(value) {
+            await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, value);
+            activeShortcutString = value;
+            activeShortcutObject = this.parseShortcutString(value);
+            return value;
+        },
+        async showSettings() { return __dcufFilterSettingsHostAdapter.invokeNative('show-settings', this); },
+        getGalleryKey(urlLike) { return __dcufFilterSettingsHostAdapter.invokeNative('get-gallery-key', this, urlLike); },
         normalizeHeadtext(value) {
             return DCUF_SHARED_STORAGE.normalizeHeadtext(value);
         },
@@ -4154,235 +2974,11 @@ const FilterModule = {
             await this.refilterAllContent(reason);
             return normalized;
         },
-        getCanonicalHeadtextFromNode(source) {
-            if (!(source instanceof Element)) return '';
-            const explicit = source.getAttribute('data-headtext');
-            if (explicit) return this.normalizeHeadtext(explicit);
-            const canonical = source.matches('.subject_inner') ? source : source.querySelector('.subject_inner');
-            if (canonical?.textContent?.trim()) return this.normalizeHeadtext(canonical.textContent);
-            const valueNode = source.matches('[data-val]') ? source : source.querySelector('[data-val]');
-            if (valueNode?.getAttribute('data-val')) return this.normalizeHeadtext(valueNode.getAttribute('data-val'));
-            const directText = Array.from(source.childNodes)
-                .filter((node) => node.nodeType === Node.TEXT_NODE)
-                .map((node) => node.textContent || '')
-                .join(' ');
-            return this.normalizeHeadtext(directText || source.textContent || '');
-        },
-        collectDiscoveredHeadtexts() {
-            const values = new Set();
-            document.querySelectorAll('tr.ub-content, .custom-post-item, .view_bottom li').forEach((element) => {
-                const descriptor = this.describeFilterTarget(element);
-                if (descriptor?.isHeadtextTarget && descriptor.writerInfo && descriptor.headtext && !descriptor.isNotice) values.add(descriptor.headtext);
-            });
-            document.querySelectorAll('a[onclick*="listSearchHead"], .subject_morelist a, [data-fixture-headtext-nav]').forEach((element) => {
-                const headtext = this.getCanonicalHeadtextFromNode(element);
-                if (headtext && !['전체', '공지'].includes(headtext)) values.add(headtext);
-            });
-            return Array.from(values).sort((a, b) => a.localeCompare(b, 'ko'));
-        },
-        async showHeadtextBlockManager() {
-            document.getElementById(this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL)?.remove();
-            const currentKey = this.getGalleryKey();
-            const panel = document.createElement('section');
-            panel.id = this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL;
-            panel.className = 'dcuf-settings-panel';
-            panel.setAttribute('role', 'dialog');
-            panel.setAttribute('aria-modal', 'true');
-            panel.style.cssText = 'position:fixed;z-index:2147483646;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 24px));max-height:min(680px,calc(100vh - 24px));overflow:auto;padding:18px;border:1px solid #8d98a6;border-radius:12px;background:#fff;color:#20242a;box-shadow:0 20px 60px #0007;box-sizing:border-box;';
-            document.body.appendChild(panel);
-
-            const render = async () => {
-                const rules = await this.loadGalleryHeadtextBlocks();
-                const current = new Set(currentKey ? (rules[currentKey] || []) : []);
-                const discovered = Array.from(new Set([...this.collectDiscoveredHeadtexts(), ...current])).sort((a, b) => a.localeCompare(b, 'ko'));
-                panel.replaceChildren();
-
-                const header = document.createElement('div');
-                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;';
-                const title = document.createElement('strong');
-                title.textContent = '갤러리별 말머리 차단';
-                const close = document.createElement('button');
-                close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '닫기');
-                close.style.cssText = 'border:0;background:transparent;font-size:22px;cursor:pointer;color:inherit;';
-                close.onclick = () => panel.remove();
-                header.append(title, close);
-                panel.appendChild(header);
-
-                const keyLabel = document.createElement('div');
-                keyLabel.textContent = currentKey ? `현재 갤러리: ${currentKey}` : '현재 페이지의 갤러리를 확인할 수 없습니다.';
-                keyLabel.style.cssText = 'font-size:13px;color:#667085;margin-bottom:10px;';
-                panel.appendChild(keyLabel);
-
-                const choices = document.createElement('div');
-                choices.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:10px;';
-                discovered.forEach((headtext) => {
-                    const label = document.createElement('label');
-                    label.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px;border:1px solid #d7dde5;border-radius:7px;cursor:pointer;min-width:0;';
-                    const input = document.createElement('input');
-                    input.type = 'checkbox'; input.checked = current.has(headtext); input.disabled = !currentKey;
-                    input.addEventListener('change', async () => {
-                        if (input.checked) current.add(headtext); else current.delete(headtext);
-                        const next = { ...rules };
-                        if (current.size) next[currentKey] = Array.from(current); else delete next[currentKey];
-                        input.disabled = true;
-                        await this.saveGalleryHeadtextBlocks(next, 'headtext checkbox');
-                        await render();
-                    });
-                    const text = document.createElement('span'); text.textContent = headtext;
-                    label.append(input, text); choices.appendChild(label);
-                });
-                if (!discovered.length) {
-                    const empty = document.createElement('div'); empty.textContent = '현재 목록에서 발견한 말머리가 없습니다.'; empty.style.cssText = 'grid-column:1/-1;color:#667085;font-size:13px;'; choices.appendChild(empty);
-                }
-                panel.appendChild(choices);
-
-                const manual = document.createElement('div');
-                manual.style.cssText = 'display:flex;gap:7px;margin-bottom:10px;';
-                const manualInput = document.createElement('input');
-                manualInput.type = 'text'; manualInput.placeholder = '목록에 없는 말머리'; manualInput.disabled = !currentKey;
-                manualInput.style.cssText = 'flex:1;min-width:0;padding:8px;border:1px solid #b9c2ce;border-radius:7px;';
-                const add = document.createElement('button'); add.type = 'button'; add.textContent = '추가'; add.disabled = !currentKey;
-                add.style.cssText = 'padding:8px 12px;border:1px solid #8793a2;border-radius:7px;background:#f6f8fb;cursor:pointer;';
-                add.onclick = async () => {
-                    const value = this.normalizeHeadtext(manualInput.value);
-                    if (!value) return;
-                    current.add(value);
-                    await this.saveGalleryHeadtextBlocks({ ...rules, [currentKey]: Array.from(current) }, 'manual headtext add');
-                    await render();
-                };
-                manualInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') add.click(); });
-                manual.append(manualInput, add); panel.appendChild(manual);
-
-                const clear = document.createElement('button');
-                clear.type = 'button'; clear.textContent = '현재 갤러리 전체 해제'; clear.disabled = !currentKey || !current.size;
-                clear.style.cssText = 'width:100%;padding:8px;border:1px solid #c5ccd5;border-radius:7px;background:transparent;color:inherit;cursor:pointer;margin-bottom:14px;';
-                clear.onclick = async () => {
-                    const next = { ...rules }; delete next[currentKey];
-                    await this.saveGalleryHeadtextBlocks(next, 'clear current gallery headtexts');
-                    await render();
-                };
-                panel.appendChild(clear);
-
-                const savedTitle = document.createElement('strong'); savedTitle.textContent = '저장된 다른 갤러리'; panel.appendChild(savedTitle);
-                const saved = document.createElement('div'); saved.style.cssText = 'display:grid;gap:7px;margin-top:8px;';
-                const others = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
-                others.forEach(([key, values]) => {
-                    const row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #d7dde5;border-radius:7px;';
-                    const text = document.createElement('span'); text.textContent = `${key}: ${values.join(', ')}`; text.style.cssText = 'flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;';
-                    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '삭제';
-                    remove.style.cssText = 'border:1px solid #d49a9a;border-radius:6px;background:#fff5f5;color:#b42318;padding:5px 8px;cursor:pointer;';
-                    remove.onclick = async () => { const next = { ...rules }; delete next[key]; await this.saveGalleryHeadtextBlocks(next, 'remove saved gallery headtexts'); await render(); };
-                    row.append(text, remove); saved.appendChild(row);
-                });
-                if (!others.length) { const none = document.createElement('div'); none.textContent = '다른 갤러리에 저장된 항목이 없습니다.'; none.style.cssText = 'font-size:13px;color:#667085;'; saved.appendChild(none); }
-                panel.appendChild(saved);
-            };
-            await render();
-        },
+        getCanonicalHeadtextFromNode(source) { return __dcufFilterSettingsHostAdapter.invokeNative('get-canonical-headtext', this, source); },
+        collectDiscoveredHeadtexts() { return __dcufFilterSettingsHostAdapter.invokeNative('collect-headtexts', this); },
+        async showHeadtextBlockManager() { return __dcufFilterSettingsHostAdapter.invokeNative('show-headtext-manager', this); },
         // [v2.1.1 수정] 단축키 변경 모달 표시 (실시간 입력 감지 로직 개선)
-        showShortcutChanger() {
-            if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
-
-
-            const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-            settingsPanel.style.pointerEvents = 'none';
-
-
-            const overlay = document.createElement('div');
-            overlay.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
-            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
-            document.body.appendChild(overlay);
-
-
-            const modal = document.createElement('div');
-            modal.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL;
-            modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 100001; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
-            modal.innerHTML = `
-                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">새로운 단축키를 입력하세요 (최대 3개)</h4>
-                <div id="${this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW}" style="min-width: 200px; height: 40px; line-height: 40px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #333;">입력 대기 중...</div>
-                <div>
-                    <button id="${this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN}" style="padding: 8px 16px; margin-right: 10px; border: 1px solid #3b71fd; background: #3b71fd; color: #fff; border-radius: 4px; cursor: pointer;">변경</button>
-                    <button id="${this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN}" style="padding: 8px 16px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; cursor: pointer;">취소</button>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-
-            let pressedKeys = new Set();
-            let combinationTimeout = null;
-            const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
-
-
-            const updatePreview = () => {
-                if (pressedKeys.size > 0) {
-                    previewEl.textContent = this.formatShortcutKeys(pressedKeys);
-                } else {
-                    previewEl.textContent = '입력 대기 중...';
-                }
-            };
-
-
-            const keydownHandler = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-
-                // 타이머가 있다면, 아직 조합이 진행 중이라는 의미이므로 초기화
-                clearTimeout(combinationTimeout);
-
-
-                if (pressedKeys.size < 3) {
-                    pressedKeys.add(e.key);
-                    updatePreview();
-                }
-
-
-                // 키 입력이 0.5초간 없으면 현재 조합을 확정하고 Set을 비움
-                combinationTimeout = setTimeout(() => {
-                    pressedKeys.clear();
-                }, 500);
-            };
-
-
-            const keyupHandler = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                // 키를 떼는 시점은 조합 확정과 관련 없으므로, pressedKeys를 유지합니다.
-            };
-
-
-            document.addEventListener('keydown', keydownHandler, true);
-            document.addEventListener('keyup', keyupHandler, true);
-
-
-
-
-            const cleanup = () => {
-                document.removeEventListener('keydown', keydownHandler, true);
-                document.removeEventListener('keyup', keyupHandler, true);
-                overlay.remove();
-                modal.remove();
-                settingsPanel.style.pointerEvents = 'auto';
-            };
-
-
-            document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
-                const newShortcut = previewEl.textContent;
-                if (newShortcut && newShortcut !== '입력 대기 중...') {
-                    await GM_setValue(this.CONSTANTS.STORAGE_KEYS.SHORTCUT_KEY, newShortcut);
-                    activeShortcutString = newShortcut;
-                    activeShortcutObject = this.parseShortcutString(newShortcut);
-                    document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
-                    cleanup();
-                } else {
-                    alert('유효한 단축키를 입력해주세요.');
-                }
-            };
-
-
-            document.getElementById(this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN).onclick = cleanup;
-            overlay.onclick = cleanup;
-        },
+        showShortcutChanger() { return __dcufFilterSettingsHostAdapter.invokeNative('show-shortcut-changer', this); },
         // [v2.1 추가] 키 Set을 정해진 형식의 문자열로 변환
         formatShortcutKeys(keySet) {
             return DCUF_SHARED_STORAGE.formatShortcutKeys(keySet);
@@ -4400,250 +2996,28 @@ const FilterModule = {
             });
             return set;
         },
-        isFilterTargetDescriptor(value) {
-            return Boolean(value && value.element instanceof HTMLElement);
-        },
-        normalizeFilterTarget(target, { includeHeadtext = true, includePum = true } = {}) {
-            if (this.isFilterTargetDescriptor(target)) return target;
-            return this.describeFilterTarget(target, { includeHeadtext, includePum });
-        },
-        isReplyOnlyCommentWrapper(element) {
-            if (!(element instanceof HTMLElement)) return false;
-            if (!this.isCommentListItem(element)) return false;
-            return Boolean(element.querySelector(':scope > div.reply.show'))
-                && !element.querySelector(':scope > div.cmt_info');
-        },
-        findWriterInfoForFilterTarget(element) {
-            if (!(element instanceof HTMLElement)) return null;
-            const directCommentWriter = element.querySelector(':scope > div.cmt_info .ub-writer');
-            if (directCommentWriter instanceof HTMLElement) return directCommentWriter;
-
-            const directReplyWriter = element.querySelector(':scope > div.reply_info .ub-writer');
-            if (directReplyWriter instanceof HTMLElement) return directReplyWriter;
-
-            if (this.isCommentListItem(element)) return null;
-            return element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
-        },
-        isHeadtextFilterTarget(element) {
-            if (!(element instanceof HTMLElement) || this.isCommentListItem(element)) return false;
-            if (element.matches('tr.ub-content')) return true;
-            return Boolean(element.closest('.view_bottom, .gall_listwrap'))
-                && Boolean(element.querySelector('[data-headtext], .gall_subject'));
-        },
-        extractHeadtext(element) {
-            if (!(element instanceof HTMLElement)) return '';
-            const source = element.matches('[data-headtext]')
-                ? element
-                : element.querySelector('[data-headtext], .gall_subject');
-            return this.getCanonicalHeadtextFromNode(source);
-        },
-        isPumPost(element) {
-            if (!(element instanceof HTMLElement) || !this.isHeadtextFilterTarget(element)) return false;
-            const marker = element.querySelector(':scope > .gall_tit > b.font_blue009');
-            return this.normalizeHeadtext(marker?.textContent || '') === '(펌)';
-        },
-        describeFilterTarget(element, { includeHeadtext = true, includePum = true } = {}) {
-            if (!(element instanceof HTMLElement)) return null;
-            if (this.isReplyOnlyCommentWrapper(element)) return null;
-
-            const writerInfo = this.findWriterInfoForFilterTarget(element);
-            const uid = writerInfo?.getAttribute('data-uid') || null;
-            const nickname = writerInfo?.getAttribute('data-nick') || null;
-            const writerDataIp = writerInfo?.getAttribute('data-ip') || null;
-            const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
-            const ipText = ipSpan ? ipSpan.textContent.trim() : '';
-            const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
-            const ip = ipFromSpan || writerDataIp || null;
-            const ipPrefix = this.getIpPrefix(ip);
-            const isHeadtextTarget = includeHeadtext && this.isHeadtextFilterTarget(element);
-            const isPumPost = includePum && this.isPumPost(element);
-            const hasNoticeMarker = Boolean(element.querySelector('em.icon_notice'))
-                || element.classList.contains('notice')
-                || element.classList.contains('us-post--notice');
-            // `.gall_num` exists on post rows, not comments. Keeping this lookup row-only
-            // avoids adding a selector call to every repeated comment-filter pass.
-            const isNotice = hasNoticeMarker || (element.tagName === 'TR'
-                && this.normalizeHeadtext(element.querySelector('.gall_num')?.textContent || '') === '공지');
-
-            return {
-                element,
-                writerInfo,
-                uid,
-                nickname,
-                ip,
-                ipText,
-                writerDataIp,
-                ipPrefix,
-                isGuest: Boolean((!uid || uid.length < 3) && ip),
-                isNotice,
-                shouldSkipFiltering: this.shouldSkipFiltering(element),
-                hasBlockDisableClass: element.classList.contains('block-disable'),
-                galleryKey: isHeadtextTarget ? this.getGalleryKey() : null,
-                headtext: isHeadtextTarget ? this.extractHeadtext(element) : '',
-                isHeadtextTarget,
-                isPumPost
-            };
-        },
-        describeFilterTargets(items) {
-            if (!Array.isArray(items) || items.length === 0) return [];
-            const seen = new Set();
-            const descriptors = [];
-            // The default rule set is empty. Avoid all headtext DOM probing on the
-            // ordinary mutation hot path until the user has an active rule.
-            const includeHeadtext = dcFilterSettings.galleryHeadtextBlockSet?.size > 0;
-            const includePum = Boolean(dcFilterSettings.blockPumPosts);
-            items.forEach((item) => {
-                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext, includePum });
-                const element = descriptor?.element;
-                if (!(element instanceof HTMLElement) || seen.has(element)) return;
-                seen.add(element);
-                descriptors.push(descriptor);
-            });
-            return descriptors;
-        },
-        applySyncToDescriptors(descriptors, { resetDisplay = false } = {}) {
-            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
-            descriptors.forEach((descriptor) => {
-                const element = descriptor?.element;
-                if (!(element instanceof HTMLElement)) return;
-                if (resetDisplay && !dcFilterSettings.masterDisabled) {
-                    // Comment items can already be hidden by async UID blocking.
-                    // Clearing display before the next sync decision makes blocked comments briefly flash back in
-                    // until a later async/stabilized pass hides them again, so preserve current visibility here.
-                    if (!this.isCommentListItem(element)) {
-                        element.style.display = '';
-                    }
-                }
-                this.applySyncBlock(descriptor);
-            });
-        },
-        applyAsyncToDescriptors(descriptors) {
-            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
-            descriptors.forEach((descriptor) => {
-                void this.applyAsyncBlock(descriptor);
-            });
-        },
-        applyFilterItems(items) {
-            const descriptors = this.describeFilterTargets(items);
-            if (descriptors.length === 0) return;
-            this.applySyncToDescriptors(descriptors);
-            this.applyAsyncToDescriptors(descriptors);
-        },
-        flushQueuedObservedFilterItems() {
-            if (this._queuedObserverFilterRafId) {
-                cancelAnimationFrame(this._queuedObserverFilterRafId);
-                this._queuedObserverFilterRafId = 0;
-            }
-            if (this._queuedObserverFilterTimerId) {
-                clearTimeout(this._queuedObserverFilterTimerId);
-                this._queuedObserverFilterTimerId = 0;
-            }
-            if (!(this._queuedObserverFilterItems instanceof Set) || this._queuedObserverFilterItems.size === 0) return;
-            const items = Array.from(this._queuedObserverFilterItems);
-            this._queuedObserverFilterItems.clear();
-            this.applyFilterItems(items);
-        },
-        queueObservedFilterItems(items) {
-            if (!Array.isArray(items) || items.length === 0) return;
-            if (!(this._queuedObserverFilterItems instanceof Set)) this._queuedObserverFilterItems = new Set();
-            items.forEach((item) => {
-                if (item instanceof HTMLElement) this._queuedObserverFilterItems.add(item);
-            });
-            if (this._queuedObserverFilterItems.size === 0) return;
-            if (this._queuedObserverFilterRafId || this._queuedObserverFilterTimerId) return;
-
-            this._queuedObserverFilterRafId = requestAnimationFrame(() => {
-                this._queuedObserverFilterRafId = 0;
-                this.flushQueuedObservedFilterItems();
-            });
-            this._queuedObserverFilterTimerId = window.setTimeout(() => {
-                this._queuedObserverFilterTimerId = 0;
-                this.flushQueuedObservedFilterItems();
-            }, 80);
-        },
-        collectMutationFilterItems(payload, containerSelector, itemSelector, {
-            attributeNames = [],
-            includeChildListTargets = false
-        } = {}) {
-            if (!payload || typeof payload !== 'object') return [];
-            const items = [];
-            const seen = new Set();
-            const watchedAttributes = new Set(attributeNames);
-            const addItem = (element) => {
-                if (!(element instanceof HTMLElement) || !element.isConnected || seen.has(element)) return;
-                if (!element.matches(itemSelector) || !element.closest(containerSelector)) return;
-                seen.add(element);
-                items.push(element);
-            };
-            const scanTarget = (root) => {
-                if (!(root instanceof Element)) return;
-                addItem(root);
-                const closestItem = root.closest(itemSelector);
-                if (closestItem) addItem(closestItem);
-            };
-            const scanAddedRoot = (root) => {
-                if (!(root instanceof Element)) return;
-                scanTarget(root);
-                if (typeof root.querySelectorAll === 'function') {
-                    root.querySelectorAll(itemSelector).forEach(addItem);
-                }
-            };
-
-            if (Array.isArray(payload.addedElements)) payload.addedElements.forEach(scanAddedRoot);
-            if (Array.isArray(payload.records)) {
-                payload.records.forEach((record) => {
-                    if (record?.type === 'attributes' && watchedAttributes.has(record.attributeName)) {
-                        scanTarget(record.target);
-                    } else if (includeChildListTargets && record?.type === 'childList') {
-                        scanTarget(record.target);
-                    }
-                });
-            }
-            return items;
-        },
-        collectImmediateCommentFilterItems(payload) {
-            return this.collectMutationFilterItems(
-                payload,
-                this.CONSTANTS.SELECTORS.COMMENT_CONTAINER,
-                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
-                { attributeNames: ['data-uid', 'data-nick', 'data-ip'] }
-            );
-        },
-        applyImmediateCommentMutations(payload) {
-            const items = this.collectImmediateCommentFilterItems(payload);
-            if (items.length === 0) return;
-            const descriptors = this.describeFilterTargets(items);
-            this.applySyncToDescriptors(descriptors);
-            this.incrementRuntimeDiagnostic('filter.immediateComment.runs');
-            this.setRuntimeDiagnosticGauge('filter.immediateComment.lastTargetCount', descriptors.length);
-        },
-        getRuntimeCoordinator() {
-            return window.__dcufRuntimeCoordinator || null;
-        },
-        incrementRuntimeDiagnostic(label, amount = 1) {
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            if (typeof runtimeCoordinator?.incrementDiagnostic === 'function') {
-                runtimeCoordinator.incrementDiagnostic(label, amount);
-            }
-        },
-        setRuntimeDiagnosticGauge(label, value) {
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            if (typeof runtimeCoordinator?.setDiagnosticGauge === 'function') {
-                runtimeCoordinator.setDiagnosticGauge(label, value);
-            }
-        },
-        getRelevantMutationGeneration(scope = 'all') {
-            if (scope === 'comments') return Number(this._commentRelevantMutationGeneration) || 0;
-            return Number(this._filterRelevantMutationGeneration) || 0;
-        },
-        markRelevantMutation(scope = 'all') {
-            this._filterRelevantMutationGeneration = (Number(this._filterRelevantMutationGeneration) || 0) + 1;
-            if (scope === 'comments') {
-                this._commentRelevantMutationGeneration = (Number(this._commentRelevantMutationGeneration) || 0) + 1;
-            }
-            this.setRuntimeDiagnosticGauge('filter.relevantGeneration', this._filterRelevantMutationGeneration);
-            this.setRuntimeDiagnosticGauge('filter.commentRelevantGeneration', Number(this._commentRelevantMutationGeneration) || 0);
-        },
+        isFilterTargetDescriptor(...args) { return __dcufFilterHostAdapter.invokeNative('isFilterTargetDescriptor', this, ...args); },
+        normalizeFilterTarget(...args) { return __dcufFilterHostAdapter.invokeNative('normalizeFilterTarget', this, ...args); },
+        isReplyOnlyCommentWrapper(...args) { return __dcufFilterHostAdapter.invokeNative('isReplyOnlyCommentWrapper', this, ...args); },
+        findWriterInfoForFilterTarget(...args) { return __dcufFilterHostAdapter.invokeNative('findWriterInfoForFilterTarget', this, ...args); },
+        isHeadtextFilterTarget(...args) { return __dcufFilterHostAdapter.invokeNative('isHeadtextFilterTarget', this, ...args); },
+        extractHeadtext(...args) { return __dcufFilterHostAdapter.invokeNative('extractHeadtext', this, ...args); },
+        isPumPost(...args) { return __dcufFilterHostAdapter.invokeNative('isPumPost', this, ...args); },
+        describeFilterTarget(...args) { return __dcufFilterHostAdapter.invokeNative('describeFilterTarget', this, ...args); },
+        describeFilterTargets(...args) { return __dcufFilterHostAdapter.invokeNative('describeFilterTargets', this, ...args); },
+        applySyncToDescriptors(...args) { return __dcufFilterHostAdapter.invokeNative('applySyncToDescriptors', this, ...args); },
+        applyAsyncToDescriptors(...args) { return __dcufFilterHostAdapter.invokeNative('applyAsyncToDescriptors', this, ...args); },
+        applyFilterItems(...args) { return __dcufFilterHostAdapter.invokeNative('applyFilterItems', this, ...args); },
+        flushQueuedObservedFilterItems(...args) { return __dcufFilterHostAdapter.invokeNative('flushQueuedObservedFilterItems', this, ...args); },
+        queueObservedFilterItems(...args) { return __dcufFilterHostAdapter.invokeNative('queueObservedFilterItems', this, ...args); },
+        collectMutationFilterItems(...args) { return __dcufFilterHostAdapter.invokeNative('collectMutationFilterItems', this, ...args); },
+        collectImmediateCommentFilterItems(...args) { return __dcufFilterHostAdapter.invokeNative('collectImmediateCommentFilterItems', this, ...args); },
+        applyImmediateCommentMutations(...args) { return __dcufFilterHostAdapter.invokeNative('applyImmediateCommentMutations', this, ...args); },
+        getRuntimeCoordinator(...args) { return __dcufFilterHostAdapter.invokeNative('getRuntimeCoordinator', this, ...args); },
+        incrementRuntimeDiagnostic(...args) { return __dcufFilterHostAdapter.invokeNative('incrementRuntimeDiagnostic', this, ...args); },
+        setRuntimeDiagnosticGauge(...args) { return __dcufFilterHostAdapter.invokeNative('setRuntimeDiagnosticGauge', this, ...args); },
+        getRelevantMutationGeneration(...args) { return __dcufFilterHostAdapter.invokeNative('getRelevantMutationGeneration', this, ...args); },
+        markRelevantMutation(...args) { return __dcufFilterHostAdapter.invokeNative('markRelevantMutation', this, ...args); },
         getUserSumTaskQueue() {
             if (this._userSumTaskQueue) return this._userSumTaskQueue;
             const runtimeCoordinator = this.getRuntimeCoordinator();
@@ -4706,7 +3080,7 @@ const FilterModule = {
             if (userSumCache[uid]) return userSumCache[uid];
             if (this.getNegativeUserSumCache(uid)) return null;
             if (this.INFLIGHT_USER_SUM_REQUESTS[uid]) return this.INFLIGHT_USER_SUM_REQUESTS[uid];
-            const getCookie = (name) => { const v = `; ${document.cookie}`; const p = v.split(`; ${name}=`); if (p.length === 2) return p.pop().split(';').shift(); };
+            const getCookie = (name) => this.getHostCookie(name);
             let ci = getCookie(this.CONSTANTS.ETC.COOKIE_NAME_1) || getCookie(this.CONSTANTS.ETC.COOKIE_NAME_2);
             if (!ci) return null;
             const taskQueue = this.getUserSumTaskQueue();
@@ -4785,8 +3159,8 @@ const FilterModule = {
         },
         scheduleBlockedUidCachePersist(generation) {
             const waiter = this.waitForBlockedUidGeneration(generation);
-            if (this._blockedUidWriteTimerId) window.clearTimeout(this._blockedUidWriteTimerId);
-            this._blockedUidWriteTimerId = window.setTimeout(() => {
+            if (this._blockedUidWriteTimerId) globalThis.clearTimeout(this._blockedUidWriteTimerId);
+            this._blockedUidWriteTimerId = globalThis.setTimeout(() => {
                 this._blockedUidWriteTimerId = 0;
                 this.updateBlockedUidWriteDiagnostics('timer');
                 void this.flushBlockedUidCache('timer').catch((error) => {
@@ -4798,7 +3172,7 @@ const FilterModule = {
         },
         flushBlockedUidCache(reason = 'manual') {
             if (this._blockedUidWriteTimerId) {
-                window.clearTimeout(this._blockedUidWriteTimerId);
+                globalThis.clearTimeout(this._blockedUidWriteTimerId);
                 this._blockedUidWriteTimerId = 0;
             }
             if (this._blockedUidWritePromise) {
@@ -4901,65 +3275,11 @@ const FilterModule = {
                 return Number.isFinite(numeric) && numeric > 0;
             });
         },
-        isCommentListItem(element) {
-            return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
-        },
-        setElementVisibility(element, shouldHide) {
-            if (!(element instanceof HTMLElement)) return;
-            if (element.hasAttribute('data-dcuf-parent-filtered')) {
-                element.removeAttribute('data-dcuf-parent-filtered');
-            }
-            if (element.hasAttribute('data-dcuf-parent-placeholder')) {
-                element.removeAttribute('data-dcuf-parent-placeholder');
-            }
-            if (element.classList.contains('dcuf-parent-comment-filtered')) {
-                element.classList.remove('dcuf-parent-comment-filtered');
-            }
-            if (this.isCommentListItem(element)) {
-                const stalePlaceholder = element.querySelector(':scope > .dcuf-comment-placeholder');
-                if (stalePlaceholder instanceof HTMLElement) stalePlaceholder.remove();
-            }
-            const nextDisplay = shouldHide ? 'none' : '';
-            if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
-        },
-        async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
-            if (!userData || !(element instanceof HTMLElement) || !element.isConnected) return;
-            const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
-            const shouldBeBlocked = sumBlocked || ratioBlocked;
-            // UID statistics are an additional blocking reason, not an authority to reveal content.
-            // A request can begin before a personal block is saved and resolve afterwards; letting a
-            // negative statistics result call setElementVisibility(false) in that race briefly exposes
-            // the personally blocked comment and starts a shell-attribute refilter loop.
-            if (!shouldBeBlocked && element.getAttribute('data-dcuf-personal-blocked') === '1') {
-                this.incrementRuntimeDiagnostic('filter.asyncAllow.suppressedPersonalBlock');
-                return;
-            }
-            this.setElementVisibility(element, shouldBeBlocked);
-            if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
-        },
-        shouldSkipFiltering(element) {
-            const s = dcFilterSettings; if (!s.excludeRecommended || !this.isRecommendedContext()) return false;
-            if (window.location.pathname.includes('/view/')) return !element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
-            return true;
-        },
-        async applyAsyncBlock(target) {
-            const descriptor = this.normalizeFilterTarget(target);
-            if (!descriptor) return;
-
-            const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
-            if (isNotice || shouldSkipFiltering) return;
-            if (!this.isUserStatsFilterActive()) return;
-
-            try {
-                if (element.style.display === 'none') return;
-                if (element.getAttribute('data-dcuf-personal-blocked') === '1') return;
-                if (!(writerInfo instanceof HTMLElement)) return;
-                if (!uid || uid.length < 3) return;
-                if (this.BLOCKED_UIDS_CACHE[uid]) return;
-                const userData = await this.getUserPostCommentSum(uid); if (!userData) return;
-                await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
-            } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
-        },
+        isCommentListItem(...args) { return __dcufFilterHostAdapter.invokeNative('isCommentListItem', this, ...args); },
+        setElementVisibility(...args) { return __dcufFilterHostAdapter.invokeNative('setElementVisibility', this, ...args); },
+        async applyBlockFilterToElement(...args) { return __dcufFilterHostAdapter.invokeNative('applyBlockFilterToElement', this, ...args); },
+        shouldSkipFiltering(...args) { return __dcufFilterHostAdapter.invokeNative('shouldSkipFiltering', this, ...args); },
+        async applyAsyncBlock(...args) { return __dcufFilterHostAdapter.invokeNative('applyAsyncBlock', this, ...args); },
         async refreshBlockedUidsCache(rawValue = null) {
             let data; try { data = JSON.parse(rawValue === null ? await GM_getValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, '{}') : rawValue); } catch { data = {}; }
             let changed = false;
@@ -4974,215 +3294,8 @@ const FilterModule = {
             this.BLOCKED_UIDS_CACHE = data;
             if (changed) await GM_setValue(this.CONSTANTS.STORAGE_KEYS.BLOCKED_UIDS, JSON.stringify(this.BLOCKED_UIDS_CACHE));
         },
-        applySyncBlock(target) {
-            const descriptor = this.normalizeFilterTarget(target);
-            if (!descriptor?.writerInfo) return;
-
-            const {
-                masterDisabled,
-                blockGuestEnabled,
-                proxyBlockMode = 0,
-                telecomBlockEnabled,
-                blockedGuests = [],
-                blockedGuestSet,
-                customIpPrefixSet,
-                blockPumPosts,
-                personalBlockEnabled,
-                personalBlockUidSet,
-                personalBlockNicknameSet,
-                personalBlockIpSet
-            } = dcFilterSettings;
-            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
-            const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
-
-            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget, isPumPost } = descriptor;
-            const subject = {
-                uid,
-                nickname,
-                ip,
-                ipPrefix,
-                isGuest,
-                isNotice,
-                shouldSkipFiltering,
-                hasBlockDisableClass,
-                galleryKey,
-                headtext,
-                isHeadtextTarget
-            };
-            const baseDebug = this.DEBUG_ENABLED ? {
-                branch: 'sync-base',
-                uid,
-                nickname,
-                ip,
-                ipText,
-                writerDataIp,
-                ipPrefix,
-                isGuest,
-                isPumPost,
-                blockPumPosts,
-                blockGuestEnabled,
-                proxyBlockMode: normalizedProxyBlockMode,
-                proxyBlockEnabled,
-                telecomBlockEnabled
-            } : null;
-
-            const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
-            const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
-            const decision = DCUF_SHARED_FILTER_CORE.evaluateSyncBlockDecision({
-                subject,
-                settings: {
-                    masterDisabled,
-                    blockGuestEnabled,
-                    proxyBlockMode: normalizedProxyBlockMode,
-                    telecomBlockEnabled,
-                    customIpPrefixSet,
-                    personalBlockEnabled,
-                    blockPumPosts,
-                    threshold: dcFilterSettings.threshold,
-                    ratioEnabled: dcFilterSettings.ratioEnabled,
-                    ratioMin: dcFilterSettings.ratioMin,
-                    ratioMax: dcFilterSettings.ratioMax
-                },
-                matches: {
-                    personalBlockHit: personalBlockEnabled && DCUF_SHARED_FILTER_CORE.isPersonalBlockHit(subject, {
-                        uidSet: personalBlockUidSet,
-                        nicknameSet: personalBlockNicknameSet,
-                        ipSet: personalBlockIpSet
-                    }),
-                    hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
-                    proxyMatchInfo,
-                    telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
-                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip))),
-                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext)),
-                    pumPostMatch: Boolean(isPumPost)
-                },
-                blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
-            });
-            const allowPersonalBlockReveal = Boolean(this._syncPassOptions?.allowPersonalBlockReveal);
-            const wasPersonallyBlocked = element.getAttribute('data-dcuf-personal-blocked') === '1';
-
-            if (decision.path === 'personal-block') {
-                element.setAttribute('data-dcuf-personal-blocked', '1');
-            } else if (decision.isBlocked) {
-                element.removeAttribute('data-dcuf-personal-blocked');
-            } else if (wasPersonallyBlocked && this.isCommentListItem(element) && !allowPersonalBlockReveal) {
-                // Reply-merge / comment-stabilization passes can temporarily rebuild comment UI in a
-                // state where personal-block metadata is not reliable yet. Keep already personal-blocked
-                // comments hidden until a full refilter with refreshed settings explicitly reveals them.
-                if (this.DEBUG_ENABLED) {
-                    this.debugDecision(element, {
-                        ...baseDebug,
-                        branch: 'personal-block-hold',
-                        isBlocked: true,
-                        reasons: ['personalBlock-hold']
-                    });
-                }
-                this.setElementVisibility(element, true);
-                return;
-            } else {
-                element.removeAttribute('data-dcuf-personal-blocked');
-            }
-
-            if (this.DEBUG_ENABLED) {
-                this.debugDecision(element, {
-                    ...baseDebug,
-                    branch: decision.path || 'sync-final',
-                    isBlocked: decision.isBlocked,
-                    reasons: decision.reasons,
-                    blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
-                    customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
-                    hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
-                    proxyPrefixMatch: decision.proxyPrefixMatch,
-                    proxyMatchTier: decision.proxyMatchTier,
-                    telecomPrefixMatch: decision.telecomPrefixMatch,
-                    blockedGuestMatch: decision.blockedGuestMatch,
-                    pumPostMatch: decision.pumPostMatch
-                });
-            }
-            this.setElementVisibility(element, decision.isBlocked);
-        },
-        initializeUniversalObserver() {
-            const pageContext = window.__dcufPageContext || {};
-            const targets = [];
-            if (pageContext.hasListSurface) {
-                targets.push(
-                    { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
-                    { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
-                );
-            }
-            if (pageContext.hasComments) {
-                targets.push({ c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' });
-            }
-            if (targets.length === 0) return;
-            const filterItems = (items) => this.applyFilterItems(items);
-            const queueFilterItems = (items) => this.queueObservedFilterItems(items);
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            const hasRuntimeMutationBus = runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function';
-            const attachObserver = (container, itemSelector, { attachDomObserver = true } = {}) => {
-                if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
-                container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
-                filterItems(Array.from(container.querySelectorAll(itemSelector)));
-                if (!attachDomObserver) return;
-                // [디버깅 추가]
-                new MutationObserver(mutations => {
-                    const newItems = [];
-                    mutations.forEach(m => m.addedNodes.forEach(n => {
-                        if (n.nodeType !== 1) return;
-                        if (n.matches(itemSelector)) newItems.push(n); else if (n.querySelectorAll) newItems.push(...n.querySelectorAll(itemSelector));
-                    }));
-                    if (newItems.length > 0) queueFilterItems(newItems);
-                }).observe(container, { childList: true, subtree: true });
-            };
-            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i, { attachDomObserver: !hasRuntimeMutationBus })));
-
-            if (hasRuntimeMutationBus) {
-                if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
-                if (typeof this._runtimeImmediateMutationUnsubscribe === 'function') this._runtimeImmediateMutationUnsubscribe();
-                if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
-                    this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
-                        'filter-immediate-comment-visibility',
-                        (payload) => this.applyImmediateCommentMutations(payload),
-                        { contexts: ['comments'], mutationScope: 'comments' }
-                    );
-                }
-                this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
-                    let hasRelevantMutation = false;
-                    let hasCommentMutation = false;
-                    targets.forEach((target) => {
-                        const changedContainers = payload.collectMatches(target.c);
-                        changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
-                        const changedItems = this.collectMutationFilterItems(payload, target.c, target.i, {
-                            attributeNames: ['class', 'id', 'data-uid', 'data-nick', 'data-ip'],
-                            includeChildListTargets: true
-                        });
-                        if (changedContainers.length > 0 || changedItems.length > 0) {
-                            hasRelevantMutation = true;
-                            if (target.scope === 'comments') hasCommentMutation = true;
-                        }
-                        if (changedItems.length > 0) queueFilterItems(changedItems);
-                    });
-                    if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
-                }, { contexts: ['list-surface'] });
-                return;
-            }
-
-            const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
-            const observerTarget = mainContainer || document.body;
-            const bodyObserver = new MutationObserver(mutations => {
-                mutations.forEach(m => m.addedNodes.forEach(n => {
-                    if (n.parentNode && n.parentNode.closest && (n.parentNode.closest('#dc-backup-popup') || n.parentNode.closest('#dc-block-management-panel') || n.parentNode.closest('#dcinside-filter-setting'))) {
-                        return;
-                    }
-                    if (n.nodeType === 1 && !n.closest('.user_data')) {
-                        targets.forEach(t => {
-                            if (n.matches(t.c)) attachObserver(n, t.i);
-                            else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i));
-                        });
-                    }
-                }));
-            });
-            bodyObserver.observe(observerTarget, { childList: true, subtree: true });
-        },
+        applySyncBlock(...args) { return __dcufFilterHostAdapter.invokeNative('applySyncBlock', this, ...args); },
+        initializeUniversalObserver(...args) { return __dcufFilterHostAdapter.invokeNative('initializeUniversalObserver', this, ...args); },
         loadBootSnapshot() {
             if (this._bootSnapshotPromise) return this._bootSnapshotPromise;
             const keys = this.CONSTANTS.STORAGE_KEYS;
@@ -5233,7 +3346,7 @@ const FilterModule = {
                     blockedUidsRaw
                 };
                 this._bootSnapshot = snapshot;
-                window.__dcufBootController?.note?.('boot.storage-snapshot', { keys: values.length });
+                this.noteBoot('boot.storage-snapshot', { keys: values.length });
                 return snapshot;
             }).catch((error) => {
                 this._bootSnapshotPromise = null;
@@ -5364,357 +3477,551 @@ const FilterModule = {
             }
             return dcFilterSettings;
         },
-        getRefilterTargetSelectors(scope = 'all') {
-            const commentSelectors = [
-                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
-                'li[id^="comment_li_"]',
-                'li[id^="reply_li_"]',
-                'li[id^="img_comment_li_"]',
-                'li[id^="mg_comment_li_"]'
-            ];
-            const postSelectors = [
-                this.CONSTANTS.SELECTORS.POST_ITEM,
-                `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
-            ];
-
-            if (scope === 'comments') return commentSelectors;
-            if (scope === 'posts') return postSelectors;
-            return [...postSelectors, ...commentSelectors];
-        },
-        resolveRefilterRoot(root = document) {
-            if (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) return root;
-            return document;
-        },
-        getRefilterTargets(scope = 'all', root = document) {
-            const queryRoot = this.resolveRefilterRoot(root);
-            const selectors = this.getRefilterTargetSelectors(scope);
-            const selectorText = selectors.join(', ');
-            const seen = new Set();
-            const candidates = [];
-
-            if (queryRoot instanceof Element && queryRoot.matches(selectorText)) candidates.push(queryRoot);
-            if (typeof queryRoot.querySelectorAll === 'function') {
-                candidates.push(...queryRoot.querySelectorAll(selectorText));
-            }
-
-            return candidates.reduce((descriptors, element) => {
-                if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
-                seen.add(element);
-                const descriptor = this.describeFilterTarget(element, {
-                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0,
-                    includePum: Boolean(dcFilterSettings.blockPumPosts)
-                });
-                if (descriptor) descriptors.push(descriptor);
-                return descriptors;
-            }, []);
-        },
-        runSyncRefilterPass(scope = 'all', root = document, descriptors = null, options = null) {
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
-            const startedAt = measureDuration ? performance.now() : 0;
-            const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
-            const previousSyncPassOptions = this._syncPassOptions;
-            this._syncPassOptions = options && typeof options === 'object' ? options : null;
-            try {
-                this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
-            } finally {
-                this._syncPassOptions = previousSyncPassOptions;
-            }
-            this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.runs`);
-            this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastTargetCount`, targetDescriptors.length);
-            if (measureDuration) {
-                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastDurationMs`, Math.round((performance.now() - startedAt) * 1000) / 1000);
-            }
-            return targetDescriptors;
-        },
-        scheduleSyncRefilterPasses(scope = 'all', root = document) {
-            if (this._syncRefilterRafId) cancelAnimationFrame(this._syncRefilterRafId);
-            if (!this._syncRefilterTimerIds) this._syncRefilterTimerIds = new Set();
-            this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
-            this._syncRefilterTimerIds.clear();
-
-            const runtimeCoordinator = this.getRuntimeCoordinator();
-            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
-            let lastGeneration = this.getRelevantMutationGeneration(scope);
-            const rerun = (phase, { force = false } = {}) => {
-                const generation = this.getRelevantMutationGeneration(scope);
-                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
-                    this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.skippedUnchanged`);
-                    return;
-                }
-                this.runSyncRefilterPass(scope, root);
-                lastGeneration = this.getRelevantMutationGeneration(scope);
-                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastPhase`, phase);
-            };
-            this._syncRefilterRafId = requestAnimationFrame(() => {
-                this._syncRefilterRafId = 0;
-                rerun('raf', { force: true });
-            });
-            [90, 220].forEach((delay) => {
-                const timerId = window.setTimeout(() => {
-                    this._syncRefilterTimerIds.delete(timerId);
-                    rerun(`delay:${delay}`);
-                }, delay);
-                this._syncRefilterTimerIds.add(timerId);
-            });
-        },
-        scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', roots = null) {
-            if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
-            if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
-            this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
-            this._commentRefilterTimerIds.clear();
-
-            const requestedRoots = roots && typeof roots[Symbol.iterator] === 'function'
-                ? Array.from(roots)
-                : (roots ? [roots] : [document]);
-            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason, rootCount: requestedRoots.length });
-            this._commentRefilterRafId = requestAnimationFrame(() => {
-                this._commentRefilterRafId = 0;
-                const descriptors = [];
-                const seenElements = new Set();
-                requestedRoots.forEach((root) => {
-                    if (root instanceof Element && !root.isConnected) return;
-                    this.getRefilterTargets('comments', this.resolveRefilterRoot(root)).forEach((descriptor) => {
-                        if (!descriptor?.element || seenElements.has(descriptor.element)) return;
-                        seenElements.add(descriptor.element);
-                        descriptors.push(descriptor);
-                    });
-                });
-                if (descriptors.length === 0) {
-                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedEmptyRoots');
-                    return;
-                }
-                this.runSyncRefilterPass('comments', document, descriptors);
-                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', 'raf:root-scoped');
-                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
-            });
-        },
-        getVisibilityRecoverySurface() {
-            const pageType = window.__dcufRuntimeCoordinator?.getPageContext?.().type
-                || window.__dcufPageContext?.type
-                || 'other';
-            if (pageType === 'lists') {
-                return document.querySelector('table.gall_list, .gall_listwrap, .list_wrap');
-            }
-            if (pageType === 'view') {
-                return document.querySelector('.writing_view_box, .gallview_contents, .view_content_wrap');
-            }
-            if (pageType === 'write') {
-                return document.querySelector('form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box');
-            }
-            return document.body;
-        },
-        captureHiddenVisibilityState() {
-            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-            runtimeCoordinator?.ensureMutationBus?.();
-            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-hidden-snapshot')
-                ?? runtimeCoordinator?.getMutationGeneration?.()
-                ?? 0;
-            const bfcacheState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
-            this._visibilityCycleId += 1;
-            this._hiddenAt = Date.now();
-            this._hiddenMutationGeneration = generation;
-            this._hiddenBody = document.body;
-            this._hiddenRecoverySurface = this.getVisibilityRecoverySurface();
-            this._hiddenBfcacheRecoveryId = Number(bfcacheState.id) || 0;
-            this.incrementRuntimeDiagnostic('lifecycle.visibility.hidden');
-            this.setRuntimeDiagnosticGauge('lifecycle.visibility.hiddenGeneration', generation);
-        },
-        getHiddenVisibilitySnapshot() {
-            return {
-                cycleId: this._visibilityCycleId,
-                hiddenAt: this._hiddenAt,
-                mutationGeneration: this._hiddenMutationGeneration,
-                body: this._hiddenBody,
-                recoverySurface: this._hiddenRecoverySurface,
-                bfcacheRecoveryId: this._hiddenBfcacheRecoveryId
-            };
-        },
-        isMatchingBfcacheRecovery(snapshot, recoveryState) {
-            return Boolean(
-                snapshot?.hiddenAt
-                && recoveryState?.succeeded
-                && Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
-                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt)
-                && recoveryState.body === document.body
-            );
-        },
-        async restoreVisibleState(snapshot) {
-            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
-            runtimeCoordinator?.ensureMutationBus?.();
-
-            let recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
-            const recoveryBelongsToCycle = Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
-                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt || 0)
-                && recoveryState.body === document.body;
-            if (recoveryState.pending && recoveryBelongsToCycle) {
-                await runtimeCoordinator.waitForBfcacheRecovery?.();
-                recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || recoveryState;
-            }
-
-            if (this.isMatchingBfcacheRecovery(snapshot, recoveryState)) {
-                await reloadShortcutKey();
-                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedBfcache');
-                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'bfcache-handled');
-                return { restored: false, reason: 'bfcache-handled' };
-            }
-
-            const previousSettingsSignature = this._settingsSignature;
-            const [, shortcutState] = await Promise.all([
-                this.reloadSettings(),
-                reloadShortcutKey()
-            ]);
-            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-visible-check')
-                ?? runtimeCoordinator?.getMutationGeneration?.()
-                ?? 0;
-            const currentSurface = this.getVisibilityRecoverySurface();
-            const reasons = [];
-            if (generation !== snapshot.mutationGeneration) reasons.push('mutation');
-            if (snapshot.body !== document.body || (snapshot.body && !snapshot.body.isConnected)) reasons.push('body');
-            if (snapshot.recoverySurface !== currentSurface
-                || (snapshot.recoverySurface && !snapshot.recoverySurface.isConnected)) reasons.push('surface');
-            if (previousSettingsSignature !== this._settingsSignature) reasons.push('settings');
-            if (snapshot.hiddenAt && Date.now() - snapshot.hiddenAt >= this.VISIBILITY_LONG_RESTORE_MS) reasons.push('long-suspend');
-
-            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.shortcutChanged', Boolean(shortcutState?.changed));
-            if (reasons.length === 0) {
-                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedClean');
-                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'clean');
-                return { restored: false, reason: 'clean', shortcutChanged: Boolean(shortcutState?.changed) };
-            }
-
-            const reason = `visibilitychange-visible:${reasons.join('+')}`;
-            await this.refilterAllContent(reason, {
-                scheduleFollowups: false,
-                settingsAlreadyLoaded: true
-            });
-            this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.runs');
-            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', reasons.join(','));
-            return { restored: true, reason, shortcutChanged: Boolean(shortcutState?.changed) };
-        },
-        async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
-            if (!settingsAlreadyLoaded) await this.reloadSettings();
-            const descriptors = this.getRefilterTargets('all');
-            this.startDebugPass(reason, { targetCount: descriptors.length });
-            this.runSyncRefilterPass('all', document, descriptors, {
-                allowPersonalBlockReveal: true
-            });
-            if (scheduleFollowups) this.scheduleSyncRefilterPasses();
-            this.applyAsyncToDescriptors(descriptors);
-            this.incrementRuntimeDiagnostic('filter.fullRefilter.runs');
-            this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
-            document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
-        },
-        async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
-            if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
-            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups, settingsAlreadyLoaded });
-
-            if (this._refilterAllContentRunning) {
-                this.debugLog('refilter', 'coalesced full refilter request', {
-                    reason,
-                    pendingCount: this._pendingFullRefilterReasons.length
-                });
-                return this._refilterAllContentPromise;
-            }
-
-            this._refilterAllContentRunning = true;
-            this._refilterAllContentPromise = (async () => {
-                while (this._pendingFullRefilterReasons.length > 0) {
-                    const pendingRequests = this._pendingFullRefilterReasons.splice(0);
-                    const lastRequest = pendingRequests[pendingRequests.length - 1];
-                    const runReason = pendingRequests.length > 1
-                        ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
-                        : lastRequest.reason;
-                    const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
-                    const settingsWereLoaded = pendingRequests.every((request) => request.settingsAlreadyLoaded === true);
-                    await this.runFullRefilterPass(runReason, {
-                        scheduleFollowups: shouldScheduleFollowups,
-                        settingsAlreadyLoaded: settingsWereLoaded
-                    });
-                }
-            })();
-
-            try {
-                await this._refilterAllContentPromise;
-            } finally {
-                this._refilterAllContentRunning = false;
-                this._refilterAllContentPromise = null;
-            }
-        },
-        async handleVisibilityChange() {
-            if (document.visibilityState !== 'visible') {
-                this.captureHiddenVisibilityState();
-                await this.flushBlockedUidCache('visibility-hidden');
-                return;
-            }
-            if (this._visibilityRecoveryPromise) return this._visibilityRecoveryPromise;
-
-            const snapshot = this.getHiddenVisibilitySnapshot();
-            this._visibilityRecoveryPromise = this.restoreVisibleState(snapshot).catch(async (error) => {
-                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.failed');
-                console.warn('[DCUF lifecycle] visibility restore failed; running fallback refilter.', error);
-                await this.refilterAllContent('visibilitychange-visible:fallback', { scheduleFollowups: false });
-                return { restored: true, reason: 'fallback' };
-            }).finally(() => {
-                this._visibilityRecoveryPromise = null;
-                if (this._visibilityCycleId === snapshot.cycleId && document.visibilityState === 'visible') {
-                    this._hiddenAt = 0;
-                    this._hiddenMutationGeneration = 0;
-                    this._hiddenBody = null;
-                    this._hiddenRecoverySurface = null;
-                    this._hiddenBfcacheRecoveryId = 0;
-                }
-            });
-            return this._visibilityRecoveryPromise;
-        },
-        init() {
-            if (this._initState === 'ready') return Promise.resolve('already-ready');
-            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
-            this._initState = 'initializing';
-            this._initPromise = (async () => {
-                this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '1.9.9' });
-                const snapshot = await this.loadBootSnapshot();
-                await this.cleanupLegacyManagedBlockConfig(snapshot);
-                await this.reloadSettings(snapshot);
-                await this.refreshBlockedUidsCache(snapshot.blockedUidsRaw);
-                if (!this._visibilityChangeHandler) {
-                    this._visibilityChangeHandler = () => this.handleVisibilityChange();
-                    document.addEventListener('visibilitychange', this._visibilityChangeHandler);
-                }
-                if (!this._blockedUidPagehideHandler) {
-                    this._blockedUidPagehideHandler = () => {
-                        void this.flushBlockedUidCache('pagehide').catch((error) => {
-                            console.warn('DCinside User Filter: pagehide blocked UID flush failed.', error);
-                        });
-                    };
-                    window.addEventListener('pagehide', this._blockedUidPagehideHandler);
-                }
-                this.initializeUniversalObserver();
-                window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
-                if (snapshot.thresholdMissing) {
-                    const showFirstRunSettings = async () => {
-                        await GM_setValue(this.CONSTANTS.STORAGE_KEYS.THRESHOLD, 0);
-                        await this.showSettings();
-                    };
-                    const bootController = window.__dcufBootController;
-                    if (typeof bootController?.onReady === 'function') bootController.onReady(showFirstRunSettings);
-                    else queueMicrotask(showFirstRunSettings);
-                }
-                this._initState = 'ready';
-                return 'ready';
-            })().catch((error) => {
-                this._initState = 'failed';
-                this._initPromise = null;
-                throw error;
-            });
-            return this._initPromise;
-        }
+        getRefilterTargetSelectors(...args) { return __dcufFilterHostAdapter.invokeNative('getRefilterTargetSelectors', this, ...args); },
+        resolveRefilterRoot(...args) { return __dcufFilterHostAdapter.invokeNative('resolveRefilterRoot', this, ...args); },
+        getRefilterTargets(...args) { return __dcufFilterHostAdapter.invokeNative('getRefilterTargets', this, ...args); },
+        runSyncRefilterPass(...args) { return __dcufFilterHostAdapter.invokeNative('runSyncRefilterPass', this, ...args); },
+        scheduleSyncRefilterPasses(...args) { return __dcufFilterHostAdapter.invokeNative('scheduleSyncRefilterPasses', this, ...args); },
+        scheduleCommentStabilizedRefilter(...args) { return __dcufFilterHostAdapter.invokeNative('scheduleCommentStabilizedRefilter', this, ...args); },
+        getVisibilityRecoverySurface(...args) { return __dcufFilterHostAdapter.invokeNative('getVisibilityRecoverySurface', this, ...args); },
+        captureHiddenVisibilityState(...args) { return __dcufFilterHostAdapter.invokeNative('captureHiddenVisibilityState', this, ...args); },
+        getHiddenVisibilitySnapshot(...args) { return __dcufFilterHostAdapter.invokeNative('getHiddenVisibilitySnapshot', this, ...args); },
+        isMatchingBfcacheRecovery(...args) { return __dcufFilterHostAdapter.invokeNative('isMatchingBfcacheRecovery', this, ...args); },
+        async restoreVisibleState(...args) { return __dcufFilterHostAdapter.invokeNative('restoreVisibleState', this, ...args); },
+        async runFullRefilterPass(...args) { return __dcufFilterHostAdapter.invokeNative('runFullRefilterPass', this, ...args); },
+        async refilterAllContent(...args) { return __dcufFilterHostAdapter.invokeNative('refilterAllContent', this, ...args); },
+        async handleVisibilityChange(...args) { return __dcufFilterHostAdapter.invokeNative('handleVisibilityChange', this, ...args); },
+        init(...args) { return __dcufFilterHostAdapter.invokeNative('init', this, ...args); }
     };
 
     // post-main-fixes.js는 별도 IIFE 스코프라 FilterModule 심볼을 직접 못 잡을 수 있습니다.
     // 유지보수 시 후처리 코드가 FilterModule을 참조해야 하면 이 브리지로 접근하세요.
-    window.__dcufFilterModule = FilterModule;
+    const __dcufFilterSettingsHostAdapter = (() => {
+        const markOwnedSurface = (element, surface, role = 'panel', state = 'open') => {
+            element.setAttribute('data-dcuf-surface', surface);
+            element.setAttribute('data-dcuf-role', role);
+            element.setAttribute('data-dcuf-state', state);
+            element.setAttribute('data-dcuf-presentation', __dcufSettingsPresenter.VERSION);
+            return element;
+        };
+        const legacyMethods = {
+        async showSettings() {
+            window.__dcufEnsureFilterUiStyles?.();
+            const surfaceSnapshot = await this.getSettingsSurfaceSnapshot();
+            const { masterDisabled = false, excludeRecommended = false, threshold = 0, ratioEnabled = false, ratioMin = '', ratioMax = '', blockPumPosts = false, blockGuestEnabled = false, proxyBlockMode = 0, telecomBlockEnabled = false } = surfaceSnapshot.settings;
+            const currentShortcut = surfaceSnapshot.shortcut;
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
+            const existingDiv = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            if (existingDiv) {
+                __dcufPopupGeometryHostAdapter.dispose(existingDiv);
+                existingDiv.remove();
+            }
+            const div = document.createElement('div');
+            div.id = this.CONSTANTS.UI_IDS.SETTINGS_PANEL;
+            div.style = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:24px 20px 18px 20px;min-width:280px;z-index:99999;border:2px solid #333;border-radius:10px;box-shadow:0 0 10px #0008; cursor: default; user-select: none;';
+            const proxyModeButtonsHtml = [
+                [this.PROXY_MODE.OFF, '끔'],
+                [this.PROXY_MODE.STRICT, '확실'],
+                [this.PROXY_MODE.AGGRESSIVE, '공격적']
+            ].map(([mode, label]) => {
+                const active = normalizedProxyBlockMode === mode;
+                return `<button type="button" data-proxy-mode="${mode}" aria-pressed="${active}" style="flex:1;min-width:0;border:0;background:${active ? '#3b71fd' : 'transparent'};color:${active ? '#fff' : '#333'};font-size:12px;font-weight:${active ? '700' : '600'};padding:5px 0;border-radius:7px;cursor:pointer;">${label}</button>`;
+            }).join('');
+            div.innerHTML = `
+                <div style="margin-bottom:15px;padding-bottom:12px;border-bottom: 2px solid #ccc; display:flex;align-items:center; justify-content: space-between;">
+                    <div style="display:flex; align-items: center; gap: 10px;">
+                        <div style="display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" type="checkbox" ${masterDisabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;"><b>모든 필터 기능 끄기</b></label></div>
+                        <div style="border-left: 2px solid #ccc; padding-left: 10px; display:flex; align-items:center; gap:7px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" type="checkbox" ${excludeRecommended ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}" style="font-size:14px;cursor:pointer;"><b>개념글 제외</b></label></div>
+                    </div>
+                    <div><button id="${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}" style="background:none;border:none;font-size:24px;cursor:pointer;line-height:1;padding:0 4px;color:#555;">✕</button></div>
+                </div>
+                <div id="${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}" style="opacity:${masterDisabled ? 0.5 : 1}; pointer-events:${masterDisabled ? 'none' : 'auto'};">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; flex-direction: column; align-items: center;"><h3 style="cursor: default;margin-top:0;margin-bottom:5px;">유저 글+댓글 합 기준값(이 값 이하 차단)</h3><input id="${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}" type="number" min="0" value="${threshold}" style="width:80px;font-size:16px; cursor: initial;"><div style="font-size:13px;color:#666;margin-top:5px;">0 또는 빈칸으로 두면 비활성화됩니다.</div></div>
+                        <div style="border: 2px solid #000; border-radius: 5px; padding: 8px 8px 5px 6px;"><div style="display: flex; flex-direction: column; align-items: center; gap: 7px; text-align:center;"><div style="display:flex; align-items:center; justify-content:center; gap:6px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" type="checkbox" ${blockGuestEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}" style="font-size:13px;cursor:pointer;">유동 전체 차단</label></div><div style="display:flex; flex-direction:column; align-items:center; gap:4px; padding-bottom: 5px; border-bottom: 1px solid #ddd; width:100%; text-align:center;"><div style="font-size:13px;">우회 IP 차단(오탐 위험 있음)</div><div id="${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}" style="display:flex; width:100%; max-width:220px; gap:2px; background:#edf1f5; border:1px solid #cfd6dd; border-radius:8px; padding:2px; justify-content:center;">${proxyModeButtonsHtml}</div><div class="dcuf-proxy-mode-desc" style="font-size:11px;color:#666;line-height:1.2; text-align:center;">끔 - 확실한 우회 차단 - 공격적 우회 차단</div></div><div style="display:flex; align-items:center; gap:6px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" type="checkbox" ${telecomBlockEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}" style="font-size:13px;cursor:pointer;">통신사 IP 차단</label></div></div></div>
+                    </div>
+                    <hr style="border:0;border-top:2px solid #222;margin:16px 0 12px 0;">
+                    <div style="margin-bottom:8px;display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" type="checkbox" ${ratioEnabled ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}" style="font-size:15px;cursor:pointer;">글/댓글 비율 필터 사용</label></div>
+                    <div id="${this.CONSTANTS.UI_IDS.RATIO_SECTION}">
+                        <div style="display:flex;gap:10px;align-items:center;">
+                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" style="font-size:14px;">댓글/글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(댓글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}" type="number" step="any" placeholder="예: 10" value="${ratioMin !== '' ? ratioMin : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
+                            <div style="display:flex;flex-direction:column;align-items:center;"><label for="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" style="font-size:14px;">글/댓글 비율 일정 이상 차단 </label><div style="font-size:12px;color:#888;line-height:1.2;">(글만 많은 놈)</div><input id="${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}" type="number" step="any" placeholder="예: 1" value="${ratioMax !== '' ? ratioMax : ''}" style="width:100px;font-size:15px;text-align:center; margin-top: 4px;"></div>
+                        </div><div style="margin-top:8px;font-size:13px;color:#666;text-align:left;">비율이 입력값과 같거나 큰(이상)인 유저를 차단합니다.</div>
+                    </div>
+                    <div class="dcuf-settings-section dcuf-settings-pum" style="display:flex;align-items:center;gap:8px;"><label class="switch" style="flex-shrink:0;"><input id="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" type="checkbox" ${blockPumPosts ? 'checked' : ''}><span class="switch-slider"></span></label><label for="${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}" style="font-size:15px;cursor:pointer;">펌 게시물 차단</label></div>
+                    <button type="button" id="${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}" style="width:100%;margin-top:14px;padding:9px 10px;border:1px solid #9aa4b2;border-radius:7px;background:#f6f8fb;color:#222;font-weight:700;cursor:pointer;">갤러리별 말머리 차단 관리</button>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; padding-top:15px; border-top: 2px solid #ccc;">
+                    <div style="font-size:15px;color:#444;text-align:left;">
+                        창 여닫는 단축키: <b id="${this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY}">${currentShortcut}</b>
+                        <a href="#" id="${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}" style="margin-left: 8px; font-size: 13px; text-decoration: underline; cursor: pointer;">(변경)</a>
+                    </div>
+                    <button id="${this.CONSTANTS.UI_IDS.SAVE_BUTTON}" style="font-size:16px;border:2px solid #000;border-radius:4px;background:#fff; cursor: pointer; padding: 4px 10px;">저장 & 실행</button>
+                </div>`;
+            div.removeAttribute('style');
+            div.className = 'dcuf-settings-panel';
+            markOwnedSurface(div, 'filter-settings');
+            div.setAttribute('role', 'dialog');
+            div.setAttribute('aria-modal', 'true');
+            div.setAttribute('aria-labelledby', 'dcuf-filter-settings-title');
+            div.innerHTML = __dcufSettingsPresenter.renderFilterSettings({
+                ids: this.CONSTANTS.UI_IDS,
+                settings: { masterDisabled, excludeRecommended, threshold, ratioEnabled, ratioMin, ratioMax, blockPumPosts, blockGuestEnabled, telecomBlockEnabled },
+                shortcut: currentShortcut,
+                proxyModes: [
+                    { mode: this.PROXY_MODE.OFF, label: '끔', active: normalizedProxyBlockMode === this.PROXY_MODE.OFF },
+                    { mode: this.PROXY_MODE.STRICT, label: '확실', active: normalizedProxyBlockMode === this.PROXY_MODE.STRICT },
+                    { mode: this.PROXY_MODE.AGGRESSIVE, label: '공격적', active: normalizedProxyBlockMode === this.PROXY_MODE.AGGRESSIVE },
+                ],
+            });
+            document.body.appendChild(div);
+
+
+            div.classList.add('dcuf-settings-panel');
+            const settingsHeader = div.firstElementChild;
+            if (settingsHeader) settingsHeader.classList.add('dcuf-settings-header');
+            const settingsFooter = div.lastElementChild;
+            if (settingsFooter) settingsFooter.classList.add('dcuf-settings-footer');
+            const settingsMain = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER);
+            if (settingsMain) {
+                settingsMain.classList.add('dcuf-settings-body');
+            }
+            const ratioSectionRoot = document.getElementById(this.CONSTANTS.UI_IDS.RATIO_SECTION);
+            if (ratioSectionRoot) ratioSectionRoot.classList.add('dcuf-settings-section', 'dcuf-settings-ratio');
+
+            try {
+                __dcufPopupGeometryHostAdapter.connect(div, {
+                    minWidth: 280,
+                    minHeight: 220,
+                    pointerDragSelector: '.dcuf-settings-header',
+                    pointerInteractiveSelector: 'button, input, label, a, select, textarea, .switch',
+                });
+            } catch (e) {
+                console.warn('DCinside User Filter: settings pinch init failed.', e);
+            }
+
+            const closeSettingsPanel = () => {
+                div.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => {
+                    __dcufPopupGeometryHostAdapter.dispose(div);
+                    div.remove();
+                }, 210);
+            };
+
+            const input = div.querySelector(`#${this.CONSTANTS.UI_IDS.THRESHOLD_INPUT}`);
+            const changeShortcutBtn = div.querySelector(`#${this.CONSTANTS.UI_IDS.CHANGE_SHORTCUT_BTN}`);
+            const masterDisableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.MASTER_DISABLE_CHECKBOX}`);
+            const settingsContainer = div.querySelector(`#${this.CONSTANTS.UI_IDS.SETTINGS_CONTAINER}`);
+            const ratioSection = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_SECTION}`);
+            const ratioEnableCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_ENABLE_CHECKBOX}`);
+            const ratioMinInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MIN_INPUT}`);
+            const ratioMaxInput = div.querySelector(`#${this.CONSTANTS.UI_IDS.RATIO_MAX_INPUT}`);
+            const blockPumPostsCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_PUM_POSTS_CHECKBOX}`);
+            const closeButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.CLOSE_BUTTON}`);
+            const saveButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.SAVE_BUTTON}`);
+            const excludeRecommendedCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.EXCLUDE_RECOMMENDED_CHECKBOX}`);
+            const blockGuestCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.BLOCK_GUEST_CHECKBOX}`);
+            const proxyBlockModeGroup = div.querySelector(`#${this.CONSTANTS.UI_IDS.PROXY_BLOCK_MODE_GROUP}`);
+            const telecomBlockCheckbox = div.querySelector(`#${this.CONSTANTS.UI_IDS.TELECOM_BLOCK_CHECKBOX}`);
+            const headtextManagerButton = div.querySelector(`#${this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_BUTTON}`);
+
+            if (input) { input.focus(); input.select(); }
+
+            if (changeShortcutBtn) {
+                changeShortcutBtn.onclick = (e) => {
+                    e.preventDefault();
+                    this.showShortcutChanger();
+                };
+            }
+
+            if (closeButton) {
+                closeButton.onclick = closeSettingsPanel;
+                closeButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    closeSettingsPanel();
+                }, { passive: false });
+            }
+
+            if (!masterDisableCheckbox || !settingsContainer || !ratioSection || !ratioEnableCheckbox || !ratioMinInput || !ratioMaxInput || !blockPumPostsCheckbox || !saveButton || !excludeRecommendedCheckbox || !blockGuestCheckbox || !proxyBlockModeGroup || !telecomBlockCheckbox) {
+                console.error('DCinside User Filter: settings popup init failed - required control missing.');
+                return;
+            }
+
+            const updateMasterState = () => { settingsContainer.dataset.dcufState = masterDisableCheckbox.checked ? 'disabled' : 'enabled'; };
+            masterDisableCheckbox.addEventListener('change', updateMasterState); updateMasterState();
+            const updateRatioSectionState = () => { const enabled = ratioEnableCheckbox.checked; ratioSection.dataset.dcufState = enabled ? 'enabled' : 'disabled'; ratioMinInput.disabled = !enabled; ratioMaxInput.disabled = !enabled; };
+            ratioEnableCheckbox.addEventListener('change', updateRatioSectionState); updateRatioSectionState();
+            let currentProxyBlockMode = normalizedProxyBlockMode;
+            const renderProxyModeButtons = (mode) => {
+                proxyBlockModeGroup.querySelectorAll('button[data-proxy-mode]').forEach((button) => {
+                    const buttonMode = this.normalizeProxyBlockMode(button.getAttribute('data-proxy-mode'));
+                    const active = mode === buttonMode;
+                    button.setAttribute('aria-pressed', active ? 'true' : 'false');
+                });
+            };
+            renderProxyModeButtons(currentProxyBlockMode);
+
+            // [v2.6.8 추가] 스위치 실시간 저장 & 필터 즉시 적용
+            const applyCheckboxChange = (storageKey, value, clearBlockedGuests = false) => this.commitImmediateSetting(storageKey, value, { clearBlockedGuests });
+
+            masterDisableCheckbox.addEventListener('change', () =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.MASTER_DISABLED, masterDisableCheckbox.checked)
+            );
+            excludeRecommendedCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.EXCLUDE_RECOMMENDED, e.target.checked)
+            );
+            blockGuestCheckbox.addEventListener('change', async (e) => {
+                const checked = e.target.checked;
+                await applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_GUEST, checked, !checked);
+            });
+            proxyBlockModeGroup.addEventListener('click', (e) => {
+                const targetButton = e.target.closest('button[data-proxy-mode]');
+                if (!targetButton) return;
+                const nextMode = this.normalizeProxyBlockMode(targetButton.getAttribute('data-proxy-mode'));
+                if (nextMode === currentProxyBlockMode) return;
+                currentProxyBlockMode = nextMode;
+                renderProxyModeButtons(currentProxyBlockMode);
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PROXY, currentProxyBlockMode);
+            });
+            telecomBlockCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_TELECOM, e.target.checked)
+            );
+            blockPumPostsCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.BLOCK_PUM_POSTS, e.target.checked)
+            );
+            headtextManagerButton?.addEventListener('click', () => this.showHeadtextBlockManager());
+            ratioEnableCheckbox.addEventListener('change', (e) =>
+                applyCheckboxChange(this.CONSTANTS.STORAGE_KEYS.RATIO_ENABLED, e.target.checked)
+            );
+
+            const enterKeySave = (e) => { if (e.key === 'Enter') saveButton.click(); };
+            [input, ratioMinInput, ratioMaxInput].forEach(el => { if (el) el.addEventListener('keydown', enterKeySave); });
+            saveButton.onclick = async () => {
+                saveButton.disabled = true; saveButton.textContent = '저장 중...';
+                const blockGuestChecked = blockGuestCheckbox.checked;
+                let val = parseInt(input ? input.value : '0', 10);
+                if (isNaN(val)) val = 0;
+                const values = {
+                    masterDisabled: masterDisableCheckbox.checked,
+                    excludeRecommended: excludeRecommendedCheckbox.checked,
+                    threshold: val,
+                    ratioEnabled: ratioEnableCheckbox.checked,
+                    ratioMin: ratioMinInput.value,
+                    ratioMax: ratioMaxInput.value,
+                    blockPumPosts: blockPumPostsCheckbox.checked,
+                    blockGuestEnabled: blockGuestChecked,
+                    proxyBlockMode: currentProxyBlockMode,
+                    telecomBlockEnabled: telecomBlockCheckbox.checked,
+                };
+                try {
+                    await this.commitSettingsSurface(values);
+                    closeSettingsPanel();
+                } catch (error) {
+                    console.error('DCinside User Filter: Settings save failed.', error);
+                    saveButton.disabled = false;
+                    saveButton.textContent = '저장 & 실행';
+                    alert('설정 저장에 실패했습니다. 콘솔을 확인해 주세요.');
+                }
+            };
+        },
+        getGalleryKey(urlLike = window.location.href) {
+            try {
+                const url = new URL(urlLike, window.location.href);
+                const id = (url.searchParams.get('id') || '').trim();
+                if (!id) return null;
+                const path = url.pathname.toLowerCase();
+                const type = path.includes('/mini/') ? 'mini' : (path.includes('/mgallery/') ? 'mgallery' : 'board');
+                return `${type}:${id}`;
+            } catch {
+                return null;
+            }
+        },
+        getCanonicalHeadtextFromNode(source) {
+            if (!(source instanceof Element)) return '';
+            const explicit = source.getAttribute('data-headtext');
+            if (explicit) return this.normalizeHeadtext(explicit);
+            const canonical = source.matches('.subject_inner') ? source : source.querySelector('.subject_inner');
+            if (canonical?.textContent?.trim()) return this.normalizeHeadtext(canonical.textContent);
+            const valueNode = source.matches('[data-val]') ? source : source.querySelector('[data-val]');
+            if (valueNode?.getAttribute('data-val')) return this.normalizeHeadtext(valueNode.getAttribute('data-val'));
+            const directText = Array.from(source.childNodes)
+                .filter((node) => node.nodeType === Node.TEXT_NODE)
+                .map((node) => node.textContent || '')
+                .join(' ');
+            return this.normalizeHeadtext(directText || source.textContent || '');
+        },
+        collectDiscoveredHeadtexts() {
+            const values = new Set();
+            document.querySelectorAll('tr.ub-content, .custom-post-item, .view_bottom li').forEach((element) => {
+                const descriptor = this.describeFilterTarget(element);
+                if (descriptor?.isHeadtextTarget && descriptor.writerInfo && descriptor.headtext && !descriptor.isNotice) values.add(descriptor.headtext);
+            });
+            document.querySelectorAll('a[onclick*="listSearchHead"], .subject_morelist a, [data-fixture-headtext-nav]').forEach((element) => {
+                const headtext = this.getCanonicalHeadtextFromNode(element);
+                if (headtext && !['전체', '공지'].includes(headtext)) values.add(headtext);
+            });
+            return Array.from(values).sort((a, b) => a.localeCompare(b, 'ko'));
+        },
+        async showHeadtextBlockManager() {
+            document.getElementById(this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL)?.remove();
+            const currentKey = this.getGalleryKey();
+            const panel = document.createElement('section');
+            panel.id = this.CONSTANTS.UI_IDS.HEADTEXT_MANAGER_PANEL;
+            panel.className = 'dcuf-settings-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.style.cssText = 'position:fixed;z-index:2147483646;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100vw - 24px));max-height:min(680px,calc(100vh - 24px));overflow:auto;padding:18px;border:1px solid #8d98a6;border-radius:12px;background:#fff;color:#20242a;box-shadow:0 20px 60px #0007;box-sizing:border-box;';
+            panel.removeAttribute('style');
+            markOwnedSurface(panel, 'headtext-settings');
+            document.body.appendChild(panel);
+
+            const render = async () => {
+                const rules = await this.loadGalleryHeadtextBlocks();
+                const current = new Set(currentKey ? (rules[currentKey] || []) : []);
+                const discovered = Array.from(new Set([...this.collectDiscoveredHeadtexts(), ...current])).sort((a, b) => a.localeCompare(b, 'ko'));
+                panel.replaceChildren();
+
+                const modernOthers = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
+                panel.innerHTML = __dcufSettingsPresenter.renderHeadtextManager({ currentKey, discovered, current, others: modernOthers });
+                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => panel.remove();
+                panel.querySelectorAll('[data-dcuf-headtext-value]').forEach((input) => {
+                    input.addEventListener('change', async () => {
+                        const value = input.dataset.dcufHeadtextValue;
+                        if (input.checked) current.add(value); else current.delete(value);
+                        const next = { ...rules };
+                        if (current.size) next[currentKey] = Array.from(current); else delete next[currentKey];
+                        input.disabled = true;
+                        await this.saveGalleryHeadtextBlocks(next, 'headtext checkbox');
+                        await render();
+                    });
+                });
+                const modernManualInput = panel.querySelector('[data-dcuf-headtext-manual]');
+                const addButton = panel.querySelector('[data-dcuf-headtext-action="add"]');
+                addButton.onclick = async () => {
+                    const value = this.normalizeHeadtext(modernManualInput.value);
+                    if (!value) return;
+                    current.add(value);
+                    await this.saveGalleryHeadtextBlocks({ ...rules, [currentKey]: Array.from(current) }, 'manual headtext add');
+                    await render();
+                };
+                modernManualInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') addButton.click(); });
+                panel.querySelector('[data-dcuf-headtext-action="clear"]').onclick = async () => {
+                    const next = { ...rules };
+                    delete next[currentKey];
+                    await this.saveGalleryHeadtextBlocks(next, 'clear current gallery headtexts');
+                    await render();
+                };
+                panel.querySelectorAll('[data-dcuf-headtext-remove]').forEach((button) => {
+                    button.onclick = async () => {
+                        const next = { ...rules };
+                        delete next[button.dataset.dcufHeadtextRemove];
+                        await this.saveGalleryHeadtextBlocks(next, 'remove saved gallery headtexts');
+                        await render();
+                    };
+                });
+                return;
+
+                const header = document.createElement('div');
+                header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;';
+                const title = document.createElement('strong');
+                title.textContent = '갤러리별 말머리 차단';
+                const close = document.createElement('button');
+                close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '닫기');
+                close.style.cssText = 'border:0;background:transparent;font-size:22px;cursor:pointer;color:inherit;';
+                close.onclick = () => panel.remove();
+                header.append(title, close);
+                panel.appendChild(header);
+
+                const keyLabel = document.createElement('div');
+                keyLabel.textContent = currentKey ? `현재 갤러리: ${currentKey}` : '현재 페이지의 갤러리를 확인할 수 없습니다.';
+                keyLabel.style.cssText = 'font-size:13px;color:#667085;margin-bottom:10px;';
+                panel.appendChild(keyLabel);
+
+                const choices = document.createElement('div');
+                choices.style.cssText = 'display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:7px;margin-bottom:10px;';
+                discovered.forEach((headtext) => {
+                    const label = document.createElement('label');
+                    label.style.cssText = 'display:flex;align-items:center;gap:6px;padding:7px;border:1px solid #d7dde5;border-radius:7px;cursor:pointer;min-width:0;';
+                    const input = document.createElement('input');
+                    input.type = 'checkbox'; input.checked = current.has(headtext); input.disabled = !currentKey;
+                    input.addEventListener('change', async () => {
+                        if (input.checked) current.add(headtext); else current.delete(headtext);
+                        const next = { ...rules };
+                        if (current.size) next[currentKey] = Array.from(current); else delete next[currentKey];
+                        input.disabled = true;
+                        await this.saveGalleryHeadtextBlocks(next, 'headtext checkbox');
+                        await render();
+                    });
+                    const text = document.createElement('span'); text.textContent = headtext;
+                    label.append(input, text); choices.appendChild(label);
+                });
+                if (!discovered.length) {
+                    const empty = document.createElement('div'); empty.textContent = '현재 목록에서 발견한 말머리가 없습니다.'; empty.style.cssText = 'grid-column:1/-1;color:#667085;font-size:13px;'; choices.appendChild(empty);
+                }
+                panel.appendChild(choices);
+
+                const manual = document.createElement('div');
+                manual.style.cssText = 'display:flex;gap:7px;margin-bottom:10px;';
+                const manualInput = document.createElement('input');
+                manualInput.type = 'text'; manualInput.placeholder = '목록에 없는 말머리'; manualInput.disabled = !currentKey;
+                manualInput.style.cssText = 'flex:1;min-width:0;padding:8px;border:1px solid #b9c2ce;border-radius:7px;';
+                const add = document.createElement('button'); add.type = 'button'; add.textContent = '추가'; add.disabled = !currentKey;
+                add.style.cssText = 'padding:8px 12px;border:1px solid #8793a2;border-radius:7px;background:#f6f8fb;cursor:pointer;';
+                add.onclick = async () => {
+                    const value = this.normalizeHeadtext(manualInput.value);
+                    if (!value) return;
+                    current.add(value);
+                    await this.saveGalleryHeadtextBlocks({ ...rules, [currentKey]: Array.from(current) }, 'manual headtext add');
+                    await render();
+                };
+                manualInput.addEventListener('keydown', (event) => { if (event.key === 'Enter') add.click(); });
+                manual.append(manualInput, add); panel.appendChild(manual);
+
+                const clear = document.createElement('button');
+                clear.type = 'button'; clear.textContent = '현재 갤러리 전체 해제'; clear.disabled = !currentKey || !current.size;
+                clear.style.cssText = 'width:100%;padding:8px;border:1px solid #c5ccd5;border-radius:7px;background:transparent;color:inherit;cursor:pointer;margin-bottom:14px;';
+                clear.onclick = async () => {
+                    const next = { ...rules }; delete next[currentKey];
+                    await this.saveGalleryHeadtextBlocks(next, 'clear current gallery headtexts');
+                    await render();
+                };
+                panel.appendChild(clear);
+
+                const savedTitle = document.createElement('strong'); savedTitle.textContent = '저장된 다른 갤러리'; panel.appendChild(savedTitle);
+                const saved = document.createElement('div'); saved.style.cssText = 'display:grid;gap:7px;margin-top:8px;';
+                const others = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
+                others.forEach(([key, values]) => {
+                    const row = document.createElement('div'); row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #d7dde5;border-radius:7px;';
+                    const text = document.createElement('span'); text.textContent = `${key}: ${values.join(', ')}`; text.style.cssText = 'flex:1;min-width:0;overflow-wrap:anywhere;font-size:13px;';
+                    const remove = document.createElement('button'); remove.type = 'button'; remove.textContent = '삭제';
+                    remove.style.cssText = 'border:1px solid #d49a9a;border-radius:6px;background:#fff5f5;color:#b42318;padding:5px 8px;cursor:pointer;';
+                    remove.onclick = async () => { const next = { ...rules }; delete next[key]; await this.saveGalleryHeadtextBlocks(next, 'remove saved gallery headtexts'); await render(); };
+                    row.append(text, remove); saved.appendChild(row);
+                });
+                if (!others.length) { const none = document.createElement('div'); none.textContent = '다른 갤러리에 저장된 항목이 없습니다.'; none.style.cssText = 'font-size:13px;color:#667085;'; saved.appendChild(none); }
+                panel.appendChild(saved);
+            };
+            await render();
+        },
+        showShortcutChanger() {
+            if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
+
+
+            const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
+            settingsPanel.style.pointerEvents = 'none';
+
+
+            const overlay = document.createElement('div');
+            overlay.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL_OVERLAY;
+            overlay.style = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100000;';
+            overlay.removeAttribute('style');
+            markOwnedSurface(overlay, 'shortcut-settings', 'overlay');
+            document.body.appendChild(overlay);
+
+
+            const modal = document.createElement('div');
+            modal.id = this.CONSTANTS.UI_IDS.SHORTCUT_MODAL;
+            modal.style = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #fff; padding: 20px; border-radius: 8px; z-index: 100001; text-align: center; box-shadow: 0 0 15px rgba(0,0,0,0.3);';
+            modal.innerHTML = `
+                <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">새로운 단축키를 입력하세요 (최대 3개)</h4>
+                <div id="${this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW}" style="min-width: 200px; height: 40px; line-height: 40px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 20px; font-size: 18px; font-weight: bold; color: #333;">입력 대기 중...</div>
+                <div>
+                    <button id="${this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN}" style="padding: 8px 16px; margin-right: 10px; border: 1px solid #3b71fd; background: #3b71fd; color: #fff; border-radius: 4px; cursor: pointer;">변경</button>
+                    <button id="${this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN}" style="padding: 8px 16px; border: 1px solid #ccc; background: #f0f0f0; border-radius: 4px; cursor: pointer;">취소</button>
+                </div>
+            `;
+            modal.removeAttribute('style');
+            markOwnedSurface(modal, 'shortcut-settings');
+            modal.innerHTML = __dcufSettingsPresenter.renderShortcutModal(this.CONSTANTS.UI_IDS);
+            document.body.appendChild(modal);
+
+
+            let pressedKeys = new Set();
+            let validCombination = false;
+            const previewEl = document.getElementById(this.CONSTANTS.UI_IDS.NEW_SHORTCUT_PREVIEW);
+
+
+            const updatePreview = () => {
+                if (pressedKeys.size > 0) {
+                    previewEl.textContent = this.formatShortcutKeys(pressedKeys);
+                } else {
+                    previewEl.textContent = '입력 대기 중...';
+                }
+            };
+
+
+            const keydownHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+
+                const key = DCUF_SHARED_STORAGE.normalizeShortcutEventKey(e);
+                const modifiers = [['Control', e.ctrlKey], ['Meta', e.metaKey], ['Alt', e.altKey], ['Shift', e.shiftKey]];
+                pressedKeys = new Set(modifiers.filter(([, held]) => held).map(([name]) => name));
+                const modifierOnly = ['Control', 'Meta', 'Alt', 'Shift'].includes(key);
+                if (key) pressedKeys.add(key);
+                validCombination = Boolean(key) && !modifierOnly && pressedKeys.size <= 3;
+                updatePreview();
+            };
+
+
+            const keyupHandler = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // 키를 떼는 시점은 조합 확정과 관련 없으므로, pressedKeys를 유지합니다.
+            };
+
+
+            document.addEventListener('keydown', keydownHandler, true);
+            document.addEventListener('keyup', keyupHandler, true);
+
+
+
+
+            const cleanup = () => {
+                document.removeEventListener('keydown', keydownHandler, true);
+                document.removeEventListener('keyup', keyupHandler, true);
+                overlay.remove();
+                modal.remove();
+                settingsPanel.style.pointerEvents = 'auto';
+            };
+
+
+            document.getElementById(this.CONSTANTS.UI_IDS.SAVE_SHORTCUT_BTN).onclick = async () => {
+                const newShortcut = previewEl.textContent;
+                if (validCombination && newShortcut && newShortcut !== '입력 대기 중...') {
+                    await this.commitShortcutSetting(newShortcut);
+                    document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_DISPLAY).textContent = newShortcut;
+                    cleanup();
+                } else {
+                    alert('유효한 단축키를 입력해주세요. 문자·숫자·기능키를 포함해 최대 3개의 키를 함께 눌러주세요.');
+                }
+            };
+
+
+            document.getElementById(this.CONSTANTS.UI_IDS.CANCEL_SHORTCUT_BTN).onclick = cleanup;
+            overlay.onclick = cleanup;
+        },
+
+        };
+        const invoke = (method, runtime, args = []) => legacyMethods[method].call(runtime, ...args);
+        return DCUF_UI_CONTRACTS.createHostSurfaceAdapter({
+            connect(runtime) { return runtime; },
+            refresh(runtime) { return runtime.getSettingsSurfaceSnapshot(); },
+            mountOwnedRoot(root) { return root; },
+            invokeNative(action, runtime, ...args) {
+                if (action === 'show-settings') return invoke('showSettings', runtime, args);
+                if (action === 'get-gallery-key') return invoke('getGalleryKey', runtime, args);
+                if (action === 'get-canonical-headtext') return invoke('getCanonicalHeadtextFromNode', runtime, args);
+                if (action === 'collect-headtexts') return invoke('collectDiscoveredHeadtexts', runtime, args);
+                if (action === 'show-headtext-manager') return invoke('showHeadtextBlockManager', runtime, args);
+                if (action === 'show-shortcut-changer') return invoke('showShortcutChanger', runtime, args);
+                throw new Error(`Unsupported filter settings host action: ${action}`);
+            },
+            dispose(root) { root?.remove?.(); },
+        });
+    })();
     /**
      * =================================================================
      * =================== Personal Block Module =======================
@@ -5743,21 +4050,7 @@ const FilterModule = {
                     nicknames: Array.isArray(list?.nicknames) ? list.nicknames : [],
                     ips: Array.isArray(list?.ips) ? list.ips : []
                 };
-                const mountUi = async () => {
-                    if (this._uiMounted) return;
-                    this.fabScalePercent = await this.loadFabScalePercent();
-                    this.createFab();
-                    if (!this._selectionClickHandler) {
-                        this._selectionClickHandler = this.handleSelectionClick.bind(this);
-                        document.addEventListener('click', this._selectionClickHandler, true);
-                    }
-                    this._uiMounted = true;
-                };
-                if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
-                    window.__dcufBootController.onReady(() => mountUi().catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error)));
-                } else {
-                    await mountUi();
-                }
+                await __dcufPersonalBlockHostAdapter.connect(this, { deferUi });
                 this._initState = 'ready';
                 return 'ready';
             })();
@@ -5857,6 +4150,97 @@ const FilterModule = {
             return this.normalizeFabScalePercent(stored);
         },
 
+        async saveFabScalePercent(value) {
+            const normalized = this.normalizeFabScalePercent(value);
+            await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, normalized);
+            return normalized;
+        },
+        async getPersonalBlockEnabled() {
+            return Boolean(await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true));
+        },
+        async setPersonalBlockEnabled(value) {
+            const enabled = Boolean(value);
+            await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, enabled);
+            dcFilterSettings.personalBlockEnabled = enabled;
+            await FilterModule.refilterAllContent();
+            return enabled;
+        },
+        async getPersonalBlockSurfaceSnapshot() {
+            const [list, enabled, scalePercent] = await Promise.all([
+                this.loadPersonalBlocks(),
+                this.getPersonalBlockEnabled(),
+                this.loadFabScalePercent(),
+            ]);
+            return DCUF_UI_CONTRACTS.createSurfaceSnapshot({
+                enabled,
+                scalePercent,
+                list: {
+                    uids: (list.uids || []).map((item) => ({ id: String(item?.id || ''), name: String(item?.name || '') })),
+                    nicknames: (list.nicknames || []).map(String),
+                    ips: (list.ips || []).map(String),
+                },
+            }, 'personal-block');
+        },
+        clampFabPosition() { return __dcufPersonalBlockHostAdapter.invokeNative('clamp-fab', this); },
+        applyFabScalePercent(value, options) { return __dcufPersonalBlockHostAdapter.invokeNative('apply-fab-scale', this, value, options); },
+        async showFabScalePanel() { return __dcufPersonalBlockHostAdapter.invokeNative('show-fab-scale', this); },
+        async createManualBlockPanel(options) { return __dcufPersonalBlockHostAdapter.invokeNative('show-manual-block', this, options); },
+        isFabSupportedPage() { return __dcufPersonalBlockHostAdapter.invokeNative('is-fab-supported', this); },
+        closeFabDrawer() { return __dcufPersonalBlockHostAdapter.invokeNative('close-fab-drawer', this); },
+        positionFabDrawer() { return __dcufPersonalBlockHostAdapter.invokeNative('position-fab-drawer', this); },
+        toggleFabDrawer() { return __dcufPersonalBlockHostAdapter.invokeNative('toggle-fab-drawer', this); },
+        resetFabPosition() { return __dcufPersonalBlockHostAdapter.invokeNative('reset-fab-position', this); },
+        createFab() { return __dcufPersonalBlockHostAdapter.invokeNative('create-fab', this); },
+        enterSelectionMode() { return __dcufPersonalBlockHostAdapter.invokeNative('enter-selection-mode', this); },
+        exitSelectionMode() { return __dcufPersonalBlockHostAdapter.invokeNative('exit-selection-mode', this); },
+        handleSelectionClick(event) { return __dcufPersonalBlockHostAdapter.invokeNative('handle-selection-click', this, event); },
+        showSelectionPopup(userInfo) { return __dcufPersonalBlockHostAdapter.invokeNative('show-selection-popup', this, userInfo); },
+        mergeBlockLists(existing, imported) { return __dcufPersonalBlockHostAdapter.invokeNative('merge-block-lists', this, existing, imported); },
+        async createBackupPopup() { return __dcufPersonalBlockHostAdapter.invokeNative('show-backup', this); },
+        async createManagementPanel() { return __dcufPersonalBlockHostAdapter.invokeNative('show-management', this); }
+
+    };
+
+    const __dcufPersonalBlockHostAdapter = (() => {
+        const markOwnedSurface = (element, surface, role = 'panel', state = 'open') => {
+            element.setAttribute('data-dcuf-surface', surface);
+            element.setAttribute('data-dcuf-role', role);
+            element.setAttribute('data-dcuf-state', state);
+            element.setAttribute('data-dcuf-presentation', __dcufSettingsPresenter.VERSION);
+            return element;
+        };
+        const legacyMethods = {
+        markSelectionTargets() {
+            legacyMethods.restoreSelectionTargets.call(this);
+            this._selectionTargetMarkers = Array.from(document.querySelectorAll('.gall_writer, .ub-writer')).map((element) => ({
+                element,
+                surface: element.getAttribute('data-dcuf-surface'),
+                role: element.getAttribute('data-dcuf-role'),
+                state: element.getAttribute('data-dcuf-state'),
+            }));
+            this._selectionTargetMarkers.forEach(({ element }) => {
+                element.setAttribute('data-dcuf-surface', 'personal-selection-target');
+                element.setAttribute('data-dcuf-role', 'writer');
+                element.setAttribute('data-dcuf-state', 'active');
+            });
+        },
+
+        restoreSelectionTargets() {
+            for (const marker of this._selectionTargetMarkers || []) {
+                const { element } = marker;
+                if (element.getAttribute('data-dcuf-surface') !== 'personal-selection-target') continue;
+                for (const [attribute, value] of [
+                    ['data-dcuf-surface', marker.surface],
+                    ['data-dcuf-role', marker.role],
+                    ['data-dcuf-state', marker.state],
+                ]) {
+                    if (value === null) element.removeAttribute(attribute);
+                    else element.setAttribute(attribute, value);
+                }
+            }
+            this._selectionTargetMarkers = [];
+        },
+
         clampFabPosition() {
             const controls = document.getElementById('dc-personal-block-controls');
             if (!controls) return;
@@ -5911,6 +4295,9 @@ const FilterModule = {
                     <button type="button" data-dcuf-fab-size-action="save">저장</button>
                 </div>
             `;
+            markOwnedSurface(overlay, 'personal-size', 'overlay');
+            markOwnedSurface(panel, 'personal-size');
+            panel.innerHTML = __dcufSettingsPresenter.renderFabScalePanel({ value: savedPercent, min: this.FAB_SCALE_MIN, max: this.FAB_SCALE_MAX });
             overlay.appendChild(panel);
             document.body.appendChild(overlay);
 
@@ -5938,7 +4325,7 @@ const FilterModule = {
             panel.querySelector('[data-dcuf-fab-size-action="cancel"]').addEventListener('click', () => closePanel(true));
             panel.querySelector('[data-dcuf-fab-size-action="save"]').addEventListener('click', async () => {
                 const nextPercent = this.applyFabScalePercent(range.value);
-                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.FAB_SCALE_PERCENT, nextPercent);
+                await this.saveFabScalePercent(nextPercent);
                 closePanel(false);
             });
             overlay.addEventListener('click', (event) => {
@@ -6001,6 +4388,9 @@ const FilterModule = {
                     </div>
                 </form>
             `;
+            markOwnedSurface(overlay, 'personal-manual', 'overlay');
+            markOwnedSurface(panel, 'personal-manual');
+            panel.innerHTML = __dcufSettingsPresenter.renderManualBlockPanel();
             overlay.appendChild(panel);
             document.body.appendChild(overlay);
 
@@ -6037,7 +4427,7 @@ const FilterModule = {
                 document.removeEventListener('keydown', handleKeydown, true);
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
-                window.setTimeout(() => overlay.remove(), 140);
+                window.setTimeout(() => overlay.remove(), 210);
             };
             const handleKeydown = (event) => {
                 if (event.key !== 'Escape') return;
@@ -6075,13 +4465,14 @@ const FilterModule = {
                     return;
                 }
 
+                setStatus();
                 addButton.disabled = true;
                 addButton.textContent = '추가 중…';
                 try {
                     const displayName = activeType === 'uid' && displayValue ? `${displayValue}(${value})` : null;
                     await this.addBlock(activeType, value, displayName);
                     if (typeof onAdded === 'function') await onAdded({ type: activeType, value });
-                    const isEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+                    const isEnabled = await this.getPersonalBlockEnabled();
                     setStatus(
                         isEnabled ? `${typeConfig[activeType].label} 차단을 추가했습니다.` : '목록에 추가했습니다. 개인 차단 기능은 현재 꺼져 있습니다.',
                         'success'
@@ -6183,18 +4574,21 @@ const FilterModule = {
 
             const controls = document.createElement('div');
             controls.id = 'dc-personal-block-controls';
+            markOwnedSurface(controls, 'personal-menu', 'controls');
             Object.assign(controls.style, { left: 'auto', top: 'auto', right: '20px', bottom: '20px' });
 
             const fab = document.createElement('button');
             fab.id = 'dc-personal-block-fab';
+            fab.className = 'dcuf-fab-button';
             fab.type = 'button';
-            fab.textContent = '메뉴';
+            fab.textContent = 'menu';
             fab.setAttribute('aria-expanded', 'false');
             fab.setAttribute('aria-controls', 'dc-personal-block-drawer');
             fab.setAttribute('aria-label', 'DC 유저 필터 메뉴');
 
             const drawer = document.createElement('div');
             drawer.id = 'dc-personal-block-drawer';
+            drawer.className = 'dcuf-menu-drawer';
             drawer.hidden = true;
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
@@ -6204,6 +4598,7 @@ const FilterModule = {
                 <button type="button" role="menuitem" data-dcuf-fab-action="filter-settings"><span class="dcuf-menu-icon" aria-hidden="true">◫</span><span><strong>글댓합 설정</strong><small>필터 기준과 범위 조정</small></span></button>
                 <button type="button" role="menuitem" data-dcuf-fab-action="block-management"><span class="dcuf-menu-icon" aria-hidden="true">☰</span><span><strong>차단 유저 관리</strong><small>목록 확인·삭제·백업</small></span></button>
             `;
+            drawer.querySelectorAll('button').forEach((button) => button.classList.add('dcuf-menu-item'));
 
             controls.append(fab, drawer);
             document.body.appendChild(controls);
@@ -6315,11 +4710,13 @@ const FilterModule = {
             window.__dcufEnsureFilterUiStyles?.();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
+            legacyMethods.markSelectionTargets.call(this);
 
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
             popup.className = 'dcuf-selection-prompt';
+            markOwnedSurface(popup, 'personal-selection', 'status');
             popup.innerHTML = `
                 <div class="dcuf-selection-prompt-icon" aria-hidden="true">◎</div>
                 <div class="dcuf-selection-prompt-copy">
@@ -6330,6 +4727,8 @@ const FilterModule = {
                     <button class="cancel-btn">선택 취소</button>
                 </div>
             `;
+            popup.querySelectorAll('button').forEach((button) => button.classList.add('dcuf-button', 'dcuf-button--secondary'));
+            popup.querySelector('.popup-buttons')?.classList.add('dcuf-popup-actions');
             document.body.appendChild(popup);
 
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
@@ -6340,6 +4739,7 @@ const FilterModule = {
             if (!this.isSelectionMode) return;
             this.isSelectionMode = false;
             document.body.classList.remove('selection-mode-active');
+            legacyMethods.restoreSelectionTargets.call(this);
             const popup = document.getElementById('dc-selection-popup');
             if (popup) {
                 popup.classList.add('dcuf-pop-leave');
@@ -6376,9 +4776,11 @@ const FilterModule = {
             this.exitSelectionMode();
             this.isSelectionMode = true;
             document.body.classList.add('selection-mode-active');
+            legacyMethods.markSelectionTargets.call(this);
 
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
+            markOwnedSurface(popup, 'personal-selection', 'panel');
 
             // [핵심 변경] 사용자의 차단 상태를 먼저 확인
             const blockStatus = this.checkBlockStatus(userInfo);
@@ -6415,6 +4817,11 @@ const FilterModule = {
                 <div class="block-options">${optionsHtml}</div>
                 <div class="popup-buttons"><button class="cancel-btn">취소</button></div>
             `;
+            popup.querySelectorAll('.block-option').forEach((option) => option.classList.add('dcuf-selection-option'));
+            popup.querySelectorAll('.block-option > span').forEach((copy) => copy.classList.add('dcuf-selection-copy'));
+            popup.querySelectorAll('.block-options button').forEach((button) => button.classList.add('dcuf-button', button.classList.contains('btn-unblock') ? 'dcuf-button--danger' : 'dcuf-button--primary'));
+            popup.querySelector('.cancel-btn')?.classList.add('dcuf-button', 'dcuf-button--secondary');
+            popup.querySelector('.popup-buttons')?.classList.add('dcuf-popup-actions');
             document.body.appendChild(popup);
 
             popup.querySelector('.cancel-btn').onclick = () => this.exitSelectionMode();
@@ -6436,163 +4843,6 @@ const FilterModule = {
 
 
         // [신규] 차단 목록 병합 헬퍼 함수
-        attachPopupPinchResize(target, options = {}) {
-            if (!target) return;
-            if (target.getAttribute('data-dcuf-pinch-resize-bound') === '1') return;
-            target.setAttribute('data-dcuf-pinch-resize-bound', '1');
-
-            const baseMinWidth = Number(options.minWidth) || 320;
-            const baseMinHeight = Number(options.minHeight) || 260;
-            const maxWidthOption = Number(options.maxWidth) || 0;
-            const maxHeightOption = Number(options.maxHeight) || 0;
-
-            let isPinching = false;
-            let startDistance = 0;
-            let startWidth = 0;
-            let startHeight = 0;
-            let startAnchorX = 0.5;
-            let startAnchorY = 0.5;
-            let lastMoveTs = 0;
-            let lastMoveDistance = -1;
-
-            const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
-            const getDistance = (t1, t2) => Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
-            const getMidpoint = (t1, t2) => ({ x: (t1.clientX + t2.clientX) / 2, y: (t1.clientY + t2.clientY) / 2 });
-            const viewportSize = () => ({ width: window.innerWidth, height: window.innerHeight });
-
-            const normalizeFixedPosition = () => {
-                const rect = target.getBoundingClientRect();
-                const computedStyle = window.getComputedStyle(target);
-                if (computedStyle.transform && computedStyle.transform !== 'none') {
-                    target.style.setProperty('transform', 'none', 'important');
-                    target.style.setProperty('left', `${rect.left}px`, 'important');
-                    target.style.setProperty('top', `${rect.top}px`, 'important');
-                }
-
-                // Pinch geometry is calculated from the border box. Keep the CSS sizing
-                // model and the runtime dimensions in the same coordinate space so that
-                // padded popups do not grow or jump on the first move.
-                target.style.setProperty('box-sizing', 'border-box', 'important');
-                target.style.setProperty('width', `${rect.width}px`, 'important');
-                target.style.setProperty('height', `${rect.height}px`, 'important');
-                return target.getBoundingClientRect();
-            };
-
-            const isTouchInsideRect = (touch, rect, padding = 24) => (
-                touch.clientX >= rect.left - padding &&
-                touch.clientX <= rect.right + padding &&
-                touch.clientY >= rect.top - padding &&
-                touch.clientY <= rect.bottom + padding
-            );
-
-            const canStartPinch = (touches, rect) => {
-                if (!touches || touches.length < 2) return false;
-                const t1 = touches[0];
-                const t2 = touches[1];
-                if (!isTouchInsideRect(t1, rect) || !isTouchInsideRect(t2, rect)) return false;
-                const mid = getMidpoint(t1, t2);
-                return isTouchInsideRect({ clientX: mid.x, clientY: mid.y }, rect, 48);
-            };
-
-            const startPinch = (touches) => {
-                const rect = normalizeFixedPosition();
-                if (!canStartPinch(touches, rect)) return;
-
-                const distance = getDistance(touches[0], touches[1]);
-                if (!distance || !isFinite(distance)) return;
-
-                isPinching = true;
-                startDistance = distance;
-                startWidth = rect.width;
-                startHeight = rect.height;
-                const midpoint = getMidpoint(touches[0], touches[1]);
-                startAnchorX = rect.width > 0 ? clamp((midpoint.x - rect.left) / rect.width, 0, 1) : 0.5;
-                startAnchorY = rect.height > 0 ? clamp((midpoint.y - rect.top) / rect.height, 0, 1) : 0.5;
-                lastMoveTs = 0;
-                lastMoveDistance = -1;
-            };
-
-            const onTouchStart = (e) => {
-                if (!target.isConnected) return;
-                if (!e.touches || e.touches.length < 2) return;
-                startPinch(e.touches);
-                if (isPinching) {
-                    if (e.cancelable) e.preventDefault();
-                    e.stopPropagation();
-                }
-            };
-
-            const onTouchMove = (e) => {
-                if (!target.isConnected || !isPinching) return;
-                if (!e.touches || e.touches.length < 2) {
-                    isPinching = false;
-                    return;
-                }
-
-                const distance = getDistance(e.touches[0], e.touches[1]);
-                if (!distance || !isFinite(distance)) return;
-
-                const now = Date.now();
-                if (lastMoveDistance >= 0 && Math.abs(distance - lastMoveDistance) < 0.0001 && (now - lastMoveTs) < 6) {
-                    if (e.cancelable) e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                }
-                lastMoveDistance = distance;
-                lastMoveTs = now;
-
-                const mid = getMidpoint(e.touches[0], e.touches[1]);
-                const vp = viewportSize();
-                const maxViewportWidth = Math.max(120, vp.width - 8);
-                const maxViewportHeight = Math.max(120, vp.height - 8);
-
-                const dynamicMinWidth = Math.max(120, Math.min(baseMinWidth, Math.max(120, vp.width - 12)));
-                const dynamicMinHeight = Math.max(120, Math.min(baseMinHeight, Math.max(120, vp.height - 12)));
-
-                const configuredMaxWidth = maxWidthOption > 0 ? Math.min(maxWidthOption, maxViewportWidth) : maxViewportWidth;
-                const configuredMaxHeight = maxHeightOption > 0 ? Math.min(maxHeightOption, maxViewportHeight) : maxViewportHeight;
-                const maxWidth = Math.max(dynamicMinWidth, configuredMaxWidth);
-                const maxHeight = Math.max(dynamicMinHeight, configuredMaxHeight);
-
-                const requestedScale = distance / startDistance;
-                const minScale = Math.min(1, Math.max(dynamicMinWidth / startWidth, dynamicMinHeight / startHeight));
-                const maxScale = Math.max(1, Math.min(maxWidth / startWidth, maxHeight / startHeight));
-                const scale = clamp(requestedScale, minScale, maxScale);
-                const nextWidth = startWidth * scale;
-                const nextHeight = startHeight * scale;
-
-                const rawLeft = mid.x - (nextWidth * startAnchorX);
-                const rawTop = mid.y - (nextHeight * startAnchorY);
-                const viewportGap = 4;
-                const nextLeft = clamp(rawLeft, viewportGap, Math.max(viewportGap, vp.width - nextWidth - viewportGap));
-                const nextTop = clamp(rawTop, viewportGap, Math.max(viewportGap, vp.height - nextHeight - viewportGap));
-
-                // The centered settings/backup popups have responsive !important width,
-                // max-width, and min-height rules. Override those constraints only after
-                // an explicit pinch starts so the rendered box matches these calculations.
-                target.style.setProperty('min-width', `${dynamicMinWidth}px`, 'important');
-                target.style.setProperty('min-height', `${dynamicMinHeight}px`, 'important');
-                target.style.setProperty('max-width', `${maxWidth}px`, 'important');
-                target.style.setProperty('max-height', `${maxHeight}px`, 'important');
-                target.style.setProperty('width', `${nextWidth}px`, 'important');
-                target.style.setProperty('height', `${nextHeight}px`, 'important');
-                target.style.setProperty('left', `${nextLeft}px`, 'important');
-                target.style.setProperty('top', `${nextTop}px`, 'important');
-
-                if (e.cancelable) e.preventDefault();
-                e.stopPropagation();
-            };
-
-            const onTouchEnd = () => {
-                if (!target.isConnected) return;
-                isPinching = false;
-            };
-
-            target.addEventListener('touchstart', onTouchStart, { passive: false });
-            target.addEventListener('touchmove', onTouchMove, { passive: false });
-            target.addEventListener('touchend', onTouchEnd, { passive: true });
-            target.addEventListener('touchcancel', onTouchEnd, { passive: true });
-        },
         mergeBlockLists(existing, imported) {
             // UIDs 병합 (중복 ID 확인)
             const existingUIDs = new Set(existing.uids.map(u => u.id));
@@ -6617,6 +4867,7 @@ const FilterModule = {
 
             const overlay = document.createElement('div');
             overlay.id = 'dc-backup-popup-overlay';
+            markOwnedSurface(overlay, 'personal-backup', 'overlay');
 
             const popup = document.createElement('div');
             popup.id = 'dc-backup-popup';
@@ -6646,11 +4897,13 @@ const FilterModule = {
                     </div>
                 </div>
             `;
+            markOwnedSurface(popup, 'personal-backup');
+            popup.innerHTML = __dcufSettingsPresenter.renderBackupPopup();
 
             document.body.appendChild(overlay);
             document.body.appendChild(popup);
 
-            this.attachPopupPinchResize(popup, { minWidth: 300, minHeight: 240 });
+            __dcufPopupGeometryHostAdapter.connect(popup, { minWidth: 300, minHeight: 240 });
 
             const textarea = popup.querySelector('textarea');
             const fileInput = popup.querySelector('.import-file-input');
@@ -6702,7 +4955,7 @@ const FilterModule = {
                 window.setTimeout(() => {
                     overlay.remove();
                     popup.remove();
-                }, 140);
+                }, 210);
             };
 
             popup.querySelector('.popup-close-btn').onclick = closePopup;
@@ -6754,7 +5007,7 @@ const FilterModule = {
                 let importedList;
                 try {
                     importedList = JSON.parse(jsonString);
-                    if (typeof importedList !== 'object' || !importedList.uids || !importedList.nicknames || !importedList.ips) {
+                    if (!importedList || !Array.isArray(importedList.uids) || !Array.isArray(importedList.nicknames) || !Array.isArray(importedList.ips)) {
                         throw new Error('Invalid data format');
                     }
                 } catch (err) {
@@ -6811,15 +5064,19 @@ const FilterModule = {
 
             const originalBlockList = await this.loadPersonalBlocks();
             const itemsToDelete = { uids: new Set(), nicknames: new Set(), ips: new Set() };
-            const isPersonalBlockEnabled = await GM_getValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, true);
+            const isPersonalBlockEnabled = await this.getPersonalBlockEnabled();
 
 
             const overlay = document.createElement('div');
             overlay.id = 'dc-block-management-panel-overlay';
+            markOwnedSurface(overlay, 'personal-management', 'overlay');
 
 
             const panel = document.createElement('div');
             panel.id = 'dc-block-management-panel';
+            panel.setAttribute('role', 'dialog');
+            panel.setAttribute('aria-modal', 'true');
+            panel.setAttribute('aria-label', '차단 유저 관리');
             panel.innerHTML = `
                 <div class="panel-header">
                     <div class="panel-title-group">
@@ -6864,18 +5121,24 @@ const FilterModule = {
                 </div>
                 <div class="panel-resize-handle"></div>
             `;
+            markOwnedSurface(panel, 'personal-management');
+            panel.innerHTML = __dcufSettingsPresenter.renderManagementPanel({ blocks: originalBlockList, enabled: isPersonalBlockEnabled });
             document.body.appendChild(overlay);
             document.body.appendChild(panel);
 
-            this.attachPopupPinchResize(panel, { minWidth: 320, minHeight: 260 });
+            __dcufPopupGeometryHostAdapter.connect(panel, {
+                minWidth: 320,
+                minHeight: 260,
+                pointerDragSelector: '.panel-header',
+                pointerResizeSelector: '.panel-resize-handle',
+                pointerInteractiveSelector: 'button, input, label, a, select, textarea',
+            });
 
             // [신규] On/Off 스위치 이벤트 리스너
             const toggleSwitch = panel.querySelector('#personal-block-toggle');
             toggleSwitch.addEventListener('change', async (e) => {
                 const isEnabled = e.target.checked;
-                await GM_setValue(FilterModule.CONSTANTS.STORAGE_KEYS.PERSONAL_BLOCK_ENABLED, isEnabled);
-                dcFilterSettings.personalBlockEnabled = isEnabled; // 즉시 설정 반영
-                await FilterModule.refilterAllContent(); // 필터 재적용
+                await this.setPersonalBlockEnabled(isEnabled);
             });
 
             // [신규] 백업 버튼 이벤트 리스너
@@ -6930,24 +5193,25 @@ const FilterModule = {
                 listSummary.textContent = query ? `${filteredData.length} / ${data.length}개 표시` : `총 ${data.length}개`;
                 if (filteredData.length === 0) {
                     const emptyItem = document.createElement('li');
-                    emptyItem.className = 'blocked-list-empty';
+                    emptyItem.className = 'blocked-list-empty dcuf-blocked-empty';
                     emptyItem.textContent = query ? '검색 결과가 없습니다.' : '이 탭에 차단된 항목이 없습니다.';
                     listEl.appendChild(emptyItem);
                 }
 
                 filteredData.forEach((item) => {
                     const li = document.createElement('li');
-                    li.className = 'blocked-item';
+                    li.className = 'blocked-item dcuf-blocked-item';
                     const value = (typeof item === 'object') ? item.id : item;
                     const name = (typeof item === 'object') ? item.name : item;
                     li.dataset.value = value;
 
                     const nameEl = document.createElement('span');
-                    nameEl.className = 'item-name';
+                    nameEl.className = 'item-name dcuf-item-name';
                     nameEl.textContent = String(name ?? value ?? '');
                     const deleteButton = document.createElement('button');
                     deleteButton.type = 'button';
                     deleteButton.className = 'delete-item-btn';
+                    deleteButton.classList.add('dcuf-button', 'dcuf-button--danger', 'dcuf-delete-item');
                     deleteButton.textContent = '삭제';
                     deleteButton.setAttribute('aria-label', `${nameEl.textContent} 삭제 선택`);
                     li.append(nameEl, deleteButton);
@@ -7031,8 +5295,9 @@ const FilterModule = {
             const tabs = panel.querySelectorAll('.panel-tab');
             tabs.forEach(tab => {
                 tab.onclick = () => {
-                    tabs.forEach(t => t.classList.remove('active'));
+                    tabs.forEach((item) => { item.classList.remove('active'); item.setAttribute('aria-selected', 'false'); });
                     tab.classList.add('active');
+                    tab.setAttribute('aria-selected', 'true');
                     renderList(tab.dataset.type);
                 };
             });
@@ -7063,9 +5328,10 @@ const FilterModule = {
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {
+                    __dcufPopupGeometryHostAdapter.dispose(panel);
                     overlay.remove();
                     panel.remove();
-                }, 140);
+                }, 210);
             };
 
 
@@ -7088,98 +5354,16 @@ const FilterModule = {
             };
 
 
-            // 드래그 & 리사이즈 로직 전체 개선
-            let isDragging = false, isResizing = false;
-            let offsetX, offsetY, resizeStartX, resizeStartY;
-            let panelWidth = 0, panelHeight = 0;
-            let dragRafId = 0, pendingPointerX = null, pendingPointerY = null;
-
-            const applyPanelGeometry = () => {
-                dragRafId = 0;
-                if (pendingPointerX === null || pendingPointerY === null) return;
-                const clientX = pendingPointerX;
-                const clientY = pendingPointerY;
-                pendingPointerX = null;
-                pendingPointerY = null;
-
-                if (isDragging) {
-                    let newX = clientX - offsetX;
-                    let newY = clientY - offsetY;
-                    newX = Math.max(0, Math.min(newX, window.innerWidth - panelWidth));
-                    newY = Math.max(0, Math.min(newY, window.innerHeight - panelHeight));
-                    panel.style.left = `${newX}px`;
-                    panel.style.top = `${newY}px`;
-                } else if (isResizing) {
-                    panel.style.width = `${panelWidth + clientX - resizeStartX}px`;
-                    panel.style.height = `${panelHeight + clientY - resizeStartY}px`;
-                }
-            };
-
-
-            const onDragStart = (e) => {
-                if (e.button !== 0) return;
-
-
-                if (e.target.classList.contains('panel-resize-handle')) {
-                    isResizing = true;
-                } else if (e.target.closest('.panel-header')) {
-                    isDragging = true;
-                } else {
-                    return;
-                }
-
-
-                const rect = panel.getBoundingClientRect();
-
-
-                if (panel.style.transform !== 'none') {
-                    panel.style.transform = 'none';
-                    panel.style.left = `${rect.left}px`;
-                    panel.style.top = `${rect.top}px`;
-                }
-
-
-                if (isDragging) {
-                    offsetX = e.clientX - rect.left;
-                    offsetY = e.clientY - rect.top;
-                } else if (isResizing) {
-                    resizeStartX = e.clientX;
-                    resizeStartY = e.clientY;
-                }
-                panelWidth = rect.width;
-                panelHeight = rect.height;
-
-
-                document.addEventListener('mousemove', onDragMove);
-                document.addEventListener('mouseup', onDragEnd, { once: true });
-            };
-
-
-            const onDragMove = (e) => {
-                e.preventDefault();
-                pendingPointerX = e.clientX;
-                pendingPointerY = e.clientY;
-                if (!dragRafId) dragRafId = requestAnimationFrame(applyPanelGeometry);
-            };
-
-
-            const onDragEnd = () => { // async 키워드 제거
-                if (dragRafId) cancelAnimationFrame(dragRafId);
-                applyPanelGeometry();
-                isDragging = false;
-                isResizing = false;
-                document.removeEventListener('mousemove', onDragMove);
-                // GM_setValue 호출을 제거하여 창의 위치/크기 상태를 저장하지 않음
-            };
-
-
-            panel.addEventListener('mousedown', onDragStart);
-
-
             (() => { // async 키워드 제거
                 // 저장된 값을 불러오는 대신 항상 기본값으로 패널 위치와 크기를 설정
+                const presentation = window.getComputedStyle(panel);
+                const preferredWidth = Number.parseFloat(presentation.getPropertyValue('--dcuf-management-default-width')) || 400;
+                const preferredHeight = Number.parseFloat(presentation.getPropertyValue('--dcuf-management-default-height')) || 500;
                 const defaultGeo = {
-                    left: '50%', top: '50%', width: '400px', height: '500px'
+                    left: '50%',
+                    top: '50%',
+                    width: `${Math.min(preferredWidth, Math.max(280, window.innerWidth - 24))}px`,
+                    height: `${Math.min(preferredHeight, Math.max(320, window.innerHeight - 24))}px`
                 };
                 // 기본값은 항상 % 단위이므로, transform 스타일을 항상 적용하여 정중앙에 배치
                 panel.style.transform = 'translate(-50%, -50%)';
@@ -7188,8 +5372,1067 @@ const FilterModule = {
                 renderList('uids'); // 초기 렌더링
             })();
         }
-    };
+        };
+        const connections = new WeakMap();
+        const invoke = (method, runtime, args = []) => legacyMethods[method].call(runtime, ...args);
+        const actions = Object.freeze({
+            'clamp-fab': 'clampFabPosition',
+            'apply-fab-scale': 'applyFabScalePercent',
+            'show-fab-scale': 'showFabScalePanel',
+            'show-manual-block': 'createManualBlockPanel',
+            'is-fab-supported': 'isFabSupportedPage',
+            'close-fab-drawer': 'closeFabDrawer',
+            'position-fab-drawer': 'positionFabDrawer',
+            'toggle-fab-drawer': 'toggleFabDrawer',
+            'reset-fab-position': 'resetFabPosition',
+            'create-fab': 'createFab',
+            'enter-selection-mode': 'enterSelectionMode',
+            'exit-selection-mode': 'exitSelectionMode',
+            'handle-selection-click': 'handleSelectionClick',
+            'show-selection-popup': 'showSelectionPopup',
+            'merge-block-lists': 'mergeBlockLists',
+            'show-backup': 'createBackupPopup',
+            'show-management': 'createManagementPanel',
+        });
+        const mount = async (runtime) => {
+            const existing = connections.get(runtime);
+            if (existing) return existing;
+            const pending = (async () => {
+                const scope = DCUF_UI_CONTRACTS.createDisposableScope('personal-block-host');
+                runtime.fabScalePercent = await runtime.loadFabScalePercent();
+                invoke('createFab', runtime);
+                const selectionClickHandler = runtime.handleSelectionClick.bind(runtime);
+                scope.listen(document, 'click', selectionClickHandler, true);
+                runtime._selectionClickHandler = selectionClickHandler;
+                runtime._uiMounted = true;
+                const connection = Object.freeze({
+                    refresh: () => runtime.getPersonalBlockSurfaceSnapshot(),
+                    dispose: () => {
+                        scope.dispose();
+                        runtime._selectionClickHandler = null;
+                        runtime._uiMounted = false;
+                        connections.delete(runtime);
+                    },
+                });
+                connections.set(runtime, connection);
+                return connection;
+            })();
+            connections.set(runtime, pending);
+            try { return await pending; }
+            catch (error) { connections.delete(runtime); throw error; }
+        };
+        const connect = async (runtime, { deferUi = false } = {}) => {
+            const existing = connections.get(runtime);
+            if (existing) return existing;
+            if (deferUi && typeof window.__dcufBootController?.onReady === 'function') {
+                let cancelled = false;
+                const deferred = Object.freeze({
+                    refresh: () => runtime.getPersonalBlockSurfaceSnapshot(),
+                    dispose: () => {
+                        cancelled = true;
+                        connections.delete(runtime);
+                    },
+                });
+                connections.set(runtime, deferred);
+                window.__dcufBootController.onReady(() => {
+                    if (cancelled) return;
+                    connections.delete(runtime);
+                    mount(runtime).catch((error) => console.warn('[DCUF] deferred FAB mount failed:', error));
+                });
+                return deferred;
+            }
+            return mount(runtime);
+        };
+        return DCUF_UI_CONTRACTS.createHostSurfaceAdapter({
+            connect,
+            refresh(runtime) {
+                const connection = connections.get(runtime);
+                return typeof connection?.refresh === 'function' ? connection.refresh() : runtime.getPersonalBlockSurfaceSnapshot();
+            },
+            mountOwnedRoot(root) { return root; },
+            invokeNative(action, runtime, ...args) {
+                const method = actions[action];
+                if (!method) throw new Error(`Unsupported personal-block host action: ${action}`);
+                return invoke(method, runtime, args);
+            },
+            dispose(runtime) {
+                const connection = connections.get(runtime);
+                if (typeof connection?.dispose === 'function') connection.dispose();
+            },
+        });
+    })();
+    const __dcufFilterHostAdapter = (() => {
+        const legacyMethods = {
+isRecommendedContext: () => window.location.search.includes('exception_mode=recommend'),
+debugDescribeElement(element) {
+            if (!(element instanceof HTMLElement)) return { tag: null };
+            const titleNode = element.querySelector('.gall_tit a, .post-title-link, .usertxt, .gall_tit, .post-title');
+            return {
+                tag: element.tagName,
+                id: element.id || null,
+                className: typeof element.className === 'string' ? element.className : '',
+                rowId: element.getAttribute('data-custom-row-id'),
+                title: titleNode ? titleNode.textContent.trim().replace(/\s+/g, ' ').slice(0, 80) : null
+            };
+        },
+debugDecision(element, payload) {
+            if (!this.DEBUG_ENABLED) return;
+            if (!(this.DEBUG_DECISION_KEYS instanceof Set)) this.DEBUG_DECISION_KEYS = new Set();
+            const reasons = Array.isArray(payload.reasons) ? payload.reasons.filter(Boolean) : [];
+            const identity = [
+                this.DEBUG_PASS_ID,
+                payload.branch || '',
+                payload.uid || '',
+                payload.ip || '',
+                payload.ipPrefix || '',
+                payload.isBlocked ? 'hide' : 'show',
+                reasons.join(',')
+            ].join('|');
+            if (this.DEBUG_DECISION_KEYS.has(identity)) return;
+            if (this.DEBUG_DECISION_LOG_COUNT >= this.DEBUG_MAX_DECISIONS_PER_PASS) return;
+            this.DEBUG_DECISION_KEYS.add(identity);
+            this.DEBUG_DECISION_LOG_COUNT += 1;
+            this.debugLog('decision', `${payload.branch || 'sync'} #${this.DEBUG_DECISION_LOG_COUNT}`, {
+                passId: this.DEBUG_PASS_ID,
+                element: this.debugDescribeElement(element),
+                ...payload,
+                reasons
+            });
+            console.log(
+                `[DCUF DEBUG][decision-line] pass=${this.DEBUG_PASS_ID} idx=${this.DEBUG_DECISION_LOG_COUNT} branch=${payload.branch || 'sync'} blocked=${payload.isBlocked} ` +
+                `uid=${payload.uid || '(none)'} nick=${payload.nickname || '(none)'} ip=${payload.ip || '(none)'} prefix=${payload.ipPrefix || '(none)'} ` +
+                `guest=${payload.isGuest} custom=${payload.hasCustomIpPrefixBlock} proxyMode=${payload.proxyBlockMode} proxy=${payload.proxyPrefixMatch} proxyTier=${payload.proxyMatchTier || '(none)'} telecom=${payload.telecomPrefixMatch} ` +
+                `blockedGuest=${payload.blockedGuestMatch} reasons=${reasons.join(',') || '(none)'}`
+            );
+        },
+debugMirrorSync(originalRow, mirroredItem, nextDisplay, source) {
+            if (!this.DEBUG_ENABLED) return;
+            const prevDisplay = mirroredItem.style.display || '';
+            if (prevDisplay === nextDisplay && nextDisplay !== 'none') return;
+            this.debugLog('mirror', source, {
+                original: this.debugDescribeElement(originalRow),
+                mirrored: this.debugDescribeElement(mirroredItem),
+                originalDisplay: originalRow.style.display || '',
+                mirroredBefore: prevDisplay,
+                mirroredAfter: nextDisplay,
+                originalClassName: typeof originalRow.className === 'string' ? originalRow.className : ''
+            });
+        },
+async debugDumpState(reason = 'manual') {
+            if (!this.DEBUG_ENABLED) return null;
+            await this.reloadSettings();
+            const rawBlockConfig = await this.loadDebugBlockConfig();
+            const payload = this.debugSettingsSnapshot({
+                reason,
+                rawBlockConfigIp: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip : '',
+                rawBlockConfigIpPreview: typeof rawBlockConfig?.ip === 'string' ? rawBlockConfig.ip.split('||').slice(0, 20) : [],
+                rawBlockConfigIpCount: this.parseIpPrefixList(rawBlockConfig?.ip || '').length
+            });
+            this.debugLog('dump', reason, payload);
+            console.log(`[DCUF DEBUG][dump-line] ${this.debugStringifySafe(payload)}`);
+            return payload;
+        },
+installDebugApi() {
+            if (window.DCUFDebug && window.DCUFDebug.__dcufInstalled) return;
+            window.DCUFDebug = {
+                __dcufInstalled: true,
+                dumpState: (reason = 'manual dumpState') => this.debugDumpState(reason),
+                inspectCurrentPage: async (reason = 'manual inspectCurrentPage') => {
+                    await this.reloadSettings();
+                    this.startDebugPass(reason, { source: 'window.DCUFDebug.inspectCurrentPage' });
+                    this.runSyncRefilterPass();
+                    return this.debugDumpState(`${reason} after runSyncRefilterPass`);
+                },
+                refilter: async (reason = 'manual refilter') => {
+                    await this.refilterAllContent(reason);
+                    return this.debugDumpState(`${reason} after refilter`);
+                }
+            };
+            this.debugLog('api', 'window.DCUFDebug installed', Object.keys(window.DCUFDebug));
+        },
+isFilterTargetDescriptor(value) {
+            return Boolean(value && value.element instanceof HTMLElement);
+        },
+normalizeFilterTarget(target, { includeHeadtext = true, includePum = true } = {}) {
+            if (this.isFilterTargetDescriptor(target)) return target;
+            return this.describeFilterTarget(target, { includeHeadtext, includePum });
+        },
+isReplyOnlyCommentWrapper(element) {
+            if (!(element instanceof HTMLElement)) return false;
+            if (!this.isCommentListItem(element)) return false;
+            return Boolean(element.querySelector(':scope > div.reply.show'))
+                && !element.querySelector(':scope > div.cmt_info');
+        },
+findWriterInfoForFilterTarget(element) {
+            if (!(element instanceof HTMLElement)) return null;
+            const directCommentWriter = element.querySelector(':scope > div.cmt_info .ub-writer');
+            if (directCommentWriter instanceof HTMLElement) return directCommentWriter;
 
+            const directReplyWriter = element.querySelector(':scope > div.reply_info .ub-writer');
+            if (directReplyWriter instanceof HTMLElement) return directReplyWriter;
+
+            if (this.isCommentListItem(element)) return null;
+            return element.querySelector(this.CONSTANTS.SELECTORS.WRITER_INFO);
+        },
+isHeadtextFilterTarget(element) {
+            if (!(element instanceof HTMLElement) || this.isCommentListItem(element)) return false;
+            if (element.matches('tr.ub-content')) return true;
+            return Boolean(element.closest('.view_bottom, .gall_listwrap'))
+                && Boolean(element.querySelector('[data-headtext], .gall_subject'));
+        },
+extractHeadtext(element) {
+            if (!(element instanceof HTMLElement)) return '';
+            const source = element.matches('[data-headtext]')
+                ? element
+                : element.querySelector('[data-headtext], .gall_subject');
+            return this.getCanonicalHeadtextFromNode(source);
+        },
+isPumPost(element) {
+            if (!(element instanceof HTMLElement) || !this.isHeadtextFilterTarget(element)) return false;
+            const marker = element.querySelector(':scope > .gall_tit > b.font_blue009');
+            return this.normalizeHeadtext(marker?.textContent || '') === '(펌)';
+        },
+describeFilterTarget(element, { includeHeadtext = true, includePum = true } = {}) {
+            if (!(element instanceof HTMLElement)) return null;
+            if (this.isReplyOnlyCommentWrapper(element)) return null;
+
+            const writerInfo = this.findWriterInfoForFilterTarget(element);
+            const uid = writerInfo?.getAttribute('data-uid') || null;
+            const nickname = writerInfo?.getAttribute('data-nick') || null;
+            const writerDataIp = writerInfo?.getAttribute('data-ip') || null;
+            const ipSpan = element.querySelector(this.CONSTANTS.SELECTORS.IP_SPAN);
+            const ipText = ipSpan ? ipSpan.textContent.trim() : '';
+            const ipFromSpan = (ipText.startsWith('(') && ipText.endsWith(')')) ? ipText.slice(1, -1) : ipText;
+            const ip = ipFromSpan || writerDataIp || null;
+            const ipPrefix = this.getIpPrefix(ip);
+            const isHeadtextTarget = includeHeadtext && this.isHeadtextFilterTarget(element);
+            const isPumPost = includePum && this.isPumPost(element);
+            const hasNoticeMarker = Boolean(element.querySelector('em.icon_notice'))
+                || element.classList.contains('notice')
+                || element.classList.contains('us-post--notice');
+            // `.gall_num` exists on post rows, not comments. Keeping this lookup row-only
+            // avoids adding a selector call to every repeated comment-filter pass.
+            const isNotice = hasNoticeMarker || (element.tagName === 'TR'
+                && this.normalizeHeadtext(element.querySelector('.gall_num')?.textContent || '') === '공지');
+
+            return {
+                element,
+                writerInfo,
+                uid,
+                nickname,
+                ip,
+                ipText,
+                writerDataIp,
+                ipPrefix,
+                isGuest: Boolean((!uid || uid.length < 3) && ip),
+                isNotice,
+                shouldSkipFiltering: this.shouldSkipFiltering(element),
+                hasBlockDisableClass: element.classList.contains('block-disable'),
+                galleryKey: isHeadtextTarget ? this.getGalleryKey() : null,
+                headtext: isHeadtextTarget ? this.extractHeadtext(element) : '',
+                isHeadtextTarget,
+                isPumPost
+            };
+        },
+describeFilterTargets(items) {
+            if (!Array.isArray(items) || items.length === 0) return [];
+            const seen = new Set();
+            const descriptors = [];
+            // The default rule set is empty. Avoid all headtext DOM probing on the
+            // ordinary mutation hot path until the user has an active rule.
+            const includeHeadtext = dcFilterSettings.galleryHeadtextBlockSet?.size > 0;
+            const includePum = Boolean(dcFilterSettings.blockPumPosts);
+            items.forEach((item) => {
+                const descriptor = this.normalizeFilterTarget(item, { includeHeadtext, includePum });
+                const element = descriptor?.element;
+                if (!(element instanceof HTMLElement) || seen.has(element)) return;
+                seen.add(element);
+                descriptors.push(descriptor);
+            });
+            return descriptors;
+        },
+applySyncToDescriptors(descriptors, { resetDisplay = false } = {}) {
+            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
+            descriptors.forEach((descriptor) => {
+                const element = descriptor?.element;
+                if (!(element instanceof HTMLElement)) return;
+                if (resetDisplay && !dcFilterSettings.masterDisabled) {
+                    // Comment items can already be hidden by async UID blocking.
+                    // Clearing display before the next sync decision makes blocked comments briefly flash back in
+                    // until a later async/stabilized pass hides them again, so preserve current visibility here.
+                    if (!this.isCommentListItem(element)) {
+                        element.style.display = '';
+                    }
+                }
+                this.applySyncBlock(descriptor);
+            });
+        },
+applyAsyncToDescriptors(descriptors) {
+            if (!Array.isArray(descriptors) || descriptors.length === 0) return;
+            descriptors.forEach((descriptor) => {
+                void this.applyAsyncBlock(descriptor);
+            });
+        },
+applyFilterItems(items) {
+            const descriptors = this.describeFilterTargets(items);
+            if (descriptors.length === 0) return;
+            this.applySyncToDescriptors(descriptors);
+            this.applyAsyncToDescriptors(descriptors);
+        },
+flushQueuedObservedFilterItems() {
+            if (this._queuedObserverFilterRafId) {
+                cancelAnimationFrame(this._queuedObserverFilterRafId);
+                this._queuedObserverFilterRafId = 0;
+            }
+            if (this._queuedObserverFilterTimerId) {
+                clearTimeout(this._queuedObserverFilterTimerId);
+                this._queuedObserverFilterTimerId = 0;
+            }
+            if (!(this._queuedObserverFilterItems instanceof Set) || this._queuedObserverFilterItems.size === 0) return;
+            const items = Array.from(this._queuedObserverFilterItems);
+            this._queuedObserverFilterItems.clear();
+            this.applyFilterItems(items);
+        },
+queueObservedFilterItems(items) {
+            if (!Array.isArray(items) || items.length === 0) return;
+            if (!(this._queuedObserverFilterItems instanceof Set)) this._queuedObserverFilterItems = new Set();
+            items.forEach((item) => {
+                if (item instanceof HTMLElement) this._queuedObserverFilterItems.add(item);
+            });
+            if (this._queuedObserverFilterItems.size === 0) return;
+            if (this._queuedObserverFilterRafId || this._queuedObserverFilterTimerId) return;
+
+            this._queuedObserverFilterRafId = requestAnimationFrame(() => {
+                this._queuedObserverFilterRafId = 0;
+                this.flushQueuedObservedFilterItems();
+            });
+            this._queuedObserverFilterTimerId = window.setTimeout(() => {
+                this._queuedObserverFilterTimerId = 0;
+                this.flushQueuedObservedFilterItems();
+            }, 80);
+        },
+collectMutationFilterItems(payload, containerSelector, itemSelector, {
+            attributeNames = [],
+            includeChildListTargets = false
+        } = {}) {
+            if (!payload || typeof payload !== 'object') return [];
+            const items = [];
+            const seen = new Set();
+            const watchedAttributes = new Set(attributeNames);
+            const addItem = (element) => {
+                if (!(element instanceof HTMLElement) || !element.isConnected || seen.has(element)) return;
+                if (!element.matches(itemSelector) || !element.closest(containerSelector)) return;
+                seen.add(element);
+                items.push(element);
+            };
+            const scanTarget = (root) => {
+                if (!(root instanceof Element)) return;
+                addItem(root);
+                const closestItem = root.closest(itemSelector);
+                if (closestItem) addItem(closestItem);
+            };
+            const scanAddedRoot = (root) => {
+                if (!(root instanceof Element)) return;
+                scanTarget(root);
+                if (typeof root.querySelectorAll === 'function') {
+                    root.querySelectorAll(itemSelector).forEach(addItem);
+                }
+            };
+
+            if (Array.isArray(payload.addedElements)) payload.addedElements.forEach(scanAddedRoot);
+            if (Array.isArray(payload.records)) {
+                payload.records.forEach((record) => {
+                    if (record?.type === 'attributes' && watchedAttributes.has(record.attributeName)) {
+                        scanTarget(record.target);
+                    } else if (includeChildListTargets && record?.type === 'childList') {
+                        scanTarget(record.target);
+                    }
+                });
+            }
+            return items;
+        },
+collectImmediateCommentFilterItems(payload) {
+            return this.collectMutationFilterItems(
+                payload,
+                this.CONSTANTS.SELECTORS.COMMENT_CONTAINER,
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                { attributeNames: ['data-uid', 'data-nick', 'data-ip'] }
+            );
+        },
+applyImmediateCommentMutations(payload) {
+            const items = this.collectImmediateCommentFilterItems(payload);
+            if (items.length === 0) return;
+            const descriptors = this.describeFilterTargets(items);
+            this.applySyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.immediateComment.runs');
+            this.setRuntimeDiagnosticGauge('filter.immediateComment.lastTargetCount', descriptors.length);
+        },
+getRuntimeCoordinator() {
+            return window.__dcufRuntimeCoordinator || null;
+        },
+incrementRuntimeDiagnostic(label, amount = 1) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.incrementDiagnostic === 'function') {
+                runtimeCoordinator.incrementDiagnostic(label, amount);
+            }
+        },
+setRuntimeDiagnosticGauge(label, value) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            if (typeof runtimeCoordinator?.setDiagnosticGauge === 'function') {
+                runtimeCoordinator.setDiagnosticGauge(label, value);
+            }
+        },
+getRelevantMutationGeneration(scope = 'all') {
+            if (scope === 'comments') return Number(this._commentRelevantMutationGeneration) || 0;
+            return Number(this._filterRelevantMutationGeneration) || 0;
+        },
+markRelevantMutation(scope = 'all') {
+            this._filterRelevantMutationGeneration = (Number(this._filterRelevantMutationGeneration) || 0) + 1;
+            if (scope === 'comments') {
+                this._commentRelevantMutationGeneration = (Number(this._commentRelevantMutationGeneration) || 0) + 1;
+            }
+            this.setRuntimeDiagnosticGauge('filter.relevantGeneration', this._filterRelevantMutationGeneration);
+            this.setRuntimeDiagnosticGauge('filter.commentRelevantGeneration', Number(this._commentRelevantMutationGeneration) || 0);
+        },
+isCommentListItem(element) {
+            return element instanceof HTMLElement && !!element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
+        },
+setElementVisibility(element, shouldHide) {
+            if (!(element instanceof HTMLElement)) return;
+            if (element.hasAttribute('data-dcuf-parent-filtered')) {
+                element.removeAttribute('data-dcuf-parent-filtered');
+            }
+            if (element.hasAttribute('data-dcuf-parent-placeholder')) {
+                element.removeAttribute('data-dcuf-parent-placeholder');
+            }
+            if (element.classList.contains('dcuf-parent-comment-filtered')) {
+                element.classList.remove('dcuf-parent-comment-filtered');
+            }
+            if (this.isCommentListItem(element)) {
+                const stalePlaceholder = element.querySelector(':scope > .dcuf-comment-placeholder');
+                if (stalePlaceholder instanceof HTMLElement) stalePlaceholder.remove();
+            }
+            const nextDisplay = shouldHide ? 'none' : '';
+            if (element.style.display !== nextDisplay) element.style.display = nextDisplay;
+        },
+async applyBlockFilterToElement(element, uid, userData, addBlockedUidFn) {
+            if (!userData || !(element instanceof HTMLElement) || !element.isConnected) return;
+            const { sumBlocked, ratioBlocked } = this.isUserBlocked(userData);
+            const shouldBeBlocked = sumBlocked || ratioBlocked;
+            // UID statistics are an additional blocking reason, not an authority to reveal content.
+            // A request can begin before a personal block is saved and resolve afterwards; letting a
+            // negative statistics result call setElementVisibility(false) in that race briefly exposes
+            // the personally blocked comment and starts a shell-attribute refilter loop.
+            if (!shouldBeBlocked && element.getAttribute('data-dcuf-personal-blocked') === '1') {
+                this.incrementRuntimeDiagnostic('filter.asyncAllow.suppressedPersonalBlock');
+                return;
+            }
+            this.setElementVisibility(element, shouldBeBlocked);
+            if (shouldBeBlocked) await addBlockedUidFn.call(this, uid, userData.sum, userData.post, userData.comment, ratioBlocked);
+        },
+shouldSkipFiltering(element) {
+            const s = dcFilterSettings; if (!s.excludeRecommended || !this.isRecommendedContext()) return false;
+            if (window.location.pathname.includes('/view/')) return !element.closest(this.CONSTANTS.SELECTORS.COMMENT_CONTAINER);
+            return true;
+        },
+async applyAsyncBlock(target) {
+            const descriptor = this.normalizeFilterTarget(target);
+            if (!descriptor) return;
+
+            const { element, writerInfo, uid, isNotice, shouldSkipFiltering } = descriptor;
+            if (isNotice || shouldSkipFiltering) return;
+            if (!this.isUserStatsFilterActive()) return;
+
+            try {
+                if (element.style.display === 'none') return;
+                if (element.getAttribute('data-dcuf-personal-blocked') === '1') return;
+                if (!(writerInfo instanceof HTMLElement)) return;
+                if (!uid || uid.length < 3) return;
+                if (this.BLOCKED_UIDS_CACHE[uid]) return;
+                const userData = await this.getUserPostCommentSum(uid); if (!userData) return;
+                await this.applyBlockFilterToElement(element, uid, userData, this.addBlockedUid);
+            } catch (e) { console.warn(`DCinside User Filter: Async filter exception.`, e, element); }
+        },
+applySyncBlock(target) {
+            const descriptor = this.normalizeFilterTarget(target);
+            if (!descriptor?.writerInfo) return;
+
+            const {
+                masterDisabled,
+                blockGuestEnabled,
+                proxyBlockMode = 0,
+                telecomBlockEnabled,
+                blockedGuests = [],
+                blockedGuestSet,
+                customIpPrefixSet,
+                blockPumPosts,
+                personalBlockEnabled,
+                personalBlockUidSet,
+                personalBlockNicknameSet,
+                personalBlockIpSet
+            } = dcFilterSettings;
+            const normalizedProxyBlockMode = this.normalizeProxyBlockMode(proxyBlockMode);
+            const proxyBlockEnabled = normalizedProxyBlockMode !== this.PROXY_MODE.OFF;
+
+            const { element, uid, nickname, ip, ipText, writerDataIp, ipPrefix, isGuest, isNotice, shouldSkipFiltering, hasBlockDisableClass, galleryKey, headtext, isHeadtextTarget, isPumPost } = descriptor;
+            const subject = {
+                uid,
+                nickname,
+                ip,
+                ipPrefix,
+                isGuest,
+                isNotice,
+                shouldSkipFiltering,
+                hasBlockDisableClass,
+                galleryKey,
+                headtext,
+                isHeadtextTarget
+            };
+            const baseDebug = this.DEBUG_ENABLED ? {
+                branch: 'sync-base',
+                uid,
+                nickname,
+                ip,
+                ipText,
+                writerDataIp,
+                ipPrefix,
+                isGuest,
+                isPumPost,
+                blockPumPosts,
+                blockGuestEnabled,
+                proxyBlockMode: normalizedProxyBlockMode,
+                proxyBlockEnabled,
+                telecomBlockEnabled
+            } : null;
+
+            const proxyMatchInfo = this.getProxyPrefixMatch(ipPrefix, normalizedProxyBlockMode);
+            const telecomPrefixSet = telecomBlockEnabled && ipPrefix ? this.getTelecomPrefixSet() : null;
+            const decision = DCUF_SHARED_FILTER_CORE.evaluateSyncBlockDecision({
+                subject,
+                settings: {
+                    masterDisabled,
+                    blockGuestEnabled,
+                    proxyBlockMode: normalizedProxyBlockMode,
+                    telecomBlockEnabled,
+                    customIpPrefixSet,
+                    personalBlockEnabled,
+                    blockPumPosts,
+                    threshold: dcFilterSettings.threshold,
+                    ratioEnabled: dcFilterSettings.ratioEnabled,
+                    ratioMin: dcFilterSettings.ratioMin,
+                    ratioMax: dcFilterSettings.ratioMax
+                },
+                matches: {
+                    personalBlockHit: personalBlockEnabled && DCUF_SHARED_FILTER_CORE.isPersonalBlockHit(subject, {
+                        uidSet: personalBlockUidSet,
+                        nicknameSet: personalBlockNicknameSet,
+                        ipSet: personalBlockIpSet
+                    }),
+                    hasCustomIpPrefixBlock: Boolean(customIpPrefixSet && customIpPrefixSet.size > 0 && ipPrefix && customIpPrefixSet.has(ipPrefix)),
+                    proxyMatchInfo,
+                    telecomPrefixMatch: Boolean(ipPrefix && telecomPrefixSet && telecomPrefixSet.has(ipPrefix)),
+                    blockedGuestMatch: Boolean(ip && (blockedGuestSet instanceof Set ? blockedGuestSet.has(ip) : blockedGuests.includes(ip))),
+                    galleryHeadtextBlock: Boolean(isHeadtextTarget && galleryKey && headtext && dcFilterSettings.galleryHeadtextBlockSet?.has(headtext)),
+                    pumPostMatch: Boolean(isPumPost)
+                },
+                blockedUidEntry: uid ? (this.BLOCKED_UIDS_CACHE[uid] || userSumCache[uid] || null) : null
+            });
+            const allowPersonalBlockReveal = Boolean(this._syncPassOptions?.allowPersonalBlockReveal);
+            const wasPersonallyBlocked = element.getAttribute('data-dcuf-personal-blocked') === '1';
+
+            if (decision.path === 'personal-block') {
+                element.setAttribute('data-dcuf-personal-blocked', '1');
+            } else if (decision.isBlocked) {
+                element.removeAttribute('data-dcuf-personal-blocked');
+            } else if (wasPersonallyBlocked && this.isCommentListItem(element) && !allowPersonalBlockReveal) {
+                // Reply-merge / comment-stabilization passes can temporarily rebuild comment UI in a
+                // state where personal-block metadata is not reliable yet. Keep already personal-blocked
+                // comments hidden until a full refilter with refreshed settings explicitly reveals them.
+                if (this.DEBUG_ENABLED) {
+                    this.debugDecision(element, {
+                        ...baseDebug,
+                        branch: 'personal-block-hold',
+                        isBlocked: true,
+                        reasons: ['personalBlock-hold']
+                    });
+                }
+                this.setElementVisibility(element, true);
+                return;
+            } else {
+                element.removeAttribute('data-dcuf-personal-blocked');
+            }
+
+            if (this.DEBUG_ENABLED) {
+                this.debugDecision(element, {
+                    ...baseDebug,
+                    branch: decision.path || 'sync-final',
+                    isBlocked: decision.isBlocked,
+                    reasons: decision.reasons,
+                    blockedGuestsCount: blockedGuestSet instanceof Set ? blockedGuestSet.size : blockedGuests.length,
+                    customIpPrefixCount: customIpPrefixSet instanceof Set ? customIpPrefixSet.size : 0,
+                    hasCustomIpPrefixBlock: decision.hasCustomIpPrefixBlock,
+                    proxyPrefixMatch: decision.proxyPrefixMatch,
+                    proxyMatchTier: decision.proxyMatchTier,
+                    telecomPrefixMatch: decision.telecomPrefixMatch,
+                    blockedGuestMatch: decision.blockedGuestMatch,
+                    pumPostMatch: decision.pumPostMatch
+                });
+            }
+            this.setElementVisibility(element, decision.isBlocked);
+        },
+initializeUniversalObserver() {
+            const pageContext = window.__dcufPageContext || {};
+            const targets = [];
+            if (pageContext.hasListSurface) {
+                targets.push(
+                    { c: this.CONSTANTS.SELECTORS.POST_LIST_CONTAINER, i: this.CONSTANTS.SELECTORS.POST_ITEM, scope: 'posts' },
+                    { c: this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER, i: 'li', scope: 'posts' }
+                );
+            }
+            if (pageContext.hasComments) {
+                targets.push({ c: this.CONSTANTS.SELECTORS.COMMENT_CONTAINER, i: this.CONSTANTS.SELECTORS.COMMENT_ITEM, scope: 'comments' });
+            }
+            if (targets.length === 0) return;
+            const filterItems = (items) => this.applyFilterItems(items);
+            const queueFilterItems = (items) => this.queueObservedFilterItems(items);
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function';
+            const attachObserver = (container, itemSelector, { attachDomObserver = true } = {}) => {
+                if (container.hasAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED)) return;
+                container.setAttribute(this.CONSTANTS.CUSTOM_ATTRS.OBSERVER_ATTACHED, 'true');
+                filterItems(Array.from(container.querySelectorAll(itemSelector)));
+                if (!attachDomObserver) return;
+                // [디버깅 추가]
+                new MutationObserver(mutations => {
+                    const newItems = [];
+                    mutations.forEach(m => m.addedNodes.forEach(n => {
+                        if (n.nodeType !== 1) return;
+                        if (n.matches(itemSelector)) newItems.push(n); else if (n.querySelectorAll) newItems.push(...n.querySelectorAll(itemSelector));
+                    }));
+                    if (newItems.length > 0) queueFilterItems(newItems);
+                }).observe(container, { childList: true, subtree: true });
+            };
+            targets.forEach(t => document.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i, { attachDomObserver: !hasRuntimeMutationBus })));
+
+            if (hasRuntimeMutationBus) {
+                if (typeof this._runtimeMutationUnsubscribe === 'function') this._runtimeMutationUnsubscribe();
+                if (typeof this._runtimeImmediateMutationUnsubscribe === 'function') this._runtimeImmediateMutationUnsubscribe();
+                if (typeof runtimeCoordinator.subscribeImmediateMutations === 'function') {
+                    this._runtimeImmediateMutationUnsubscribe = runtimeCoordinator.subscribeImmediateMutations(
+                        'filter-immediate-comment-visibility',
+                        (payload) => this.applyImmediateCommentMutations(payload),
+                        { contexts: ['comments'], mutationScope: 'comments' }
+                    );
+                }
+                this._runtimeMutationUnsubscribe = runtimeCoordinator.subscribeMutations('filter-universal-observer', (payload) => {
+                    let hasRelevantMutation = false;
+                    let hasCommentMutation = false;
+                    targets.forEach((target) => {
+                        const changedContainers = payload.collectMatches(target.c);
+                        changedContainers.forEach((container) => attachObserver(container, target.i, { attachDomObserver: false }));
+                        const changedItems = this.collectMutationFilterItems(payload, target.c, target.i, {
+                            attributeNames: ['class', 'id', 'data-uid', 'data-nick', 'data-ip'],
+                            includeChildListTargets: true
+                        });
+                        if (changedContainers.length > 0 || changedItems.length > 0) {
+                            hasRelevantMutation = true;
+                            if (target.scope === 'comments') hasCommentMutation = true;
+                        }
+                        if (changedItems.length > 0) queueFilterItems(changedItems);
+                    });
+                    if (hasRelevantMutation) this.markRelevantMutation(hasCommentMutation ? 'comments' : 'all');
+                }, { contexts: ['list-surface'] });
+                return;
+            }
+
+            const mainContainer = document.querySelector(this.CONSTANTS.SELECTORS.MAIN_CONTAINER);
+            const observerTarget = mainContainer || document.body;
+            const bodyObserver = new MutationObserver(mutations => {
+                mutations.forEach(m => m.addedNodes.forEach(n => {
+                    if (n.parentNode && n.parentNode.closest && (n.parentNode.closest('#dc-backup-popup') || n.parentNode.closest('#dc-block-management-panel') || n.parentNode.closest('#dcinside-filter-setting'))) {
+                        return;
+                    }
+                    if (n.nodeType === 1 && !n.closest('.user_data')) {
+                        targets.forEach(t => {
+                            if (n.matches(t.c)) attachObserver(n, t.i);
+                            else if (n.querySelectorAll) n.querySelectorAll(t.c).forEach(c => attachObserver(c, t.i));
+                        });
+                    }
+                }));
+            });
+            bodyObserver.observe(observerTarget, { childList: true, subtree: true });
+        },
+getRefilterTargetSelectors(scope = 'all') {
+            const commentSelectors = [
+                this.CONSTANTS.SELECTORS.COMMENT_ITEM,
+                'li[id^="comment_li_"]',
+                'li[id^="reply_li_"]',
+                'li[id^="img_comment_li_"]',
+                'li[id^="mg_comment_li_"]'
+            ];
+            const postSelectors = [
+                this.CONSTANTS.SELECTORS.POST_ITEM,
+                `${this.CONSTANTS.SELECTORS.POST_VIEW_LIST_CONTAINER} > li`
+            ];
+
+            if (scope === 'comments') return commentSelectors;
+            if (scope === 'posts') return postSelectors;
+            return [...postSelectors, ...commentSelectors];
+        },
+resolveRefilterRoot(root = document) {
+            if (root instanceof Document || root instanceof Element || root instanceof DocumentFragment) return root;
+            return document;
+        },
+getRefilterTargets(scope = 'all', root = document) {
+            const queryRoot = this.resolveRefilterRoot(root);
+            const selectors = this.getRefilterTargetSelectors(scope);
+            const selectorText = selectors.join(', ');
+            const seen = new Set();
+            const candidates = [];
+
+            if (queryRoot instanceof Element && queryRoot.matches(selectorText)) candidates.push(queryRoot);
+            if (typeof queryRoot.querySelectorAll === 'function') {
+                candidates.push(...queryRoot.querySelectorAll(selectorText));
+            }
+
+            return candidates.reduce((descriptors, element) => {
+                if (!(element instanceof HTMLElement) || seen.has(element)) return descriptors;
+                seen.add(element);
+                const descriptor = this.describeFilterTarget(element, {
+                    includeHeadtext: dcFilterSettings.galleryHeadtextBlockSet?.size > 0,
+                    includePum: Boolean(dcFilterSettings.blockPumPosts)
+                });
+                if (descriptor) descriptors.push(descriptor);
+                return descriptors;
+            }, []);
+        },
+runSyncRefilterPass(scope = 'all', root = document, descriptors = null, options = null) {
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const measureDuration = Boolean(runtimeCoordinator?._diagnosticsEnabled) && typeof performance?.now === 'function';
+            const startedAt = measureDuration ? performance.now() : 0;
+            const targetDescriptors = Array.isArray(descriptors) ? descriptors : this.getRefilterTargets(scope, root);
+            const previousSyncPassOptions = this._syncPassOptions;
+            this._syncPassOptions = options && typeof options === 'object' ? options : null;
+            try {
+                this.applySyncToDescriptors(targetDescriptors, { resetDisplay: true });
+            } finally {
+                this._syncPassOptions = previousSyncPassOptions;
+            }
+            this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.runs`);
+            this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastTargetCount`, targetDescriptors.length);
+            if (measureDuration) {
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastDurationMs`, Math.round((performance.now() - startedAt) * 1000) / 1000);
+            }
+            return targetDescriptors;
+        },
+scheduleSyncRefilterPasses(scope = 'all', root = document) {
+            if (this._syncRefilterRafId) cancelAnimationFrame(this._syncRefilterRafId);
+            if (!this._syncRefilterTimerIds) this._syncRefilterTimerIds = new Set();
+            this._syncRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
+            this._syncRefilterTimerIds.clear();
+
+            const runtimeCoordinator = this.getRuntimeCoordinator();
+            const hasRuntimeMutationBus = Boolean(runtimeCoordinator && typeof runtimeCoordinator.subscribeMutations === 'function');
+            let lastGeneration = this.getRelevantMutationGeneration(scope);
+            const rerun = (phase, { force = false } = {}) => {
+                const generation = this.getRelevantMutationGeneration(scope);
+                if (!force && hasRuntimeMutationBus && generation === lastGeneration) {
+                    this.incrementRuntimeDiagnostic(`filter.syncPass.${scope}.skippedUnchanged`);
+                    return;
+                }
+                this.runSyncRefilterPass(scope, root);
+                lastGeneration = this.getRelevantMutationGeneration(scope);
+                this.setRuntimeDiagnosticGauge(`filter.syncPass.${scope}.lastPhase`, phase);
+            };
+            this._syncRefilterRafId = requestAnimationFrame(() => {
+                this._syncRefilterRafId = 0;
+                rerun('raf', { force: true });
+            });
+            [90, 220].forEach((delay) => {
+                const timerId = window.setTimeout(() => {
+                    this._syncRefilterTimerIds.delete(timerId);
+                    rerun(`delay:${delay}`);
+                }, delay);
+                this._syncRefilterTimerIds.add(timerId);
+            });
+        },
+scheduleCommentStabilizedRefilter(reason = 'comment-stabilized', roots = null) {
+            if (this._commentRefilterRafId) cancelAnimationFrame(this._commentRefilterRafId);
+            if (!this._commentRefilterTimerIds) this._commentRefilterTimerIds = new Set();
+            this._commentRefilterTimerIds.forEach((timerId) => clearTimeout(timerId));
+            this._commentRefilterTimerIds.clear();
+
+            const requestedRoots = roots && typeof roots[Symbol.iterator] === 'function'
+                ? Array.from(roots)
+                : (roots ? [roots] : [document]);
+            this.debugLog('comment-refilter', 'scheduleCommentStabilizedRefilter', { reason, rootCount: requestedRoots.length });
+            this._commentRefilterRafId = requestAnimationFrame(() => {
+                this._commentRefilterRafId = 0;
+                const descriptors = [];
+                const seenElements = new Set();
+                requestedRoots.forEach((root) => {
+                    if (root instanceof Element && !root.isConnected) return;
+                    this.getRefilterTargets('comments', this.resolveRefilterRoot(root)).forEach((descriptor) => {
+                        if (!descriptor?.element || seenElements.has(descriptor.element)) return;
+                        seenElements.add(descriptor.element);
+                        descriptors.push(descriptor);
+                    });
+                });
+                if (descriptors.length === 0) {
+                    this.incrementRuntimeDiagnostic('filter.syncPass.comments.skippedEmptyRoots');
+                    return;
+                }
+                this.runSyncRefilterPass('comments', document, descriptors);
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastPhase', 'raf:root-scoped');
+                this.setRuntimeDiagnosticGauge('filter.syncPass.comments.lastRootCount', requestedRoots.length);
+            });
+        },
+getVisibilityRecoverySurface() {
+            const pageType = window.__dcufRuntimeCoordinator?.getPageContext?.().type
+                || window.__dcufPageContext?.type
+                || 'other';
+            if (pageType === 'lists') {
+                return document.querySelector('table.gall_list, .gall_listwrap, .list_wrap');
+            }
+            if (pageType === 'view') {
+                return document.querySelector('.writing_view_box, .gallview_contents, .view_content_wrap');
+            }
+            if (pageType === 'write') {
+                return document.querySelector('form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box');
+            }
+            return document.body;
+        },
+captureHiddenVisibilityState() {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-hidden-snapshot')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const bfcacheState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            this._visibilityCycleId += 1;
+            this._hiddenAt = Date.now();
+            this._hiddenMutationGeneration = generation;
+            this._hiddenBody = document.body;
+            this._hiddenRecoverySurface = this.getVisibilityRecoverySurface();
+            this._hiddenBfcacheRecoveryId = Number(bfcacheState.id) || 0;
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.hidden');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.hiddenGeneration', generation);
+        },
+getHiddenVisibilitySnapshot() {
+            return {
+                cycleId: this._visibilityCycleId,
+                hiddenAt: this._hiddenAt,
+                mutationGeneration: this._hiddenMutationGeneration,
+                body: this._hiddenBody,
+                recoverySurface: this._hiddenRecoverySurface,
+                bfcacheRecoveryId: this._hiddenBfcacheRecoveryId
+            };
+        },
+isMatchingBfcacheRecovery(snapshot, recoveryState) {
+            return Boolean(
+                snapshot?.hiddenAt
+                && recoveryState?.succeeded
+                && Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt)
+                && recoveryState.body === document.body
+            );
+        },
+async restoreVisibleState(snapshot) {
+            const runtimeCoordinator = window.__dcufRuntimeCoordinator;
+            runtimeCoordinator?.ensureMutationBus?.();
+
+            let recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || {};
+            const recoveryBelongsToCycle = Number(recoveryState.id) > Number(snapshot.bfcacheRecoveryId || 0)
+                && Number(recoveryState.startedAt) >= Number(snapshot.hiddenAt || 0)
+                && recoveryState.body === document.body;
+            if (recoveryState.pending && recoveryBelongsToCycle) {
+                await runtimeCoordinator.waitForBfcacheRecovery?.();
+                recoveryState = runtimeCoordinator?.getBfcacheRecoveryState?.() || recoveryState;
+            }
+
+            if (this.isMatchingBfcacheRecovery(snapshot, recoveryState)) {
+                await reloadShortcutKey();
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedBfcache');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'bfcache-handled');
+                return { restored: false, reason: 'bfcache-handled' };
+            }
+
+            const previousSettingsSignature = this._settingsSignature;
+            const [, shortcutState] = await Promise.all([
+                this.reloadSettings(),
+                reloadShortcutKey()
+            ]);
+            const generation = runtimeCoordinator?.flushPendingMutations?.('visibility-visible-check')
+                ?? runtimeCoordinator?.getMutationGeneration?.()
+                ?? 0;
+            const currentSurface = this.getVisibilityRecoverySurface();
+            const reasons = [];
+            if (generation !== snapshot.mutationGeneration) reasons.push('mutation');
+            if (snapshot.body !== document.body || (snapshot.body && !snapshot.body.isConnected)) reasons.push('body');
+            if (snapshot.recoverySurface !== currentSurface
+                || (snapshot.recoverySurface && !snapshot.recoverySurface.isConnected)) reasons.push('surface');
+            if (previousSettingsSignature !== this._settingsSignature) reasons.push('settings');
+            if (snapshot.hiddenAt && Date.now() - snapshot.hiddenAt >= this.VISIBILITY_LONG_RESTORE_MS) reasons.push('long-suspend');
+
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.shortcutChanged', Boolean(shortcutState?.changed));
+            if (reasons.length === 0) {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.skippedClean');
+                this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', 'clean');
+                return { restored: false, reason: 'clean', shortcutChanged: Boolean(shortcutState?.changed) };
+            }
+
+            const reason = `visibilitychange-visible:${reasons.join('+')}`;
+            await this.refilterAllContent(reason, {
+                scheduleFollowups: false,
+                settingsAlreadyLoaded: true
+            });
+            this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.runs');
+            this.setRuntimeDiagnosticGauge('lifecycle.visibility.restore.lastReason', reasons.join(','));
+            return { restored: true, reason, shortcutChanged: Boolean(shortcutState?.changed) };
+        },
+async runFullRefilterPass(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
+            if (!settingsAlreadyLoaded) await this.reloadSettings();
+            const descriptors = this.getRefilterTargets('all');
+            this.startDebugPass(reason, { targetCount: descriptors.length });
+            this.runSyncRefilterPass('all', document, descriptors, {
+                allowPersonalBlockReveal: true
+            });
+            if (scheduleFollowups) this.scheduleSyncRefilterPasses();
+            this.applyAsyncToDescriptors(descriptors);
+            this.incrementRuntimeDiagnostic('filter.fullRefilter.runs');
+            this.setRuntimeDiagnosticGauge('filter.fullRefilter.lastTargetCount', descriptors.length);
+            document.dispatchEvent(new CustomEvent('dcFilterRefiltered'));
+        },
+async refilterAllContent(reason = 'refilterAllContent', { scheduleFollowups = true, settingsAlreadyLoaded = false } = {}) {
+            if (!this._pendingFullRefilterReasons) this._pendingFullRefilterReasons = [];
+            this._pendingFullRefilterReasons.push({ reason, scheduleFollowups, settingsAlreadyLoaded });
+
+            if (this._refilterAllContentRunning) {
+                this.debugLog('refilter', 'coalesced full refilter request', {
+                    reason,
+                    pendingCount: this._pendingFullRefilterReasons.length
+                });
+                return this._refilterAllContentPromise;
+            }
+
+            this._refilterAllContentRunning = true;
+            this._refilterAllContentPromise = (async () => {
+                while (this._pendingFullRefilterReasons.length > 0) {
+                    const pendingRequests = this._pendingFullRefilterReasons.splice(0);
+                    const lastRequest = pendingRequests[pendingRequests.length - 1];
+                    const runReason = pendingRequests.length > 1
+                        ? `${lastRequest.reason} [coalesced:${pendingRequests.length}]`
+                        : lastRequest.reason;
+                    const shouldScheduleFollowups = pendingRequests.some((request) => request.scheduleFollowups !== false);
+                    const settingsWereLoaded = pendingRequests.every((request) => request.settingsAlreadyLoaded === true);
+                    await this.runFullRefilterPass(runReason, {
+                        scheduleFollowups: shouldScheduleFollowups,
+                        settingsAlreadyLoaded: settingsWereLoaded
+                    });
+                }
+            })();
+
+            try {
+                await this._refilterAllContentPromise;
+            } finally {
+                this._refilterAllContentRunning = false;
+                this._refilterAllContentPromise = null;
+            }
+        },
+async handleVisibilityChange() {
+            if (document.visibilityState !== 'visible') {
+                this.captureHiddenVisibilityState();
+                await this.flushBlockedUidCache('visibility-hidden');
+                return;
+            }
+            if (this._visibilityRecoveryPromise) return this._visibilityRecoveryPromise;
+
+            const snapshot = this.getHiddenVisibilitySnapshot();
+            this._visibilityRecoveryPromise = this.restoreVisibleState(snapshot).catch(async (error) => {
+                this.incrementRuntimeDiagnostic('lifecycle.visibility.restore.failed');
+                console.warn('[DCUF lifecycle] visibility restore failed; running fallback refilter.', error);
+                await this.refilterAllContent('visibilitychange-visible:fallback', { scheduleFollowups: false });
+                return { restored: true, reason: 'fallback' };
+            }).finally(() => {
+                this._visibilityRecoveryPromise = null;
+                if (this._visibilityCycleId === snapshot.cycleId && document.visibilityState === 'visible') {
+                    this._hiddenAt = 0;
+                    this._hiddenMutationGeneration = 0;
+                    this._hiddenBody = null;
+                    this._hiddenRecoverySurface = null;
+                    this._hiddenBfcacheRecoveryId = 0;
+                }
+            });
+            return this._visibilityRecoveryPromise;
+        },
+init() {
+            if (this._initState === 'ready') return Promise.resolve('already-ready');
+            if (this._initState === 'initializing' && this._initPromise) return this._initPromise;
+            this._initState = 'initializing';
+            this._initPromise = (async () => {
+                this.installDebugApi();
+                this.debugLog('init', 'FilterModule init start', { version: '2.0.0' });
+                const snapshot = await this.loadBootSnapshot();
+                await this.cleanupLegacyManagedBlockConfig(snapshot);
+                await this.reloadSettings(snapshot);
+                await this.refreshBlockedUidsCache(snapshot.blockedUidsRaw);
+                if (!this._visibilityChangeHandler) {
+                    this._visibilityChangeHandler = () => this.handleVisibilityChange();
+                    document.addEventListener('visibilitychange', this._visibilityChangeHandler);
+                }
+                if (!this._blockedUidPagehideHandler) {
+                    this._blockedUidPagehideHandler = () => {
+                        void this.flushBlockedUidCache('pagehide').catch((error) => {
+                            console.warn('DCinside User Filter: pagehide blocked UID flush failed.', error);
+                        });
+                    };
+                    window.addEventListener('pagehide', this._blockedUidPagehideHandler);
+                }
+                this.initializeUniversalObserver();
+                window.__dcufBootController?.note?.('boot.local-filter-settings-ready');
+                if (snapshot.thresholdMissing) {
+                    const showFirstRunSettings = async () => {
+                        await this.initializeFirstRunThreshold();
+                        await this.showSettings();
+                    };
+                    const bootController = window.__dcufBootController;
+                    if (typeof bootController?.onReady === 'function') bootController.onReady(showFirstRunSettings);
+                    else queueMicrotask(showFirstRunSettings);
+                }
+                this._initState = 'ready';
+                return 'ready';
+            })().catch((error) => {
+                this._initState = 'failed';
+                this._initPromise = null;
+                throw error;
+            });
+            return this._initPromise;
+        },
+        getHostCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            return parts.length === 2 ? parts.pop().split(';').shift() : undefined;
+        },
+        noteBoot(label, detail) {
+            window.__dcufBootController?.note?.(label, detail);
+        }
+        };
+        const invoke = (method, runtime, args = []) => {
+            if (!Object.hasOwn(legacyMethods, method)) throw new Error(`Unsupported filter host action: ${method}`);
+            return legacyMethods[method].call(runtime, ...args);
+        };
+        return DCUF_UI_CONTRACTS.createHostSurfaceAdapter({
+            connect(runtime, ...args) { return invoke('init', runtime, args); },
+            refresh(runtime, scope = 'all', root = document) { return invoke('runSyncRefilterPass', runtime, [scope, root]); },
+            mountOwnedRoot(root) { return root; },
+            invokeNative(action, runtime, ...args) { return invoke(action, runtime, args); },
+            dispose(runtime) {
+                runtime._runtimeMutationUnsubscribe?.();
+                runtime._runtimeMutationUnsubscribe = null;
+            },
+        });
+    })();
+    window.__dcufFilterModule = FilterModule;
     if (!__dcufRoot.__dcufPcMenuCommandsRegistered) {
         __dcufRoot.__dcufPcMenuCommandsRegistered = true;
         const menuCommands = [
@@ -7247,13 +6490,10 @@ const FilterModule = {
         window.addEventListener('keydown', async (e) => {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
 
-            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                e.ctrlKey === activeShortcutObject.ctrlKey &&
-                e.shiftKey === activeShortcutObject.shiftKey &&
-                e.altKey === activeShortcutObject.altKey &&
-                e.metaKey === activeShortcutObject.metaKey;
+            const isMatch = DCUF_SHARED_STORAGE.matchesShortcutEvent(e, activeShortcutObject);
 
             if (!isMatch) return;
+            if (document.getElementById(FilterModule.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
             e.preventDefault();
 
             const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -7268,7 +6508,7 @@ const FilterModule = {
 
         __dcufRoot.__dcufPcFilterPortState = 'initializing';
         __dcufRoot.__dcufPcFilterPortPromise = (async () => {
-            console.log('[DCUF PC] Initializing filter port v1.9.9...');
+            console.log('[DCUF PC] Initializing filter port v2.0.0...');
 
             observeDarkMode();
             bindSettingsShortcut();
