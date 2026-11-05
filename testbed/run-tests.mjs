@@ -50,7 +50,7 @@ import { runMemoPaletteContract } from './ui-b1-memo-palette-contract.mjs';
 import { runListV7Contract, runListV7PaletteContract } from './ui-b1-list-v7-contract.mjs';
 import { runArticleV7Contract, runArticleV7PaletteContract, runArticleV7ContrastOracleContract } from './ui-b1-article-v7-contract.mjs';
 import { runArticleAttachmentContract, runRecommendationSeparatorContract } from './ui-article-attachment-contract.mjs';
-import {runWriterV7Contract,runWriterV7PaletteContract} from './ui-b1-write-v7-contract.mjs';
+import {runWriterV7Contract,runWriterV7PaletteContract,runWriterNicknamePhoneContract} from './ui-b1-write-v7-contract.mjs';
 import {runManagementV7Contract,runManagementV7PaletteContract} from './ui-owned-management-v7-contract.mjs';
 import {runManagementChildrenV7Contract,runManagementChildrenV7PaletteContract} from './ui-owned-management-children-v7-contract.mjs';
 import {runMenuSelectionV7Contract,runMenuV7PaletteContract,runMenuV7OriginalActionsContract} from './ui-owned-menu-selection-v7-contract.mjs';
@@ -167,6 +167,7 @@ mobileTest('B1 password pages: glass and original native form actions', 'write',
 mobileTest('B1 form header: reuse list chrome without list runtime', 'write', runB1FormHeaderContract);
 mobileTest('B1 write shell: shared header and native editor preservation', 'write', runB1WriteShellContract);
 mobileTest('B1 writer v7: adopted composition and native nickname states', 'write', runWriterV7Contract);
+mobileTest('B1 writer v7: phone nickname text and password containment', 'write', runWriterNicknamePhoneContract);
 mobileTest('B1 writer v7: actual palette preview save and cancel', 'write', runWriterV7PaletteContract);
 mobileTest('B1 controls: common material transmission and fixed popup coordinates', 'write', runControlMaterialContract);
 mobileTest('B1 editor menus: glass and original reachable controls', 'write', runB1EditorMenuContract);
@@ -9204,7 +9205,7 @@ mobileTest('modify password surface uses the mobile card UI and removes trailing
             createHash('sha256').update(css, 'utf8').digest('hex').toUpperCase()
         )), [
             '6EC32CBBB15A2856405A34E86A58372C2E6FB14D49A0A72DCC11FE184C61E9DF',
-            '90389D1B12A7D4F3462BC9BA0F2418F3A0B367B4004FCE7023AD6E6F3841C1C2'
+            'B84BCEB6AA7DDAE05560CF82F0E023D5D13264D93B517CD2A822011D7994A655'
         ], 'native-form presentation payloads must match the registered semantic modify/delete, write-shell, write-popup, write-fields, write-headtext, write-editor-shell, write-toolbar-shell, editor-layer, and attachment contracts');
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
     } finally { await session.close(); }
@@ -9389,7 +9390,7 @@ mobileTest('modify/delete presentation uses only adapter-applied semantic select
         assert.equal(contract.computed.actionsColumns.split(' ').length, 2);
         assert.equal(
             createHash('sha256').update(contract.writePayloadShaSource, 'utf8').digest('hex').toUpperCase(),
-            '90389D1B12A7D4F3462BC9BA0F2418F3A0B367B4004FCE7023AD6E6F3841C1C2',
+            'B84BCEB6AA7DDAE05560CF82F0E023D5D13264D93B517CD2A822011D7994A655',
             'write/modify-editor payload must match the registered page/form-shell, popup, field, editor, toolbar, and editor-layer semantic contract'
         );
         assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);

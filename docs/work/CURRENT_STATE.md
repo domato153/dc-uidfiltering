@@ -2,14 +2,16 @@
 
 ## Current execution
 
+- Nickname fix complete: WRITER_NICKNAME_DIAGNOSIS.md. Three writer tests/live proxy pass;old draft assets stale. Cleanup artifacts after completion.
+
 - Active plan: Stage1/2/3 adopted. User2026-11-05 explicitly authorizes stage4 official Mobile/main/site/README and Releases. Versioned files are prepared;trusted publication route and OAuth authority are missing.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-promotion`;next action `trusted-stable-publication-route`. User explicitly authorizes official files and Releases;additional workflow OAuth authority is missing.
 - Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,late-padding protection and original scroll/resume. Final list GNB correction fits wrapped links and bypasses only the verified important zero-margin conflict;article/write upper headers stay unchanged. Writer now has two independent media/HTML and font/link scroll rows.
 - Source state: Source checkpoint base HEAD `c883e65ed10eb00be283155994d580d08a9581c1` on `codex/ui-port-boundary`. Read fresh checkpoint/draft disposition.
-- Candidate fingerprint: `5865ffcf154509e7adaf56e58a4678db3da49390976b4c153e9b7321bfba7f14`
+- Candidate fingerprint: `94f258a7357058ae72f1059ef2977eb56f0578d6ebd8c5997ffec1d0efe45b4c`
 - Current stage receipt: `verification/receipts/2026-11-05-stable-356-pc200-preparation.json` SHA-256 `699d650f595932a9c762b80611fa404c59a0f00fe42b2e41a80c651d0d9a272b`.
-- Current artifact: Mobile3.5.6 9EEDA68520CD5A39C734E2F7D269E045D838437BA651D382669DA41CD891EF34 guard/root/dist;PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD root/dist. Versioned preparation only;canonical publication pending.
+- Current artifact: Mobile3.5.6 FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55 guard/root/dist;PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD root/dist. Versioned preparation only;canonical publication pending.
 - Current scoped checks:writer5-context independent mouse/trusted-touch/native-input/popup/dispose/clone checks pass;existing6-kind editor-menu contract and2 fresh-context behavior pairs pass. Actual writer/font menu observed and writer screenshot replaced. Prior site layout/other images retain exact bindings. One unrelated legacy password style oracle fails identically on control and candidate;not a pass.
 - Reviewable proposal: Adopted prototype now copied into local root index/style/README/assets with3.5.6/2.0.0 labels and latest writer image. Official refs remain unchanged;prepared files are not publication.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`,artifacts/site-v7-2026-11-04 and artifacts/site-v7-visual-2026-11-05. Captures are unmodified anonymous public site content with source injection,not fixtures,generated examples or installed-extension/device proof.
@@ -19,7 +21,7 @@
 - Pending live checks: Final-artifact installed-extension canary/trusted workflow approval and post-publication canonical/download verification remain pending. Source-injected actual images are not that qualification.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"9EEDA68520CD5A39C734E2F7D269E045D838437BA651D382669DA41CD891EF34"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
+{"schemaVersion":1,"mobile":{"sha256":"FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

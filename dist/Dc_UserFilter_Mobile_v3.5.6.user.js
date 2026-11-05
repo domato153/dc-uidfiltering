@@ -8090,6 +8090,9 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-native-form-role="guest-field"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"] {
             --dcuf-write-field-padding: 0 108px 0 12px;
         }
+        [data-dcuf-native-form-role="guest-field"][data-dcuf-native-form-state="write-editor"] [data-dcuf-native-form-role="name-input"][data-dcuf-native-form-state="write-editor"][readonly] {
+            --dcuf-write-field-padding: 0 44px 0 12px;
+        }
         [data-dcuf-native-form-role="nickname-use"][data-dcuf-native-form-state="write-editor"], [data-dcuf-native-form-role="nickname-clear"][data-dcuf-native-form-state="write-editor"] {
             position: absolute;
             top: 50%;
@@ -8693,7 +8696,9 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-native-form-role="form"][data-dcuf-native-form-state="write-editor"] {
                 padding: 18px !important;
             }
-            [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"] {
+            /* The desktop-site phone form is zoomed from device width: a980px
+               layout viewport does not provide four desktop-sized fields. */
+            [data-dcuf-native-form-role="page"][data-dcuf-native-form-state="write-editor"]:not(.dcuf-write-desktop-site-mobile) [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"] {
                 grid-template-columns: repeat(4, minmax(0, 1fr));
             }
             [data-dcuf-native-form-role="fields"][data-dcuf-native-form-state="write-editor"] > [data-dcuf-native-form-role="headtext-shell"][data-dcuf-native-form-state="write-editor"],

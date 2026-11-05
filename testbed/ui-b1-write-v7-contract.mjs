@@ -6,7 +6,7 @@ import {renderedLabelContrast} from './ui-control-material-contract.mjs';
 const R=role=>'[data-dcuf-native-form-role="'+role+'"][data-dcuf-native-form-state="write-editor"]';
 const settle=p=>p.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
 export async function mountWriterV7(browser,server,s) {
- const e=await createTestPage(browser,server.baseUrl,{viewport:{width:s.width,height:s.height},storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
+ const e=await createTestPage(browser,server.baseUrl,{viewport:{width:s.width,height:s.height},...(s.phone?{screen:{width:412,height:1006},isMobile:true,hasTouch:true}:{}),storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
  const route=s.modify?'/board/modify/':'/mgallery/board/write/';
  await e.page.route(u=>u.origin===server.baseUrl&&u.pathname===route,r=>r.fulfill({contentType:'text/html',body:writerV7Html({variant:s.minor?'minor':'major',formMode:s.modify?'modify':'write'})}));
  await e.goto(route+'?id=test&no=1001');await e.page.waitForFunction(()=>document.body.getAttribute('data-dcuf-native-form-state')==='write-editor');
@@ -14,6 +14,28 @@ export async function mountWriterV7(browser,server,s) {
  return e;
 }
 const hit=async l=>{await l.scrollIntoViewIfNeeded({timeout:2500});const r=await l.evaluate(n=>{const b=n.getBoundingClientRect(),t=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);return{ok:b.width>0&&b.height>0&&(n===t||n.contains(t)),box:b.toJSON(),hit:t?.outerHTML.slice(0,180),viewport:[innerWidth,innerHeight],scrollY,font:document.querySelector('.note-fontname button')?.getBoundingClientRect().toJSON(),ancestors:(()=>{const a=[];for(let e=n.parentElement;e&&a.length<7;e=e.parentElement)a.push({class:e.className,overflow:getComputedStyle(e).overflow,scrollTop:e.scrollTop,position:getComputedStyle(e).position,z:getComputedStyle(e).zIndex,transform:getComputedStyle(e).transform,filter:getComputedStyle(e).backdropFilter});return a})()}});assert.ok(r.ok,JSON.stringify(r));return true};
+export async function runWriterNicknamePhoneContract({browser,server}) {
+ for(const dark of [false,true]) {
+  const e=await mountWriterV7(browser,server,{width:980,height:2306,minor:true,phone:true,dark}),p=e.page;
+  try {
+   await p.waitForFunction(()=>document.body.classList.contains('dcuf-write-desktop-site-mobile'));
+   const check=async(id,button)=>{
+    await settle(p);
+    const geometry=await p.locator(id).evaluate((n,button)=>{const s=getComputedStyle(n),r=n.getBoundingClientRect(),parent=n.parentElement.getBoundingClientRect(),b=document.querySelector(button).getBoundingClientRect(),password=document.querySelector('#password').getBoundingClientRect();return{textRoom:n.clientWidth-parseFloat(s.paddingLeft)-parseFloat(s.paddingRight),font:parseFloat(s.fontSize),contained:r.left>=parent.left-1&&r.right<=parent.right+1,buttonContained:b.left>=parent.left-1&&b.right<=parent.right+1,passwordClear:r.right<=password.left+1||r.bottom<=password.top+1}},button);
+    assert.ok(geometry.textRoom>=geometry.font*3,'Phone nickname retains readable text room: '+JSON.stringify(geometry));
+    assert.ok(geometry.contained&&geometry.buttonContained&&geometry.passwordClear,'Native nickname and active auxiliary stay clear of password: '+JSON.stringify(geometry));
+    await hit(p.locator(button));
+   };
+   await check('#gall_nick_name','#btn_gall_nick_name_x');
+   await p.locator('#btn_gall_nick_name_x').click();await check('#name','#btn_gall_nick_name_y');
+   await p.locator('#name').fill('직접 닉네임');await p.locator('#btn_gall_nick_name_y').click();
+   await check('#gall_nick_name','#btn_gall_nick_name_x');
+   assert.equal(await p.locator('#gall_nick_name').inputValue(),'합성 갤닉');
+   assertNoRuntimeErrors(await getMetrics(p),e.consoleErrors);
+  }finally{await e.close()}
+ }
+ return {contexts:2};
+}
 export async function runWriterV7Contract({browser,server}) {
  const records=[];
  for(const s of [{width:1440,height:1100},{width:980,height:2306,minor:true},{width:980,height:900,minor:true,dark:true},{width:980,height:900,modify:true},{width:390,height:700,dark:true}]) {
