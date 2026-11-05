@@ -1,5 +1,8 @@
 # Mobile3.5.6 / PC2.0.0 stable preparation
 
+Current disposition2026-11-05:PUBLISHED. Workflow41990171245 succeeded;Mobile3.5.6/PC2.0.0/site/README/latest nickname-fixed writer image and both Release assets are official. See verification/receipts/2026-11-05-stable-356-pc200-publication.json. Prior blocker/pending descriptions below are historical,not another next task.
+
+
 User2026-11-05 explicitly authorized official Mobile/main files,adopted index/README/latest images and both Release assets. Version policy:each component is one decimal digit;carry1.9.9→2.0.0,not1.9.10. Current canonical versions were Mobile3.5.5/PC1.9.9;new versions3.5.6/2.0.0.
 
 ## Prepared

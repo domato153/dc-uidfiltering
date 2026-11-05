@@ -2,23 +2,20 @@
 
 ## Current execution
 
-- Nickname fix and latest real writer image complete;WRITER_NICKNAME_DIAGNOSIS.md. Cleanup artifacts after completion.
-
-- Active plan: Stage1/2/3 adopted. User2026-11-05 explicitly authorizes stage4 official Mobile/main/site/README and Releases. Files prepared;workflow OAuth refreshed. Combined route:COMBINED_STABLE_PUBLICATION.md.
+- Active plan: Four-stage Mobile UI/PC shared port/site/official publication is published. Next: user-requested local artifact cleanup inventory;guidebook consolidation remains a later discussion.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
-- Active stage: `stable-promotion`;next action `trusted-stable-publication-route`. User explicitly authorizes official files and Releases;combined trusted route is being installed.
-- Accepted visual preference: actual adopted memo/current v7 detail,soft glass and pale paired-ink buttons. Latest user restores inline global services/native categories;added exploration/category disclosures are superseded. Keep unified list plate,late-padding protection and original scroll/resume. Final list GNB correction fits wrapped links and bypasses only the verified important zero-margin conflict;article/write upper headers stay unchanged. Writer now has two independent media/HTML and font/link scroll rows.
-- Source state: Source checkpoint base HEAD `c883e65ed10eb00be283155994d580d08a9581c1` on `codex/ui-port-boundary`. Read fresh checkpoint/draft disposition.
-- Candidate fingerprint: `b66a74040618a48e6107745b020279a230cb4646d3f26fc754c831594f4fd7e6`
-- Current stage receipt: `verification/receipts/2026-11-05-stable-356-pc200-preparation.json` SHA-256 `699d650f595932a9c762b80611fa404c59a0f00fe42b2e41a80c651d0d9a272b`.
-- Current artifact: Mobile3.5.6 FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55 guard/root/dist;PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD root/dist. Versioned preparation only;canonical publication pending.
-- Current scoped checks:writer5-context independent mouse/trusted-touch/native-input/popup/dispose/clone checks pass;existing6-kind editor-menu contract and2 fresh-context behavior pairs pass. Actual writer/font menu observed and writer screenshot replaced. Prior site layout/other images retain exact bindings. One unrelated legacy password style oracle fails identically on control and candidate;not a pass.
-- Reviewable proposal: Adopted prototype now copied into local root index/style/README/assets with3.5.6/2.0.0 labels and latest writer image. Official refs remain unchanged;prepared files are not publication.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`,artifacts/site-v7-2026-11-04 and artifacts/site-v7-visual-2026-11-05. Captures are unmodified anonymous public site content with source injection,not fixtures,generated examples or installed-extension/device proof.
-- Accepted baseline: Adopted actual memo/current v7;latest user restores inline services/categories. Prior PC common-code port is accepted;site composition is a proposal,not approval.
-- Last current audit: UNKNOWN:formal upper admission,actual installed-PC use and exact Mobile OS/tab discard remain separate. No broad whole-UI/performance/accessibility certification. Prior PC receipt retains its exact artifact.
-- Blockers: Combined workflow/environment bootstrap and dispatch pending;OAuth workflow scope verified. Actual final-Mobile extension startup and replay PASS;see COMBINED_STABLE_PUBLICATION.md.
-- Pending live checks: Final-artifact installed-extension canary/trusted workflow approval and post-publication canonical/download verification remain pending. Source-injected actual images are not that qualification.
+- Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
+- Source state: Source checkpoint base HEAD `1f8f451efa56fd1edd92044130893532e0835ef4` on `codex/ui-port-boundary`. Official main da65ebb4f48b4e8418df093e98345aebe00e31c7;Mobile b9cfe32ae90fadbfe0370341f250f75ac99e2639;tag mobile-v3.5.6. No whole-source merge.
+- Candidate fingerprint: `6d9dcb507b2028f6830274801607c2ce6b794634e5cc47d181cdfe41ab8bef77`
+- Current stage receipt: `verification/receipts/2026-11-05-stable-356-pc200-publication.json` SHA-256 `3429BA5C14826B81104625544042450E5673D31B3CDA2C10938200ABE557EF1F`.
+- Current artifact: Mobile3.5.6 FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55;PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD. Canonical files and Release downloads match exactly.
+- Current scoped checks: Three focused writer tests pass,including screen412/layout980/touch nickname text room/containment in both themes. Existing PC port test retains exact bytes. Actual Mobile extension startup6 observations and replay pass;not whole-feature/device proof.
+- Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/stable-3.5.6-pc-2.0.0/published has workflow receipt/public readback. testbed/artifacts/stable-356-final-canary binds actual extension evidence. Keep needed release/evidence bytes until cleanup inventory;old prepared bundle is superseded.
+- Accepted baseline: Actual adopted memo/current v7 detail,pale paired-ink dark buttons,theme accents,inline services/categories and list-only unified plate/original scroll direction. Writer two independent media/HTML and font/link rows;phone nickname uses2 columns/readonly44px reserve. PC keeps native host layout.
+- Last current audit: PASS:Official publication only. Workflow41990171245 prepare/publish SUCCESS;environment approved;two canonical scripts,two Release assets and checksum verified;Pages built exact main;6 anonymous public HTTP readbacks PASS. Formal upper admission,installed-PC and physical-phone/mutation states remain UNKNOWN. Unrelated old password oracle was not weakened or called pass.
+- Blockers: None for this publication. Trusted main workflow and mobile-release approval environment now exist;OAuth workflow scope verified. No pending publication action.
+- Pending live checks: No pending publication readback. Physical phone/installed-PC and broader formal UI qualification remain separate;do not relabel them as release startup evidence.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}

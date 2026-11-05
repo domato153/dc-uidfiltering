@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "status": "PUBLISHED",
+  "sourceSha": "1f8f451efa56fd1edd92044130893532e0835ef4",
+  "mainCommit": "da65ebb4f48b4e8418df093e98345aebe00e31c7",
+  "mobileCommit": "b9cfe32ae90fadbfe0370341f250f75ac99e2639",
+  "tag": "mobile-v3.5.6",
+  "mobile": {
+    "version": "3.5.6",
+    "sha256": "FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55"
+  },
+  "pc": {
+    "version": "2.0.0",
+    "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"
+  },
+  "releaseUrl": "https://github.com/domato153/dc-uidfiltering/releases/tag/mobile-v3.5.6",
+  "workflow": {
+    "runId": 41990171245,
+    "url": "https://github.com/domato153/dc-uidfiltering/actions/runs/41990171245",
+    "conclusion": "success",
+    "trustedMain": "9b050972266164085c78ffc858c44bfb07fbea9e",
+    "environment": "mobile-release",
+    "approval": "Approved under explicit owner publication authorization"
+  },
+  "checkpoint": {
+    "runId": 41989905459,
+    "sourceSha": "1f8f451efa56fd1edd92044130893532e0835ef4",
+    "conclusion": "success",
+    "scope": "CHECKPOINT_ONLY"
+  },
+  "canary": {
+    "status": "PASS",
+    "artifactSha256": "FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55",
+    "browser": "Chrome156.0.8078.80",
+    "extension": "Tampermonkey5.5.0",
+    "observations": 6,
+    "cases": [
+      "major-list-wide",
+      "minor-list-wide",
+      "major-view-wide"
+    ],
+    "independentReplay": "PASS",
+    "scope": "Anonymous desktop startup through actual installed extension;not all features,PC or physical phone"
+  },
+  "writerImage": {
+    "path": "assets/mobile-write.png",
+    "sha256": "3111B413414093A89C4C0CD54C1236FDD4C050BAACD252BEE8E132323C625912",
+    "state": "Actual public source-injected writer after nickname fix"
+  },
+  "publicReadback": {
+    "status": "PASS",
+    "checkedAt": "2026-11-05T07:56:31.654Z",
+    "results": [
+      {
+        "id": "canonical-mobile",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/Mobile/Dc_UserFilter_Mobile.user.js",
+        "sha256": "FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55",
+        "status": "PASS"
+      },
+      {
+        "id": "canonical-pc",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/main/dcinside_user_filter.user.js",
+        "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+        "status": "PASS"
+      },
+      {
+        "id": "release-mobile",
+        "url": "https://github.com/domato153/dc-uidfiltering/releases/download/mobile-v3.5.6/Dc_UserFilter_Mobile_v3.5.6.user.js",
+        "sha256": "FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55",
+        "status": "PASS"
+      },
+      {
+        "id": "release-pc",
+        "url": "https://github.com/domato153/dc-uidfiltering/releases/download/mobile-v3.5.6/dcinside_user_filter_v2.0.0.user.js",
+        "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+        "status": "PASS"
+      },
+      {
+        "id": "pages-writer",
+        "url": "https://domato153.github.io/dc-uidfiltering/assets/mobile-write.png",
+        "sha256": "3111B413414093A89C4C0CD54C1236FDD4C050BAACD252BEE8E132323C625912",
+        "status": "PASS"
+      },
+      {
+        "id": "pages-index",
+        "url": "https://domato153.github.io/dc-uidfiltering/",
+        "sha256": "EEB44F4A3A1A36BE0ADDCEEA03045E115015491EFBB1C7BFC0EDCDCCBB5A452D",
+        "status": "PASS"
+      }
+    ]
+  },
+  "pages": {
+    "url": "https://domato153.github.io/dc-uidfiltering/",
+    "status": "built",
+    "commit": "da65ebb4f48b4e8418df093e98345aebe00e31c7"
+  },
+  "limits": [
+    "Existing unrelated legacy password visual oracle remains a known control/candidate failure;no full-suite pass claimed",
+    "Exact physical phone/installed-PC/permission and mutation-dependent states remain separate",
+    "No local artifacts cleanup performed;user-requested cleanup is the next bounded inventory"
+  ]
+}
