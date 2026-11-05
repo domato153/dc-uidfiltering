@@ -12,7 +12,7 @@ function check(condition, message) {
     if (!condition) failures.push(message);
 }
 
-check(JSON.stringify(files) === JSON.stringify(['development-ci.yml', 'live-site-canary.yml', 'promotion-windows.yml', 'release-mobile.yml']), `unexpected workflow set: ${files.join(', ')}`);
+check(JSON.stringify(files) === JSON.stringify(['development-ci.yml', 'live-site-canary.yml', 'promotion-windows.yml', 'release-mobile.yml', 'release-stable.yml']), `unexpected workflow set: ${files.join(', ')}`);
 for (const file of files) {
     const text = await readFile(path.join(workflowsDir, file), 'utf8');
     check(!/pull_request_target\s*:/.test(text), `${file}: pull_request_target is forbidden`);
@@ -60,6 +60,11 @@ check(!live.includes('continue-on-error:'), 'live failures cannot be hidden as s
 check(live.includes('testbed/artifacts/live-site-canary/*.png') && !live.includes('testbed/artifacts/**'), 'live evidence upload must exclude profiles, extension payloads, and raw stores');
 
 const release = await readFile(path.join(workflowsDir, 'release-mobile.yml'), 'utf8');
+const combined = await readFile(path.join(workflowsDir, 'release-stable.yml'), 'utf8');
+check(combined.includes('workflow_dispatch:') && !/^  (?:push|pull_request|schedule):/m.test(combined), 'combined release is manual-only');
+check(combined.includes('environment: mobile-release') && combined.includes("if: inputs.publish_confirmation == 'PUBLISH'"), 'combined publication needs explicit confirmation and approval environment');
+check(combined.includes('WORKFLOW_SHA') && combined.includes('refs/heads/main') && combined.includes('persist-credentials: false'), 'combined prepare must bind trusted main and isolate candidate credentials');
+check(combined.includes('run: node control/tools/stable-release.mjs publish') && !combined.includes('run: node source/tools/stable-release.mjs publish'), 'combined write job must execute trusted control only');
 check(release.includes('environment: mobile-release'), 'release publication must use the mobile-release environment');
 check(release.includes('contents: write'), 'release publish job must explicitly request contents: write');
 check(release.includes("if: inputs.publish_confirmation == 'PUBLISH'"), 'release publish job lacks explicit PUBLISH gating');
