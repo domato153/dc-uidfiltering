@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-05",
+  "scope": "List inline navigation restoration and stage3 site proposal;not promotion",
+  "sourceBase": "ce69502a3034cb1338939ca4a648b7d9a6006df6",
+  "mobileSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+  "pcSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+  "restoration": {
+    "from": "a3090b4^",
+    "delta": "Remove added service/category disclosure projection and CSS;restore inline width and center existing GNB. Native overflow and scroll owner retained.",
+    "preserved": [
+      "unified plate",
+      "palette/glass light and dark",
+      "gallery late padding protection",
+      "ready resume and canvas restoration",
+      "native nodes/parents/callbacks/destinations",
+      "PC bytes"
+    ]
+  },
+  "checks": {
+    "red": "Frozen2C14 category list remains hidden;new positive inline contract fails before source change.",
+    "passed": [
+      "Header category4 contexts:visible native destinations,overflow adjacency/last-choice hit,native callback/parent/link identity,clone refresh",
+      "Header followup4 contexts:14 palettes/material,late padding,plate/chrome,menus/replacement,native overflow,down/up/down scroll",
+      "Header resume2 contexts:suspended rendering rollback,ready reattachment,canvas and navigation",
+      "verify-repo release",
+      "inspect-live-architecture --check",
+      "Header palette/reset/door ownership:historical pairs,phase and mutation rejection retained after updating only2 approved CSS fragments"
+    ],
+    "site": [
+      {
+        "width": 1440,
+        "buttons": [
+          {
+            "x": 140,
+            "y": 554.984375,
+            "width": 238.625,
+            "height": 53.5,
+            "top": 554.984375,
+            "right": 378.625,
+            "bottom": 608.484375,
+            "left": 140
+          },
+          {
+            "x": 390.625,
+            "y": 554.984375,
+            "width": 238.640625,
+            "height": 53.5,
+            "top": 554.984375,
+            "right": 629.265625,
+            "bottom": 608.484375,
+            "left": 390.625
+          }
+        ],
+        "images": "all decoded",
+        "tabs": "click/End/Home",
+        "horizontalOverflow": false,
+        "errors": []
+      },
+      {
+        "width": 980,
+        "buttons": [
+          {
+            "x": 24,
+            "y": 500.984375,
+            "width": 192.875,
+            "height": 51.796875,
+            "top": 500.984375,
+            "right": 216.875,
+            "bottom": 552.78125,
+            "left": 24
+          },
+          {
+            "x": 228.875,
+            "y": 500.984375,
+            "width": 192.875,
+            "height": 51.796875,
+            "top": 500.984375,
+            "right": 421.75,
+            "bottom": 552.78125,
+            "left": 228.875
+          }
+        ],
+        "images": "all decoded",
+        "tabs": "click/End/Home",
+        "horizontalOverflow": false,
+        "errors": []
+      },
+      {
+        "width": 390,
+        "buttons": [
+          {
+            "x": 18,
+            "y": 363.75,
+            "width": 171,
+            "height": 51.796875,
+            "top": 363.75,
+            "right": 189,
+            "bottom": 415.546875,
+            "left": 18
+          },
+          {
+            "x": 201,
+            "y": 363.75,
+            "width": 171,
+            "height": 51.796875,
+            "top": 363.75,
+            "right": 372,
+            "bottom": 415.546875,
+            "left": 201
+          }
+        ],
+        "images": "all decoded",
+        "tabs": "click/End/Home",
+        "horizontalOverflow": false,
+        "errors": []
+      }
+    ],
+    "visual": {
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "interpretation": "Both pixel comparisons differ as expected:generated layout/factual corrections and explicit inline restoration/dynamic public content. Rendered images manually inspected;user approval remains separate."
+    },
+    "registrationDelta": "Only header-shell/header-gnb current CSS candidate strings changed;historical controls/digests/purity/mutation tests unchanged."
+  },
+  "captures": [
+    {
+      "id": "mobile-list",
+      "path": "design-prototypes/site-v7/assets/mobile-list.png",
+      "sha256": "0f23e5481568c41b95052603e9da2a8fe91d61a1fae5ac980054299405230d7d",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    },
+    {
+      "id": "palette",
+      "path": "design-prototypes/site-v7/assets/palette.png",
+      "sha256": "0b1a8d93e05facad33edac8a5d8a8b5bb9d665c23cb05e1f8830d719c0722945",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    },
+    {
+      "id": "menu",
+      "path": "design-prototypes/site-v7/assets/menu.png",
+      "sha256": "1f6a3126d96bbe0560dc08459404064b240c99ce216af1d08ed82407d4ba9da1",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    },
+    {
+      "id": "mobile-article",
+      "path": "design-prototypes/site-v7/assets/mobile-article.png",
+      "sha256": "a342b44fb5c064554418211c061cba9ec6c8bfb3986fadd7554b3b6b3c48c1e7",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/view/?id=wutheringwaves&no=2377010&page=1",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    },
+    {
+      "id": "mobile-write",
+      "path": "design-prototypes/site-v7/assets/mobile-write.png",
+      "sha256": "3d91c9b476b1e021a7359b87789dbf75f1d1ca7bb666d18a0523f53b0ad0e058",
+      "runtimeSha256": "108930c864b2e3efb541b3105ea80ecf6e97c592ceaa7e19c79eb210a81be589",
+      "url": "https://gall.dcinside.com/mgallery/board/write/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    },
+    {
+      "id": "pc-management",
+      "path": "design-prototypes/site-v7/assets/pc-management.png",
+      "sha256": "e223ca123855c31fa9b01b399b833b8c7160627d7f7e36d0d055d118e86bc61b",
+      "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    },
+    {
+      "id": "pc-backup",
+      "path": "design-prototypes/site-v7/assets/pc-backup.png",
+      "sha256": "8cf693f9983213eaebecd7ced2b180b440f17071da239470567d21c79093653d",
+      "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public site DOM/content + current source-injected userscript. No fixture content or title/author replacement. Anonymous isolated browser;not installed extension/device qualification."
+    }
+  ],
+  "proposal": {
+    "path": "design-prototypes/site-v7",
+    "officialRootFilesChanged": false,
+    "officialRefsChanged": false,
+    "versionBumped": false,
+    "installProminence": "equal Mobile/PC",
+    "realExamplesOnly": true,
+    "referenceOnly": "composition-reference.png;excluded from actual examples",
+    "readme": "Clarifies separate script storage,no automatic Mobile/PC/device sync"
+  },
+  "limits": [
+    "Actual installed extension/device/OS discard behavior not newly qualified",
+    "Formal upper admission UNKNOWN",
+    "Source-injected actual public screenshots are read-only presentation evidence",
+    "User site/README appearance review and stage4 promotion approval pending"
+  ],
+  "omissions": [
+    "No full product suite:only affected headers/native category and existing resume path",
+    "PC runtime unchanged;no repeated PC product tests",
+    "No account/login/write/setting save network requests"
+  ]
+}

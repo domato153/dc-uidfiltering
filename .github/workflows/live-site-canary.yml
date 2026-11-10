@@ -1,0 +1,87 @@
+name: DCUF desktop live-site canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Exact repository commit SHA to build and test (40 lowercase hex characters)
+        required: true
+        type: string
+      suite:
+        description: Public desktop routes (smoke = 3, full = 4); neither is full-feature acceptance
+        required: true
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - full
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dcuf-live-desktop-${{ inputs.source_sha }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: 22.17.0
+  PNPM_VERSION: 10.33.1
+  CANDIDATE_SHA: ${{ inputs.source_sha }}
+
+jobs:
+  desktop-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Validate exact source input
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: '[[ "${EXPECTED_SHA}" =~ ^[0-9a-f]{40}$ ]]'
+      - name: Checkout exact source
+        id: checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ env.CANDIDATE_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Verify exact checkout
+        env:
+          EXPECTED_SHA: ${{ env.CANDIDATE_SHA }}
+        run: test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
+      - name: Set up pinned Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - name: Prepare pinned toolchain and real desktop Chromium
+        run: |
+          corepack enable
+          corepack prepare pnpm@${PNPM_VERSION} --activate
+          pnpm install --frozen-lockfile
+          node testbed/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Check system contracts and build exact artifacts
+        run: |
+          node tools/verify-workflows.mjs
+          node tools/test-live-site-canary.mjs
+          node tools/verify-baseline.mjs
+          node tools/build-userscript.mjs --testbed-output testbed/artifacts/runtime-under-test.user.js
+      - name: Download and verify pinned official Tampermonkey
+        run: node tools/prepare-live-extension.mjs
+      - name: Run actual-extension desktop public-site checks
+        if: ${{ !cancelled() && steps.checkout.outcome == 'success' }}
+        env:
+          CANARY_SUITE: ${{ inputs.suite }}
+        # A real full Chromium window on Xvfb, not headless-shell or GM shim.
+        run: |
+          xvfb-run -a node testbed/run-live-site-canary.mjs --suite "${CANARY_SUITE}" --headed
+          node tools/verify-live-site-canary.mjs
+      - name: Retain only reports and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: live-desktop-${{ env.CANDIDATE_SHA }}-${{ github.run_attempt }}
+          path: |
+            testbed/artifacts/live-site-canary/*.json
+            testbed/artifacts/live-site-canary/*.md
+            testbed/artifacts/live-site-canary/*.png
+          if-no-files-found: error
+          retention-days: 14

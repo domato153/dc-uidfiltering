@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "tiers": ["ER0", "ER1", "ER2", "ER3"],
+  "signals": [
+    "explicitExternalResearch", "currentExternalAuthority", "competingMethods",
+    "novelFailure", "highConsequence", "generalizedClaim", "internalEvidenceGap",
+    "testPlanPrecedent", "conflictingEvidence"
+  ],
+  "selectionRule": {
+    "ER0": "Repository facts and existing exact evidence settle the question; no external proposition is needed.",
+    "ER1": "One current external authority or compatibility detail could change a consequential choice.",
+    "ER2": "Explicit research, competing methods, novel failure, generalized claim, internal evidence gap, or test-plan precedent requires comparison of primary sources and a local transfer check.",
+    "ER3": "Conflicting evidence combined with high consequence requires deeper review and an explicit unresolved defeater if conflict remains."
+  },
+  "cases": [
+    { "id": "local-fact", "category": "negative", "signals": [], "expectedTier": "ER0" },
+    { "id": "high-consequence-local-fact", "category": "negative", "signals": ["highConsequence"], "expectedTier": "ER0" },
+    { "id": "current-api", "category": "positive", "signals": ["currentExternalAuthority"], "expectedTier": "ER1" },
+    { "id": "requested-research", "category": "positive", "signals": ["explicitExternalResearch"], "expectedTier": "ER2" },
+    { "id": "competing-methods", "category": "overlap", "signals": ["competingMethods", "highConsequence"], "expectedTier": "ER2" },
+    { "id": "novel-host-failure", "category": "held-out", "signals": ["novelFailure", "internalEvidenceGap"], "expectedTier": "ER2" },
+    { "id": "conflict-low-risk", "category": "negative", "signals": ["conflictingEvidence"], "expectedTier": "ER2" },
+    { "id": "conflict-high-risk", "category": "held-out", "signals": ["conflictingEvidence", "highConsequence"], "expectedTier": "ER3" }
+  ]
+}

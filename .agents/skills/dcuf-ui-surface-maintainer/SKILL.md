@@ -35,6 +35,8 @@ Use `!important` only for a verified host inline/important conflict, visibility 
 
 ## Validate before acceptance
 
+For appearance changes or visual complaints, use [the visual-review route](../../../docs/work/UI_VISUAL_REVIEW.md). Produce a same-viewport reference/current/diff comparison, inspect the actual rendered states at readable scale, and record concrete defects or intended differences. A capture, a pixel match, functional PASS counts, or a miniature gallery alone cannot approve composition. Keep unreviewed current output out of regression baselines.
+
 1. Model the exact live root, parent/sibling order, attributes, sprite children, and click-created state before production fixes.
 2. Add a failing positive contract for geometry, adjacency, visibility, overflow, focus, or `elementFromPoint`; screenshots, z-index alone, and zero-area matches are not passes.
 3. Cover relevant light/dark, wide/narrow/short, logged-in/out, and competing-layer states.

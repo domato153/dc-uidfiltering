@@ -1,0 +1,231 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_OWNED_INPUT_CHILDREN_SCOPED_RECORD",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "2fc8e0be197cb54a6a24c0395e3cf000e116c20d",
+  "candidateFingerprint": "9111774d3ce116293604f6045093311f1c4f658e1310d04a5ee29e93694b3903",
+  "artifact": {
+    "mobileSha256": "1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B",
+    "pcSha256": "EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3"
+  },
+  "control": {
+    "mobileSha256": "DC0BEFDEE0F976A43A0074EFB7289EF3FD0F81F32BCA200D6D5A3598BC7909FF",
+    "pcSha256": "4121B55DA92393FCDEFB958218CEFE8FD703DD6A8A5485CDC44DA81F1D92F2C9"
+  },
+  "scope": {
+    "checklist": [
+      "S-06",
+      "S-07",
+      "S-08",
+      "P-04",
+      "P-12",
+      "P-13"
+    ],
+    "ownedVisualStatesPerTheme": 12,
+    "ordinaryGlassAndButtonFaces": "UNCHANGED",
+    "presentationOwner": "shared-settings-presenter with optional Mobile explanation ink",
+    "validationOwner": "existing personal-block-host-adapter rejects malformed top-level list fields before unchanged merge owner",
+    "newOwners": false,
+    "newObservers": false,
+    "newPriorities": 0,
+    "metadataStorageVersionChanged": false,
+    "actualUserFilesSettingsClipboardDownloadsTouched": false,
+    "officialRelease": false
+  },
+  "reference": {
+    "family": "docs/design/b1-glass-ordinary-target-light-2026-10-27.png",
+    "familySha256": "95B99AE75111ED1C15A374786509EBC548ACADEECC9DD9AA057B46BD6DC3CFEF",
+    "recipe": "docs/design/b1-owned-input-proposal-2026-10-28.css",
+    "recipeSha256": "8CF8858D8B027385CECABFE9685E654FF13B3542476C5764409A4FAF3F147B12",
+    "kind": "INDEPENDENT_DC0B_PLUS_SEPARATE_INPUT_RECIPE",
+    "validFlowsAligned": true,
+    "controlReferenceExclusion": "Only the three newly repaired malformed-list negative cases are excluded from preserved-control/proposal image captures; raw RED and current Mobile/PC alert GREEN are retained separately."
+  },
+  "verification": {
+    "mobileFocused": {
+      "distinctPassed": 8,
+      "functional": 7,
+      "write": 1,
+      "mode": "FOCUSED_CURRENT_RUNTIME",
+      "replacement": "owned-input-final.json replaces the earlier owned-input result in owned.json; the unchanged conditional result remains current. No full108 Mobile run or transferred prior107/DC0B claim."
+    },
+    "pcFunctional": 15,
+    "ownedLayoutStates": 72,
+    "heights": [
+      900,
+      560,
+      2306
+    ],
+    "layoutWidth": 980,
+    "minimumSampledExplanationContrast": 7.499609217269914,
+    "nativeNoticesPerCandidateCapture": 16,
+    "originalActionHits": true,
+    "nonshrinkingActionLabels": true,
+    "syntheticValidMerge": "Original text/FileReader paths preserve existing and imported UIDs/nicknames/IPs; memory-only synthetic file,not OS/user-file access.",
+    "invalidShape": "Each of three top-level fields rejects through existing native notice and preserves data; no per-item schema migration claim.",
+    "defaultPcStyleContexts": 6,
+    "pcStyleDifferences": 0,
+    "pcStyleScope": "Default panel/rest-hover paint/layout/storage only. Long-row label geometry intentionally changes for both targets.",
+    "immediateMobileSemanticObservations": 6,
+    "normalizedSemanticDifferences": 0,
+    "rawSemanticDifferences": 4,
+    "normalization": "UID-cache JSON object key serialization order and positive execution-clock timestamps only; original raw observations retained. Cache expiry/eviction and whole-product semantics excluded.",
+    "visualPairs": 16,
+    "visualMatcherPassed": 16,
+    "visualFidelity": "REVIEWED",
+    "productApproved": false,
+    "visualRawHashEqualPairs": 8,
+    "viewerImages": 48,
+    "viewerStates": 24,
+    "uiBoundaryFiles": 38,
+    "liveArchitectureLinks": "PASS; accepted registry unchanged; not live-site evidence",
+    "detector": "Two JS source regex scans have no findings; parsed-page contrast/tiny-text checks not run. Sampled rendered contrast is separate.",
+    "independentReview": "Read-only review found no product/PC fallback regression. Author-variant action counts and IP-merge assertions were added and rerun in final input/capture checks. No second review claimed.",
+    "impactFallback": "Fresh source/shared-harness route includes policy/proof/runtime/acceptance fallback. This receipt closes scoped UI evidence only; upper/full acceptance is NOT_RUN."
+  },
+  "failureClassification": {
+    "product": "Muted explanation ink on translucent shells; flex-shrunk split row actions; malformed non-array backup fields reaching forEach instead of existing invalid-format notice.",
+    "harness": "Native JavaScript alert must be dismissed before awaiting the click completion; former click-await deadlock was not a product permission failure.",
+    "review": "Final harness now asserts unblock counts2/1/0 and old/imported IP preservation; final synthetic file and other-gallery delete paths captured."
+  },
+  "sourceFiles": [
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "612D2A4DF42D4C648E32C8B3006E77858B57499628B14CCBA4F1E818679E1FFF"
+    },
+    {
+      "path": "src/targets/shared/settings-presenter.js",
+      "sha256": "EF8E99FF02A00AAD71D4217D9A1BA4BCACDEA7B0C2F8E6A8747778F9C01D35ED"
+    },
+    {
+      "path": "src/targets/shared/personal-block-host-adapter.js",
+      "sha256": "4A0725B46FC613BE424D28A82CC8F34448C4CA26D53219BBE2FEBEC0341DE20B"
+    },
+    {
+      "path": "testbed/ui-b1-owned-input-contract.mjs",
+      "sha256": "FCB5407ADC5125F24F4A77262982A1B7F7838FE858FC40429178B5CD605D4BE2"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "9B55C3856CE107C82BC53F0E1046837C3537E16D38BDD9E8BE02E190DC5B36A9"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/owned.json",
+      "sha256": "85B18C2EA779FE88E7DB9A4BB9A0F84B26505B8E6612F7C0A3F2D2C97951C509"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/owned-input-final.json",
+      "sha256": "E28771EDF09FDFE05BF8971F939F4CD14B2293BE6C974B875B081EF6BC5AF1A1"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/glass.json",
+      "sha256": "A5829FB2AAFB571C6C411816697D4CB48C557B189C6615EDC2E52B5AD0098029"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/dialog.json",
+      "sha256": "3F0EAD32DE51D3CA5196BE31D21657E72E7D8CE92F2A8A71D6E9E67CF5848D62"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/headtext.json",
+      "sha256": "B75BF6FCE4F852FBAAACBDF1E3D01A7BEE920820FC847AFD59EDF03702E089DE"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/settings.json",
+      "sha256": "990650F516325E1307322D27D8124997E4A465338B3916423DD687E865BE77E4"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/palette.json",
+      "sha256": "C232C763B3E350BC77FD7E2740180E9057D2688E0B060C99352CFA80DB73197F"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/material.json",
+      "sha256": "52B2FCBAC277E4E1639A6BC0372F92C3EBE4A689D203C9977F88165567E46C2F"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/pc-functional.json",
+      "sha256": "C87FBF6D851FF9A756E51A12E2248C1E514F255A4456B6CA15772364AAD53265"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/pc-style-comparison.json",
+      "sha256": "74B1F289D66D4785AAF9725C9B26F6D75FD58986C26315E3F418A33448D3159D"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/behavior-comparison.json",
+      "sha256": "039C4D12FDA9802069CA3F6040AD7D91D040C0C1B1FBF22B5365A8C77BEE0279"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/after-900/receipt.json",
+      "sha256": "020FBECE8F266E48A2066EEA75EB9722EA17F95B598F7D115CCF838566473265"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/after-560/receipt.json",
+      "sha256": "701A1F3DD667223839F353DBFA40A65615A53B97ABB8DAD749C661CF37FC24BC"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/after-2306/receipt.json",
+      "sha256": "973FFB9994D6554F5349DF4755E61CDEDC2F1370C8C98C2D8B254E3A5B519DD9"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/before-900/receipt.json",
+      "sha256": "8179FB725F52A1FD0DE3A1B5277FDBAFD42172FA97BC1366D94FA3F5796AD536"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/proposal-900/receipt.json",
+      "sha256": "FFA99F311FF3E979892B20338DA23F9E794B14063E24B16BC8B2F2D1FA953875"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/visual-final/review.json",
+      "sha256": "D05B1453C04717A18F874ADD2F9EF6F8C72C499C8EAF2CD7763B03067F39155A"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/viewer-checks.json",
+      "sha256": "5F7C205F9CF3E6D54B37218DEB848FBE558EFFE29DECE0AC4A96AA50D5AD0D9B"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/viewer-proof.png",
+      "sha256": "CA85B0976FE36376D59AFE3BDB5C6F86C2EE86511DDD4A4854A63D30FE90CF1C"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/boundaries.log",
+      "sha256": "CA64A21868337A62001DA3540A5971D1B05D3F5CD6BDD8297D602D47A8B9B610"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/impeccable-detect.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/import-shape-reproduced.json",
+      "sha256": "E9DD911A86A76994CC9AED8D6EC3F40A43844EA47891085796DDA7F0387E83A2"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/import-shape-expected-red.log",
+      "sha256": "F6BD37C516A8532833531A2B6D312CBFF895729791674CDC420585EFBC1468B8"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/import-shape-fixed.json",
+      "sha256": "7EE00910AFA6BFCC152F7E98BEBC4D7DFF4423535346D4641E0D9BCD5836B5A5"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/import-shape-fixed-pc.json",
+      "sha256": "1166AEAA3C2D1FA0D0571B192F7FAB359BA48B19E9A1BB04BF79D8642BC01308"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/impact-final.json",
+      "sha256": "07BEB1112F4A0524AD536A03091FB9447ADAEF329502F4291E2AB6B48C1FC2AA"
+    },
+    {
+      "path": "artifacts/b1-input-children-2026-10-28/final-captures.log",
+      "sha256": "FEAB3761A5C27B806B0748A330699B730DF80DBE72C0787EB7EC0028E3CD9B54"
+    }
+  ],
+  "remaining": [
+    "Image-specific reply C-07 original/native support and parity",
+    "Real clipboard/export/OS chooser/file-read failure and unobserved key/escape children",
+    "All128/account/device/current-extension/formal header/whole-UI acceptance",
+    "Per-item backup validation outside the repaired top-level array contract"
+  ],
+  "qualificationScope": "SCOPED_UI_CHANGE",
+  "workSuccessCertified": false
+}

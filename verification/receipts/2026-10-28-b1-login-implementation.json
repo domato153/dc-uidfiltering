@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_LOGIN_ENTRY_SCOPED_IMPLEMENTATION",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "e01d8a4eac8f7a0c2c83eb669081b5ccf6fb83fd",
+  "candidateFingerprint": "385b8c6fc3d3bdbedcc6e635cf664b420352a99289d7eeec66c72d689f93a93f",
+  "artifact": {
+    "mobileSha256": "F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "mobileVersion": "3.5.5",
+    "pcVersion": "1.9.9",
+    "officialRelease": false
+  },
+  "controls": {
+    "mobileSha256": "1593C0F7FA4FFDFCAF1607EFC3D8DC557FED9F4A41CD968C9914814965C5BF5B",
+    "pcSha256": "EF24D41DD44AC13634FC17CEC43B31CD371C6D0F3D8AEA6A6C47CB81ABB832E3",
+    "recovery": "Preserved local controls or source-base checkpoint build; do not substitute another release."
+  },
+  "scope": {
+    "mobileExactSignLoginOnly": true,
+    "originalNodesFieldsParentsValuesHandlers": true,
+    "productCredentialHiddenCookieReads": false,
+    "authenticationAttempted": false,
+    "newStorageKeysOrGrants": false,
+    "galleryBootOnSign": false,
+    "sharedTheme": "Pure exact CSS/preset extraction; existing consumers remain"
+  },
+  "verification": {
+    "metadata": {
+      "positive": 4,
+      "negative": 7,
+      "extensionMatchingIsSeparate": true
+    },
+    "sourceObservations": 48,
+    "layoutThemeContexts": 6,
+    "positiveFormHits": 42,
+    "paletteThemeContexts": 28,
+    "resources": "Ready/media/pageshow removed; existing harness baseline preserved,including its own probe frame/timer.",
+    "exactThemeParity": "Mobile target CSS,full mounted Mobile/PC CSS,14 presets and normalization byte/value-equal to immediate controls.",
+    "mobileCompletedBeforeScopeSteering": {
+      "passed": 160,
+      "failed": 0,
+      "groups": {
+        "functional": 109,
+        "write": 36,
+        "boot": 13,
+        "smoke": 1,
+        "performance": 1
+      }
+    },
+    "hostCompatibility": {
+      "passed": 11,
+      "failed": 0,
+      "initialFailure": "Oracle still read presets from old theme-presenter path; updated authority path plus same14-value assertion and presenter-consumer binding."
+    },
+    "pcAffectedPaletteOnly": {
+      "passed": 1,
+      "failed": 0,
+      "wholePcSuite": "NOT_RUN_USER_SCOPED"
+    },
+    "actualExtension": {
+      "kind": "actual-tampermonkey-login-native-replay",
+      "status": "PASS",
+      "cases": [
+        {
+          "url": "https://sign.dcinside.com/login",
+          "requestedActive": true,
+          "resolvedUrl": "https://sign.dcinside.com/login",
+          "expectedActive": true,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/login/",
+          "requestedActive": true,
+          "resolvedUrl": "https://sign.dcinside.com/login/",
+          "expectedActive": true,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/login?s_url=https%3A%2F%2Fgall.dcinside.com%2Fboard%2Flists%2F",
+          "requestedActive": true,
+          "resolvedUrl": "https://sign.dcinside.com/login?s_url=https%3A%2F%2Fgall.dcinside.com%2Fboard%2Flists%2F",
+          "expectedActive": true,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/login#native-fragment",
+          "requestedActive": true,
+          "resolvedUrl": "https://sign.dcinside.com/login#native-fragment",
+          "expectedActive": true,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/login/?s_url=synthetic#native-fragment",
+          "requestedActive": true,
+          "resolvedUrl": "https://sign.dcinside.com/login/?s_url=synthetic#native-fragment",
+          "expectedActive": true,
+          "dark": true,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/login/member_check",
+          "requestedActive": false,
+          "resolvedUrl": "https://sign.dcinside.com/login/member_check",
+          "expectedActive": false,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/myinfo/find_id",
+          "requestedActive": false,
+          "resolvedUrl": "https://sign.dcinside.com/myinfo/find_id",
+          "expectedActive": false,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com/join/",
+          "requestedActive": false,
+          "resolvedUrl": "https://sign.dcinside.com/join/",
+          "expectedActive": false,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "https://sign.dcinside.com.evil.test/login",
+          "requestedActive": false,
+          "resolvedUrl": "https://sign.dcinside.com.evil.test/login",
+          "expectedActive": false,
+          "dark": false,
+          "status": "PASS"
+        },
+        {
+          "url": "http://sign.dcinside.com/login",
+          "requestedActive": false,
+          "resolvedUrl": "https://sign.dcinside.com/login",
+          "expectedActive": true,
+          "requestedHttpApplicability": "N/A_BROWSER_UPGRADED_TO_EXACT_HTTPS",
+          "dark": false,
+          "status": "PASS"
+        }
+      ],
+      "extensionVersion": "5.5.0",
+      "extensionSha256": "BCAEC082C439E11C4DF683F43D07E9AC3D4439251D72B91C5B452F977DAC15D5",
+      "chromeVersion": "156.0.8078.48",
+      "chromeExecutableSha256": "480F275B63D1EA39113CBC8344AC395578ACC25B432BD39AF5FBC77005179ACA",
+      "installMethod": "Utilities / Import from URL / Install",
+      "exactServedSha256": "F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB",
+      "documentStart": true,
+      "gmShimOrUserscriptInjection": false,
+      "networkMethods": [
+        "GET"
+      ],
+      "ownedChromeClosed": true,
+      "scope": "Actual installed Chrome/Tampermonkey metadata and isolated entry on synthetic native replay; no auth request, real account, or live-authentication claim."
+    },
+    "visual": {
+      "pairs": 4,
+      "pixelMatches": 0,
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "userFinalAestheticAdoption": false,
+      "referenceImages": [
+        "docs/design/b1-login-proposal-light-2026-10-28.png",
+        "docs/design/b1-login-proposal-dark-2026-10-28.png"
+      ],
+      "intentionalDifferences": [
+        "Reference classic scrollbar changes content width/centering by15/7.5px.",
+        "Canonical current B1 dark paper/rim/sheen is quieter than older hardcoded provisional draft; no duplicated new material owner."
+      ],
+      "optical": [
+        {
+          "dark": false,
+          "neutralBackingTransmission": 14,
+          "opaqueFieldDelta": 0
+        },
+        {
+          "dark": true,
+          "neutralBackingTransmission": 10,
+          "opaqueFieldDelta": 0
+        }
+      ],
+      "viewer": "Selected two980x900 images decode in both themes; no broken images."
+    },
+    "independentReview": "No blocking product issue. Synthetic initial/duplicate prefilled-value and delayed rejection/pre-ready disposal/resource gaps added to final focused contract."
+  },
+  "testSelection": {
+    "directive": "User2026-10-28: actual change/dependency impact,not routine full tests or unaffected-code repeats.",
+    "actualImpact": [
+      {
+        "changed": "Exact Mobile login entry/metadata and native adapter/presenter",
+        "selected": "Focused48 source observations,metadata4/7,actual installed-TM10 routes,light/dark whole/detail and neutral transmission."
+      },
+      {
+        "changed": "Hoisted pure shared palette/base and Mobile material extraction,existing bootstrap/build consumers",
+        "selected": "Exact old/current Mobile/PC CSS and14 presets; actual PC palette/startup consumer1 test. Full160/host11 had already completed before user steering."
+      },
+      {
+        "changed": "Host oracle preset authority path",
+        "selected": "Retain original14-preset assertions and check presenter consumer; host11 rerun completed before user steering."
+      },
+      {
+        "changed": "Guidance/current-next/checkpoint inputs",
+        "selected": "Exact-tree packaging/governance verification via existing publisher; no further product-wide browser suite."
+      }
+    ],
+    "resolverProfiles": [
+      "policy",
+      "proof-core",
+      "proof-runtime",
+      "acceptance",
+      "promotion-windows"
+    ],
+    "automaticFallbackExecution": false,
+    "notRun": [
+      "Full PC/filter semantic suites after scope correction",
+      "Generic fallback proof/acceptance/promotion pipelines",
+      "Real account/CAPTCHA/authentication/device tests"
+    ],
+    "postSteeringFollowup": "Git fixture whitespace only: focused48 rerun and final extension replay refreshed; source render bytes unchanged. Requested HTTP resolved to exact HTTPS,so direct HTTP extension applicability is N/A; no product change or full-suite rerun.",
+    "formalUpperAcceptance": "UNKNOWN"
+  },
+  "architecture": {
+    "acceptedRegistryUnchanged": true,
+    "candidateOverlay": "architecture/candidates/mobile-ui-modernization-assurance.json",
+    "loginSurface": "login-authentication",
+    "priorityExceptions": 0,
+    "mixedExitOrPromotion": false
+  },
+  "remaining": [
+    "Real-account authentication,password-manager integration,conditional CAPTCHA/auth errors and actual phone",
+    "Named unobserved integrated UI children and formal header/whole-UI admission",
+    "User final visual preference; draft is not a regression golden",
+    "Four separate upload documents remain DEFERRED_USER_ACCEPTED; C-07 image replies N/A"
+  ],
+  "sourceFiles": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "112D4060C251174DE01EA3A12BFDFA41079E59A9B37E1907443397816F095B1B"
+    },
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "sha256": "A256E6B9C1C4D3D8197DBC8FFAD71D16410021282A125951CF1675080B1AA0C0"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "19F97D61B18A242D51FEA70E24477E5944326544EE6B7F4ECD1C363A266E2291"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "1C53647C092503D49321C0B5631FB38FBB54123B2A174330DD2B698257251DAB"
+    },
+    {
+      "path": "src/meta/userscript-header.txt",
+      "sha256": "1B48FA1797F132BC5D531706B84A4F9091953A3938B674D6A455052218CFAC6D"
+    },
+    {
+      "path": "src/runtime/bootstrap.js",
+      "sha256": "692FB3862F1C567E86D5EAB16CAA76D09EFD8B7D3388051386FE28FEEE00A877"
+    },
+    {
+      "path": "src/shared/theme-primitives.js",
+      "sha256": "EDE1A172DFF552120259612DD4468D3369B958F7E938627DD58322964F9E9D03"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "C12C242956C3AB68D7226C2BDD06BAC92348D7B04C38BCAE3A6182BC8AF9D4E7"
+    },
+    {
+      "path": "src/targets/mobile/login-presenter.js",
+      "sha256": "41512BCA8CA1F28D89CB2CB76E12F5AB906B915951C641CBC64DA60AC61E21BC"
+    },
+    {
+      "path": "src/targets/mobile/login-host-adapter.js",
+      "sha256": "0BCF5D4D21E718465EC158F135FC9AC6CD24101A2796B4241621ED8F099C5F39"
+    },
+    {
+      "path": "src/targets/mobile/theme-host-style.js",
+      "sha256": "934FB2DACCAC53FCF76840EF80F0706B216DB6395F68362BA12A9933F140DD94"
+    },
+    {
+      "path": "src/targets/shared/theme-presenter.js",
+      "sha256": "54B2A7EA75E58CF556835581B4E422D100E9E2FB360B2D54AC5D8E6E3186DC08"
+    },
+    {
+      "path": "tools/build-userscript.mjs",
+      "sha256": "0DF984076F955AD930B1C80858D99C4B742A125ACF41F7814C66934D2292B980"
+    },
+    {
+      "path": "tools/build-pc-filter-userscript.mjs",
+      "sha256": "E8EE41681BCE17C87E4B1ECAE6A56557CAA8B3F23E291DB0181A71866BC33185"
+    },
+    {
+      "path": "tools/verify-repo.mjs",
+      "sha256": "9F5E85022BA025F2D64AF2E67BCD80D098DE286B00A054B57493F793CC196B06"
+    },
+    {
+      "path": "tools/verify-modernization-assurance.mjs",
+      "sha256": "C9CA171B00DD86EE26DB440B301031E8A42EA77BD68E4DE2AD73CC14AB822D74"
+    },
+    {
+      "path": "tools/test-governance.mjs",
+      "sha256": "490EC812009EA2049ACCB407D9FFA13B16FCF53BDAC14AC9404B7B0DBAEBE34C"
+    },
+    {
+      "path": "tools/test-mobile-source-contracts.mjs",
+      "sha256": "CDC948D9B0FE38C8B750390C0C9DDDCFA1F193A2F2AFABB71DF85487BB5E5156"
+    },
+    {
+      "path": "tools/test-header-palette-ownership.mjs",
+      "sha256": "354FCC962B0AE0FBD22D20E6CEE369988EC5F0117C6BB59BFF21EA639F6387FE"
+    },
+    {
+      "path": "testbed/run-host-compatibility.mjs",
+      "sha256": "257ECEDCC4F30E4E6A66BFAAB58ED96ABC4ACA90D7835E91CB6ED38C2B6D5A7B"
+    },
+    {
+      "path": "testbed/ui-b1-login-contract.mjs",
+      "sha256": "19CAAB57E3D5648DBB1704D0413645417600046A12BF1AEF5052BE1B25B4249A"
+    },
+    {
+      "path": "testbed/test-login-metadata.mjs",
+      "sha256": "E00C6D78D42DF26672126A0FC97B066DD7A258F6E5E5974AB2D7ACC7AD615E36"
+    },
+    {
+      "path": "testbed/test-login-theme-parity.mjs",
+      "sha256": "2AEFA06D57E4A304EE6D4C8361F1613C0827892A9EA45AADA19C87777C3C1BFD"
+    },
+    {
+      "path": "testbed/run-login-entry.mjs",
+      "sha256": "50020D638584DC5D1F2468DEA52C3FBACAE2B6A8F745556FA735454307D5B3F4"
+    },
+    {
+      "path": "testbed/run-login-extension.mjs",
+      "sha256": "AB1A6067513694F3E81D40FCC18774176249BC6B90429DAF1CAE114955E9542B"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "FEE57F249C3E195FA5EDB55EBD0E132CA9EA4EA45D155A65649389C2C44314CB"
+    },
+    {
+      "path": "testbed/fixtures/login-native.mjs",
+      "sha256": "CA3429532CE917060491E86BD0A65ACB703AE742B8CCD07303159F00B97E143B"
+    },
+    {
+      "path": "testbed/fixtures/login-native.html",
+      "sha256": "2D8649666F8A9D8F3F62AA183FFE50BA0E272C4DE4F1AD0EE634FD18CFC71F42"
+    },
+    {
+      "path": "testbed/fixtures/login-native.css",
+      "sha256": "B5E0A47F9341CBCAAF3133A895B7AAC281CA49021748EB2BE3E330BF4B22C7CC"
+    },
+    {
+      "path": "testbed/fixtures/login-wordmark.svg",
+      "sha256": "05E66AC37993E17668EE69B198C6DD88370A090F6E37740C5B4F90E9CE48EB93"
+    },
+    {
+      "path": "testbed/fixtures/login-security-sprite.png",
+      "sha256": "A991B3B664A7DE55989AE2CEC0FC14433373339572C3C6113272D0BBCA068635"
+    },
+    {
+      "path": "verification/intended-deltas.json",
+      "sha256": "9934AFABBF0F21B5DD7C4A2FCA4D561FDCEB2AF48C16C2796FE50ECA1F52F3FD"
+    }
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/metadata-red.log",
+      "sha256": "44519005AB769701E75C35CD880311DD1E7CA4E85BCA03A06AA79870E6FD7E0C"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/entry-red.log",
+      "sha256": "53D81BEF8163146F962104C6E78726203BCC00817296E0C4B5325BF73B326569"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/source-final/observations.json",
+      "sha256": "83DDB5699A1AF4A4CEF97A9EAE42B842C12E5E527998E4E16EB3D1D056821681"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/source-final.log",
+      "sha256": "EC7E35CA209EF10A66826F4EE0C6162277BE4FD5556038312EBDFFBDB7D8976B"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/mobile-full.json",
+      "sha256": "645365CEDAA2A2D3148CF02820ED53C9E14C9B1E10AB82F1538A67EBDACF02F7"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/host-final.json",
+      "sha256": "7F911F8FDB47C07E8AA7546C1375002FD6AD851C10F886D9FD9742EF4DFA4D53"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/pc-palette.json",
+      "sha256": "EF25BD16C369AB822B01B20D4E43E10FC0A9B3DB8C9F44329B3E8D61D596E9B9"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/extension/report.json",
+      "sha256": "E39178C2F0C1C26D020898A1C0C598DBF2790177CD13CA6575ACBC8860AAD545"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/extension-diagnosis.log",
+      "sha256": "3AAA7BC6F4B045BBB47DB1ECD9CC148314C4791E6369C67123F52F92D4C3F3D0"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/visual-manifest.json",
+      "sha256": "B4BB67FD24B50538EA516AD8E3D8E106A90E67BCB5031251A4DFD7052672B7EB"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/visual-review/review.json",
+      "sha256": "B7C643B9D2523F7B28B9B8AC866DCD4D9272C0837E0E6B6E1EDAE9E562D82C6E"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/material-viewer.json",
+      "sha256": "32215A2A754B29AA963FC8368CCDB900FE0576A28C1AE62E9B3A2224C7E99430"
+    },
+    {
+      "path": "artifacts/b1-login-implementation-2026-10-28/impact-final.json",
+      "sha256": "40DFA5B8EEF201BE30066378FAA3AF35A8AB1153DF1E0D4FB74A905B0A2B7327"
+    }
+  ],
+  "qualificationScope": "SCOPED_UI_CHANGE",
+  "workSuccessCertified": false
+}

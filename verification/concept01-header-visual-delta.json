@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "base": "023e01d5b9266226741a68253f77652989fb7dba",
+  "scope": "Exact approved Concept01 and header-layout visual fragments only. Structural selector-input schema changes remain current. Historical hashes remain unchanged; no behavior or raw-admission waiver.",
+  "sources": [
+    {
+      "sourceRef": "src/targets/mobile/header-shell-presenter.js",
+      "family": "HeaderShell",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted: the palette mounts before presenter objects initialize.\n",
+          "control": "    // Hoisted: the palette mounts before presenter objects initialize.\n"
+        },
+        {
+          "candidate": "        }\n        ${selectors.searchButton},\n",
+          "control": "        }\n        ${selectors.search},\n        ${selectors.searchButton},\n"
+        },
+        {
+          "candidate": "        ${selectors.logout} {\n            border-color: var(--dcuf-theme-accent-ink);\n            background-color: var(--dcuf-theme-accent-strong) !important;\n",
+          "control": "        ${selectors.logout} {\n            border-color: var(--dcuf-theme-accent-strong);\n            background-color: var(--dcuf-theme-accent-strong) !important;\n"
+        },
+        {
+          "candidate": "        ${selectors.searchInset} {\n            border: 1px solid var(--dcuf-theme-border-strong);\n            border-radius: 8px;\n            background: var(--dcuf-theme-surface-input);\n            box-shadow: none;\n        }\n        ${selectors.searchField} {\n            border-color: transparent;\n            background-color: var(--dcuf-theme-surface-input);\n            color: var(--dcuf-theme-fg);\n        }\n",
+          "control": "        ${selectors.searchInset} {\n            box-shadow: inset 0 0 0 1px var(--dcuf-theme-accent-strong);\n        }\n        ${selectors.searchField} {\n            border-color: var(--dcuf-theme-accent-strong);\n        }\n"
+        },
+        {
+          "candidate": "            css: `\n        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: var(--dcuf-theme-surface, #fff); border-bottom: 1px solid var(--dcuf-theme-border, #e2e7e5); }\n        ${selectors.head} {\n            display: grid !important;\n            grid-template-columns: minmax(180px, .7fr) minmax(240px, 1.3fr);\n            grid-template-areas: \"brand search\" \"utilities utilities\";\n            align-items: center;\n            gap: 8px 28px;\n            padding: 18px 24px 10px;\n            position: relative;\n            height: auto;\n            min-width: 0;\n            max-width: 1180px;\n            margin-inline: auto;\n            box-sizing: border-box;\n",
+          "control": "            css: `\n        ${selectors.root} { min-width: 0 !important; width: 100% !important; height: auto !important; background: #fff; border-bottom: 1px solid #e5e5e5; }\n        ${selectors.head} {\n            display: flex !important;\n            justify-content: space-between;\n            align-items: center;\n            padding: 8px 15px;\n            gap: 15px;\n            min-width: 320px;\n            box-sizing: border-box;\n"
+        },
+        {
+          "candidate": "        }\n        ${selectors.logo} { grid-area: brand; position: static; inset: auto; float: none; margin: 0; display: flex; align-items: center; gap: 10px; min-width: 0; font: 800 24px/1.2 system-ui, sans-serif; letter-spacing: -.6px; }\n        ${selectors.logo} > a { position: static; margin: 0; flex: none; color: var(--dcuf-theme-fg); text-decoration: none; }\n        ${selectors.root} ${selectors.logo} > a + a { font-size: 12px; font-weight: 600; color: var(--dcuf-theme-fg-muted); }\n        ${selectors.logoImage} { height: 22px; width: auto; }\n        ${selectors.logoImageAlt} { display: none; }\n        ${selectors.searchWrap} { grid-area: search; position: relative; inset: auto; margin: 0; width: 100%; min-width: 0; max-width: none; }\n        ${selectors.topSearch} { display: flex; align-items: center; width: 100%; height: 44px; box-sizing: border-box; }\n        ${selectors.topSearch} > div { flex: 1; min-width: 0; }\n        ${selectors.topSearch} button { flex: none; width: 44px; height: 42px; margin: 0; }\n        ${selectors.links} { grid-area: utilities; position: static; inset: auto; display: flex; justify-content: flex-end; align-items: center; flex-wrap: wrap; gap: 8px; width: 100%; min-width: 0; margin: 0; white-space: normal; }\n        ${selectors.links} > ul { display: flex; align-items: center; flex-wrap: wrap; gap: 3px; list-style: none; margin: 0; padding: 0; }\n        ${selectors.links} > ul > li { float: none; }\n        ${selectors.links} > div { flex: none; }\n        ${selectors.links} a { display: inline-flex; align-items: center; min-height: 26px; padding-inline: 4px; font-size: 11px; color: var(--dcuf-theme-fg-muted); }\n        @media (max-width: 759px) {\n            ${selectors.head} { grid-template-columns: minmax(0, 1fr); grid-template-areas: \"brand\" \"search\" \"utilities\"; padding: 16px; gap: 10px; }\n            ${selectors.links} { justify-content: flex-start; }\n        }\n        ${selectors.darkRoot} ${selectors.logo} > a:first-child { filter: brightness(0) invert(1); }\n        ${selectors.darkRoot} {\n            background: var(--dcuf-theme-surface, #1b2021);\n            border-bottom-color: var(--dcuf-theme-border, #343c3d);\n        }\n",
+          "control": "        }\n        ${selectors.logo} { flex-shrink: 0; margin: 0; display: block; }\n        ${selectors.logoImage} { height: 22px; width: auto; }\n        ${selectors.logoImageAlt} { display: none; }\n        ${selectors.searchWrap} { flex-grow: 1; min-width: 100px; max-width: 600px; }\n        ${selectors.topSearch} { width: 100%; }\n        ${selectors.links} { display: flex; flex-shrink: 0; white-space: nowrap; }\n        ${selectors.darkRoot} {\n            background: #1c1c1e;\n            border-bottom-color: #3a3a3c;\n        }\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-gnb-presenter.js",
+      "family": "HeaderGnb",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted to preserve the existing early palette injection phase.\n",
+          "control": "    // Hoisted to preserve the existing early palette injection phase.\n"
+        },
+        {
+          "candidate": "        ${selectors.root} {\n            border-color: var(--dcuf-theme-border);\n            background-color: var(--dcuf-theme-surface);\n            background-image: none;\n            color: var(--dcuf-theme-fg);\n        }\n",
+          "control": "        ${selectors.root} {\n            border-color: var(--dcuf-theme-accent-strong);\n            background-color: var(--dcuf-theme-accent-strong);\n            background-image: none;\n            color: var(--dcuf-theme-on-accent);\n        }\n"
+        },
+        {
+          "candidate": "            border-left-width: 7px;\n            border-top: 10px solid var(--dcuf-theme-fg-muted);\n            background: none !important;\n",
+          "control": "            border-left-width: 7px;\n            border-top: 10px solid var(--dcuf-theme-on-accent);\n            background: none !important;\n"
+        },
+        {
+          "candidate": "            css: `\n        ${selectors.root} { display: block; width: 100% !important; max-width: 1180px; min-width: 0 !important; height: auto; margin: 0 auto 10px; padding: 0 24px; box-sizing: border-box !important; background: transparent; border: 0; }\n        ${selectors.nav} { width: 100%; min-width: 0; height: auto; padding: 0 24px; box-sizing: border-box; display: flex !important; justify-content: flex-start; }\n        ${selectors.list} { display: flex; flex-wrap: wrap; gap: 6px; height: auto; justify-content: flex-start; width: 100%; padding: 0; margin: 0; list-style: none; }\n        ${selectors.list} > li { flex: none; float: none; width: auto; height: auto; margin: 0; }\n        ${selectors.list} > li > a { display: inline-flex; align-items: center; min-height: 34px; height: auto; padding: 0 14px; border: 1px solid var(--dcuf-theme-border); border-radius: 999px; background: var(--dcuf-theme-surface-muted); color: var(--dcuf-theme-fg); font-size: 12px; line-height: 1.4; text-shadow: none; text-decoration: none; }\n        ${selectors.list} > li > a[data-dcuf-header-gnb-role=\"current-link\"],\n        ${selectors.list} > li > a:is(:hover, :focus-visible) { background: var(--dcuf-theme-accent-soft); border-color: var(--dcuf-theme-accent-ink); color: var(--dcuf-theme-accent-ink); }\n        ${selectors.darkList} > li > a[data-dcuf-header-gnb-role=\"current-link\"] { color: var(--dcuf-theme-accent-ink); }\n        @media (max-width: 759px) { ${selectors.root} { padding-inline: 16px; } }\n\n`\n",
+          "control": "            css: `\n        ${selectors.root} { display: block; width: 100% !important; min-width: 0 !important; height: auto; box-sizing: border-box !important; background: #3b4890; }\n        ${selectors.nav} { width: auto; min-width: 0; height: auto; padding: 0 15px; display: flex !important; justify-content: center; }\n        ${selectors.list} { display: flex; flex-wrap: wrap; height: auto; justify-content: space-around; width: 100%; }\n`\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/gallery-page-head-presenter.js",
+      "family": "GalleryPageHead",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted because theme composition precedes this presenter object.\n",
+          "control": "    // Hoisted because theme composition precedes this presenter object.\n"
+        },
+        {
+          "candidate": "        ${selectors.title} {\n            color: var(--dcuf-theme-fg);\n            font-weight: 750;\n        }\n",
+          "control": "        ${selectors.title} {\n            color: var(--dcuf-theme-accent);\n        }\n"
+        },
+        {
+          "candidate": "        ${selectors.root} {\n            display: grid;\n            grid-template-columns: minmax(0, 1fr);\n            align-items: stretch;\n            gap: 14px;\n            padding: 22px 24px !important;\n            margin: 16px auto 20px;\n            box-sizing: border-box;\n            width: calc(100% - 40px);\n            max-width: 1120px;\n            height: auto;\n            min-height: 0;\n            border: 1px solid var(--dcuf-theme-border);\n            border-radius: 18px;\n            background: var(--dcuf-theme-surface-muted);\n        }\n        ${selectors.left} { position: static; float: none; display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; min-width: 0; margin: 0; }\n        ${selectors.left} > h2 { float: none; margin: 0; max-width: 100%; font-size: 30px; line-height: 1.3; letter-spacing: -.8px; overflow-wrap: anywhere; }\n        ${selectors.left} > h2 a { font: inherit; }\n        ${selectors.left} > form { float: none; margin: 0; }\n        ${selectors.right} {\n            position: static;\n            inset: auto;\n            float: none;\n            margin: 0;\n            padding: 12px 0 0;\n            border-top: 1px solid var(--dcuf-theme-border);\n            width: 100%;\n            min-width: 0;\n            display: flex;\n            justify-content: flex-start;\n            flex-wrap: wrap;\n",
+          "control": "        ${selectors.root} {\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            padding: 10px 15px !important;\n            box-sizing: border-box;\n            width: 100%;\n            height: auto;\n            min-height: 50px;\n            flex-wrap: wrap;\n            gap: 10px;\n        }\n        ${selectors.left} { float: none; }\n        ${selectors.right} {\n            float: none;\n            margin-left: auto;\n            display: flex;\n            flex-wrap: wrap;\n"
+        },
+        {
+          "candidate": "        }\n        ${selectors.clearfix} { content: none; display: none; }\n        @media (max-width: 759px) {\n            ${selectors.root} { width: calc(100% - 24px); padding: 18px !important; }\n            ${selectors.left} > h2 { font-size: 26px; }\n        }\n\n`\n",
+          "control": "        }\n        ${selectors.clearfix} { content: \"\"; display: table; clear: both; }\n`\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-recent-visit-presenter.js",
+      "family": "HeaderRecentVisit",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see CONCEPT01_TRIAL.md.\n    // Hoisted to preserve the existing early palette injection phase.\n",
+          "control": "    // Hoisted to preserve the existing early palette injection phase.\n"
+        },
+        {
+          "candidate": "        ${selectors.activeLink} {\n            color: var(--dcuf-recent-control-ink,var(--dcuf-theme-accent-ink)) !important;\n        }\n",
+          "control": "        ${selectors.activeLink} {\n            color: var(--dcuf-theme-accent) !important;\n        }\n"
+        },
+        {
+          "candidate": "        ${selectors.item} { white-space: nowrap; flex-shrink: 0; }\n        ${selectors.list} a { color: var(--dcuf-theme-fg-muted); text-decoration: none; }\n        ${selectors.controls} { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }\n",
+          "control": "        ${selectors.item} { white-space: nowrap; flex-shrink: 0; }\n        ${selectors.controls} { display: inline-flex !important; align-items: center; justify-content: center; flex: 0 0 auto; position: static !important; inset: auto !important; transform: none; margin: 0 !important; padding: 0 4px; overflow: visible; }\n"
+        }
+      ]
+    },
+    {
+      "sourceRef": "src/targets/mobile/header-drawer-presenter.js",
+      "family": "HeaderDrawer",
+      "patches": [
+        {
+          "candidate": "    // dcuf-concept01-visual-v1: approved presentation delta; see HEADER_LAYOUT_REDESIGN.md.\n    // Palette accents apply to the original host issue root, including before\n",
+          "control": "    // Palette accents apply to the original host issue root, including before\n"
+        },
+        {
+          "candidate": "                [data-dcuf-header-drawer-scope=\"1\"] ${selectors.door}[data-dcuf-header-native-door-open=\"1\"] ${selectors.tipPopup} {\n                    position: fixed;\n                    top: 50%;\n                    right: auto;\n                    left: 50%;\n                    margin: 0;\n                    transform: translate(-50%, -50%);\n                    max-width: calc(100vw - 24px);\n                    max-height: calc(100vh - 24px);\n                    overflow: auto;\n                }\n",
+          "control": "                [data-dcuf-header-drawer-scope=\"1\"] ${selectors.door}[data-dcuf-header-native-door-open=\"1\"] ${selectors.tipPopup} {\n                    right: auto;\n                    left: 12px;\n                }\n"
+        }
+      ]
+    }
+  ]
+}

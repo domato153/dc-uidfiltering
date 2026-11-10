@@ -1,0 +1,77 @@
+{
+  "provenance": "Independent original-shaped proposal rendered on retained8AC7 control before product settings styling;ordinary B1 tokens/C885;anonymous empty state;not user aesthetic approval",
+  "captures": [
+    {
+      "kind": "memo",
+      "theme": "light",
+      "path": "docs/design/b1-native-settings-memo-light-2026-10-29.png",
+      "sha256": "f4bff907ad1c2942eccf10a214f07c80544cac3a2c9087ba315324f961adfb3c"
+    },
+    {
+      "kind": "memo",
+      "theme": "dark",
+      "path": "docs/design/b1-native-settings-memo-dark-2026-10-29.png",
+      "sha256": "295b2c1487881cbc8a32d6816cf80539443eb7eb6294d885a3e470f0ee9c9e95"
+    },
+    {
+      "kind": "block",
+      "theme": "light",
+      "path": "docs/design/b1-native-settings-block-light-2026-10-29.png",
+      "sha256": "2a0f75304907502b975426aada3421efb47420f9a40a71377cb7df596c347e37"
+    },
+    {
+      "kind": "block",
+      "theme": "dark",
+      "path": "docs/design/b1-native-settings-block-dark-2026-10-29.png",
+      "sha256": "9f1816ad6f4370571a4a7422b92e7dd5aa8c95967b2c037fed9dfde7f9e043e7"
+    },
+    {
+      "kind": "headtail",
+      "theme": "light",
+      "path": "docs/design/b1-native-settings-headtail-light-2026-10-29.png",
+      "sha256": "6d01fe8541dcb08e3f851d3e6073abc1bbfbeb1bad71875b38fe341e187d6710"
+    },
+    {
+      "kind": "headtail",
+      "theme": "dark",
+      "path": "docs/design/b1-native-settings-headtail-dark-2026-10-29.png",
+      "sha256": "4e3f0a71bbba38acd40d84c5355278b96816b4a758bc26bf8ff2a9ab676f92ca"
+    },
+    {
+      "kind": "spoiler",
+      "theme": "light",
+      "path": "docs/design/b1-native-settings-spoiler-light-2026-10-29.png",
+      "sha256": "2ee3172699fa3116777ce7f1f48c9d05909b0f71095a01aeb5e085fa0d770daf"
+    },
+    {
+      "kind": "spoiler",
+      "theme": "dark",
+      "path": "docs/design/b1-native-settings-spoiler-dark-2026-10-29.png",
+      "sha256": "3569420498d9bbbf477c7a0f37164824ba076aa33985178c33275fc5323f08e4"
+    },
+    {
+      "kind": "trusted",
+      "theme": "light",
+      "path": "docs/design/b1-native-settings-trusted-light-2026-10-29.png",
+      "sha256": "cba0ba8f6d179dedbc81a16de169dae2c11d2bcf8bd065c3a8e5f0a73764bc94"
+    },
+    {
+      "kind": "trusted",
+      "theme": "dark",
+      "path": "docs/design/b1-native-settings-trusted-dark-2026-10-29.png",
+      "sha256": "b157723563cb3768b8fb9b9e916ac75b04088a587e95ca7683202c2ebaac3475"
+    },
+    {
+      "kind": "auto",
+      "theme": "light",
+      "path": "docs/design/b1-native-settings-auto-light-2026-10-29.png",
+      "sha256": "5642f6ab35f20eb13c3d87dbb40092b43d5ec5bd43fdcd0944012a10de30b0c0"
+    },
+    {
+      "kind": "auto",
+      "theme": "dark",
+      "path": "docs/design/b1-native-settings-auto-dark-2026-10-29.png",
+      "sha256": "89cc351f525ca910c11420f5e50da01c62751f2527abe70c15f8cdc8a1ae76e5"
+    }
+  ]
+}

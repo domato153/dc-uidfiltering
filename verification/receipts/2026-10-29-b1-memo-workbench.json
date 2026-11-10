@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_MEMO_WORKBENCH",
+  "status": "SCOPED_IMPLEMENTATION_VALIDATED_VISUAL_REVIEW_PENDING",
+  "sourceBaseHead": "741a64a6aedf3d4401479426031225ed9fb160dd",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577",
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "rootDistGuardMatch": true,
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/gallery-page-head-host-adapter.js",
+      "sha256": "01E95BBD1F9DE0F8BE81425B18CEDCC03475FA4641D7B731019B3D555145E0DB"
+    },
+    {
+      "path": "src/targets/mobile/gallery-page-head-presenter.js",
+      "sha256": "D1EA1B7548F28675FB9E7ECD1743DDE2D892794ACE247C70AFDE5A1EB1014734"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-settings.mjs",
+      "sha256": "01F8F7AA6A2100B565A987AA926C7FCD44F30C1C3A9E7DFC27AFFDE578E0FCE5"
+    },
+    {
+      "path": "testbed/ui-b1-memo-workbench-contract.mjs",
+      "sha256": "E7696DCFDA3BADE782CBC590BB17A9F1322D3C5CF09825E2533243A467464B27"
+    },
+    {
+      "path": "verification/b1-header-visual-delta.json",
+      "sha256": "2C11FA246C124B67B72A60FACD92CC5DE4A5EBAB7611DF944D9394CFFABA446F"
+    }
+  ],
+  "design": {
+    "path": "docs/design/b1-glass-window-researched-proposal-v7-2026-10-29.png",
+    "sha256": "4748D2D43A417BA56B5AF8B72CEAEA1B905077793D1D22C9A562A859B7D01B0E",
+    "selectedByUser": true,
+    "implementationApprovedByUser": false,
+    "fullComparison": "artifacts/b1-memo-v7/visual-review-bound/review.json",
+    "comparisonSha256": "CA44C8CBA3E75B85BA408A318E78783BEB395680FB9A401082C7BBDB3873727F",
+    "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+    "referenceFidelity": "UNVERIFIED",
+    "wholeAndDetailViewed": true
+  },
+  "scope": {
+    "nativeRoot": "memo-management",
+    "targets": [
+      "mobile"
+    ],
+    "environments": [
+      "980x900 light",
+      "980x900 dark",
+      "1536x1024 light",
+      "980x2306 adopted phone layout",
+      "390x560 dark stress"
+    ],
+    "palettes": 14,
+    "primaryTextContrast": "all14 palettes × light/dark default state >=4.5:1",
+    "actions": [
+      "scope roundtrip",
+      "sort",
+      "checkbox",
+      "draft preservation",
+      "picker/backup open-close",
+      "native field/search/primary hits",
+      "original parent/callback preservation",
+      "empty/populated/long rows",
+      "duplicate-ID nested projection exclusion",
+      "floating menu containment",
+      "keyboard focus"
+    ],
+    "storageWrites": false,
+    "credentialsUsed": false,
+    "actualExtension": false,
+    "physicalDevice": false,
+    "wholeUiAcceptance": "UNKNOWN"
+  },
+  "checks": [
+    {
+      "command": "node testbed/run-tests.mjs --filter \"B1 memo workbench\" --require-runtime-under-test",
+      "result": "1 passed,0 failed;five environments and28 primary contrast states",
+      "runtimeSha256": "039A88F9E92E43D55B35983AEB1F45FC87BBFBE2A51A7305CF668A257C7E6577"
+    },
+    {
+      "command": "node tools/verify-repo.mjs release",
+      "result": "PASS;current-version mobile and unchanged PC identities"
+    },
+    {
+      "command": "control/candidate separate fresh contexts",
+      "result": "Native controls/parents/callback traces,draft,scope/sort and GM values match6BAA→039A",
+      "localReceipt": "artifacts/b1-memo-v7/semantic.json",
+      "receiptSha256": "3C366AAD50A4217970216F66BB0F490115C8CCBE8B5FCC77907949DC2188A2EA"
+    },
+    {
+      "command": "B1 native author adjacent contract",
+      "result": "1 passed,9 states on1EB4A1C8A48D8FA0B5199E506F42197B2416FC2C9FE406AA3652888BA61BA005;later changes are management-only,not a final039A claim"
+    },
+    {
+      "command": "node tools/test-header-palette-ownership.mjs",
+      "result": "PASS exact historical restoration and negative mutation controls;registered only the approved memo factory call"
+    },
+    {
+      "command": "local reference/current viewer",
+      "result": "PASS selected-image/current/detail decoding,light/dark buttons and no page overflow"
+    }
+  ],
+  "impact": {
+    "route": "artifacts/b1-memo-v7/impact.json",
+    "decision": "Resolver conservative acceptance fallback from new test-file mapping inspected;actual delta is memo role projection/CSS and corrected memo-tab fixture. Run focused memo plus same-ID individual memo adjacency;do not run unrelated PC/full UI/bfcache/account suites.",
+    "omitted": [
+      "other settings families unchanged",
+      "PC product suite;artifact byte identity retained",
+      "full UI/physical phone/actual TM/account saves",
+      "native row-edit interior visual redesign"
+    ]
+  },
+  "independentReview": {
+    "issues": [
+      "Duplicate native #user_memo_setting under row edit",
+      "Scope return test previously clicked already-selected tab"
+    ],
+    "resolution": "Direct management topology projection;explicit second-tab selection;both reviewed sufficient and regression guard added."
+  },
+  "reusePlan": "docs/work/B1_MEMO_WORKBENCH.md",
+  "limits": [
+    "Raster background branding/sidebar and row swatches are illustrative;native rows retain authored text colors.",
+    "Guidance/native search actions retained;no pixel-identical or beauty approval claim.",
+    "Dark counterpart follows roles;only light has a selected raster."
+  ]
+}

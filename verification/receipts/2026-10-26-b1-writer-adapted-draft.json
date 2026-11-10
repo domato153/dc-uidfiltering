@@ -1,0 +1,185 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-current-theme-writer-draft",
+  "status": "REFERENCE_PREPARATION_CHECKED_DRAFT_MATERIAL_NEEDS_WORK",
+  "sourceBaseHead": "c8752677a5ebe3c5ccd502db921d8da7482f1884",
+  "candidateFingerprint": "b1f5b75cc14cf77bd96b4cad4351604946e0a0b46abb280be319dc6d23a51373",
+  "artifact": {
+    "mobileSha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "runtimeBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "designPreparationOnly": true,
+    "productUiChanged": false,
+    "guardChanged": false,
+    "acceptedRegistryChanged": false,
+    "rawCapturesLocalOnly": true
+  },
+  "selection": {
+    "styleAuthority": "Current user-adopted compact B1 header/list; early B1 writer becomes historical direction.",
+    "selectedHeader": {
+      "path": "docs/design/b1-current-header-2026-10-25.png",
+      "sha256": "66C67E354401DD0719FDB1CBEC2409DBA09E9225F93551B674618971C8485248",
+      "width": 980,
+      "height": 160
+    },
+    "darkCompanion": {
+      "path": "docs/design/b1-current-header-dark-2026-10-25.png",
+      "sha256": "A02AE414FE1F812AC19D5279D9F62F5709074A6914A7B4A98377F57F75640B09",
+      "width": 980,
+      "height": 160
+    },
+    "draft": {
+      "path": "docs/design/b1-write-current-theme-2026-10-25.png",
+      "sha256": "2E63A533A5A2965C25954BE949FABC077037725758E0730299CFE2633379F381",
+      "width": 1774,
+      "height": 887,
+      "status": "DRAFT_MATERIAL_NEEDS_WORK",
+      "productApproved": false,
+      "userAdopted": false
+    },
+    "brief": "docs/design/b1-write-current-theme-2026-10-25.md",
+    "prompt": "docs/design/b1-write-current-theme-2026-10-25.prompt.txt",
+    "generation": "Built-in image_gen; current-light/current-dark/native/published references; no CLI or dependency installation."
+  },
+  "inputs": [
+    {
+      "id": "original",
+      "runtime": null,
+      "viewport": {
+        "width": 1280,
+        "height": 1300
+      },
+      "role": "Native/published structure and real controls only",
+      "captureSha256": "0CEB2424914A3AB0F936EF27EF48EF0013EE1E6EC0AECED30DB18658F74CCAEB"
+    },
+    {
+      "id": "published",
+      "runtime": {
+        "path": "testbed/artifacts/baseline-mobile-stable.user.js",
+        "sha256": "32BA208DDD9973A7EEC343F01E963A833AB4F0C084987077EDAE46844383C25D"
+      },
+      "viewport": {
+        "width": 980,
+        "height": 1100
+      },
+      "role": "Native/published structure and real controls only",
+      "captureSha256": "9C55D4394C052CA9EEAA51099A0F6669558519E93870293B8D3C9687ABC6130F"
+    },
+    {
+      "id": "current-light",
+      "runtime": {
+        "path": "testbed/artifacts/runtime-under-test.user.js",
+        "sha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD"
+      },
+      "viewport": {
+        "width": 980,
+        "height": 1100
+      },
+      "role": "Current theme/style anchor; unfinished writer material not approved",
+      "captureSha256": "53A81C4D15D0430EA56D4D50981102C50CDCFFA60C7E329591D7A4301B2DA066"
+    },
+    {
+      "id": "current-dark",
+      "runtime": {
+        "path": "testbed/artifacts/runtime-under-test.user.js",
+        "sha256": "CE3C4D1B09A52408F0F10C96FB0B4362AE74E3AC8000C9149DE83A9E76A30EDD"
+      },
+      "viewport": {
+        "width": 980,
+        "height": 1100
+      },
+      "role": "Current theme/style anchor; unfinished writer material not approved",
+      "captureSha256": "5F2A379265F7DB81D07BA4E26DE3D56D1E089FB919E6FBBF748E48093F3FEEE9"
+    }
+  ],
+  "materialReview": {
+    "basis": "Direct full-resolution draft/header inspection; requested exterior and cancel/register scope",
+    "register": "NEEDS_WORK: opaque teal gradient/coated finish dominates",
+    "cancel": "NEEDS_WORK: light reads as near-white solid button",
+    "exterior": "NEEDS_WORK: light weak/flat; dark partial frosted depth",
+    "paper": "Readable opaque editing body is intentional",
+    "actualTransmission": "NOT_TESTED: raster proposal, implementation unchanged",
+    "next": "Targeted draft refinement, then user selection, then actual normal/backing render comparison"
+  },
+  "checks": {
+    "publicCapture": "Four isolated public GET/HEAD contexts; non-GET/HEAD aborted; nickname/password values cleared; no submit/upload/authentication.",
+    "viewer": {
+      "pass": true,
+      "proposalSize": {
+        "width": 1774,
+        "height": 887
+      },
+      "controls": [
+        {
+          "id": "current-light",
+          "path": "source-current-light-v2.png",
+          "width": 980,
+          "height": 1100
+        },
+        {
+          "id": "current-dark",
+          "path": "source-current-dark-v2.png",
+          "width": 980,
+          "height": 1100
+        },
+        {
+          "id": "original",
+          "path": "source-original-v2.png",
+          "width": 1280,
+          "height": 1300
+        },
+        {
+          "id": "published",
+          "path": "source-published-v2.png",
+          "width": 980,
+          "height": 1100
+        }
+      ],
+      "images": [
+        {
+          "path": "docs/design/b1-current-header-2026-10-25.png",
+          "sha256": "66C67E354401DD0719FDB1CBEC2409DBA09E9225F93551B674618971C8485248",
+          "width": 980,
+          "height": 160
+        },
+        {
+          "path": "docs/design/b1-current-header-dark-2026-10-25.png",
+          "sha256": "A02AE414FE1F812AC19D5279D9F62F5709074A6914A7B4A98377F57F75640B09",
+          "width": 980,
+          "height": 160
+        },
+        {
+          "path": "docs/design/b1-write-current-theme-2026-10-25.png",
+          "sha256": "2E63A533A5A2965C25954BE949FABC077037725758E0730299CFE2633379F381",
+          "width": 1774,
+          "height": 887
+        }
+      ],
+      "jsErrors": [],
+      "scope": "Viewer/reference-input health only; no implementation fidelity, product or user aesthetic approval."
+    },
+    "referenceGuardUnit": {
+      "passed": 9,
+      "failed": 0,
+      "durationMs": 319.4927
+    },
+    "nativeProductSuite": "NOT_RERUN: product/runtime/fixtures unchanged; no claim beyond prior scoped function evidence.",
+    "checkpoint": "Exact-tree validation and remote/CI identity recorded separately by checkpoint tool."
+  },
+  "limits": [
+    "New DRAFT is not adopted; exterior/actions explicitly NEEDS_WORK.",
+    "Generation text/icons/CAPTCHA/option glyphs are illustrative; never remove native controls/warnings or invent handlers to match raster.",
+    "Dark is source-theme proxy;980×1100 is detail view, not full actual-phone/device qualification.",
+    "Reference guard binds active selection; user-authorized reference updates are allowed, silent substitution is not.",
+    "No new formal header admission, actual device/account or all-popup acceptance."
+  ],
+  "localEvidence": {
+    "path": "artifacts/b1-write-refresh-2026-10-25/",
+    "disposition": "LOCAL_ONLY_EVIDENCE",
+    "viewer": "artifacts/b1-detail-2026-10-23/write-shell/index.html"
+  },
+  "next": "b1-write-draft-material-refine"
+}

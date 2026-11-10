@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-list-cohesion",
+  "status": "SCOPED_CHECKS_PASS_REFERENCE_REVIEWED_USER_PREFERENCE_PENDING",
+  "sourceBaseHead": "773cc3bda22c59619f2474870da4aef3031fc4cf",
+  "candidateFingerprint": "54fa196df5fb2c6b6175c9e91047f882cafa13c15fd7381998afe968152a5836",
+  "artifact": {
+    "mobileSha256": "BCB968526FE8817D7642C25246E447DCCD3E7D87079CAFC6C2244DB79E5AEA33",
+    "controlMobileSha256": "8A5C8209AFA4BF951C9DC38D58EBB0A1C630212859C92C4690BF070C8E12BE1D",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "L-01",
+      "L-02",
+      "L-03",
+      "L-04",
+      "L-05",
+      "L-06",
+      "L-07",
+      "L-08",
+      "L-09",
+      "H-01",
+      "H-02",
+      "H-03",
+      "H-04",
+      "X-theme",
+      "X-viewport",
+      "X-input",
+      "X-open-state"
+    ],
+    "owners": [
+      "mobile-list-presenter",
+      "mobile-header-shell-presenter"
+    ],
+    "productionDelta": "Aligned lower action/paging/search gutter, quiet centered bounded search/paging, consistent nearly opaque B1 owned menus, native dark paging ink and utility pipe/spacing fixes. Original native nodes/forms/events/settings, UiPort/state/observers, owners/map and PC unchanged.",
+    "appearanceApproved": false,
+    "userAcceptedPriorButton": true
+  },
+  "checks": {
+    "existingTests": [
+      {
+        "name": "topology",
+        "path": "artifacts/b1-list-cohesion-2026-10-23/settled-topology.json",
+        "sha256": "3668C645F5ACDFE2262CE679679C508263A23A537D754649F4BD56BF66D5A785",
+        "tests": 1,
+        "status": "PASS"
+      },
+      {
+        "name": "native-toolbar",
+        "path": "artifacts/b1-list-cohesion-2026-10-23/settled-native-toolbar.json",
+        "sha256": "6530904E6965AF9707F63B93BD28B0869F7355232EB633419C7630A687039C1C",
+        "tests": 1,
+        "status": "PASS"
+      },
+      {
+        "name": "native-isolation",
+        "path": "artifacts/b1-list-cohesion-2026-10-23/settled-native-isolation.json",
+        "sha256": "61ED7CFD314F0D4EF29A2D0B81FD3227D0999F1E8A21A4E9598B8764B027152E",
+        "tests": 1,
+        "status": "PASS"
+      },
+      {
+        "name": "palette-surfaces",
+        "path": "artifacts/b1-list-cohesion-2026-10-23/settled-palette-surfaces.json",
+        "sha256": "91BCBE08B84784E7B8C29627C745D7795A4C465AE78E34826CE3A16B08B58D52",
+        "tests": 1,
+        "status": "PASS"
+      },
+      {
+        "name": "repair",
+        "path": "artifacts/b1-list-cohesion-2026-10-23/settled-repair.json",
+        "sha256": "3A04DC86B77F00386D46791B3F60D04E6DC62CC1CD4312F4AABFDF5B5AE0EEDB",
+        "tests": 1,
+        "status": "PASS"
+      },
+      {
+        "name": "palette-presets",
+        "path": "artifacts/b1-list-cohesion-2026-10-23/settled-palette-presets.json",
+        "sha256": "7215A952BE48B05735725525A593D32A2B136CA9A7B09B5ED42856A67FE97850",
+        "tests": 1,
+        "status": "PASS"
+      }
+    ],
+    "nativeToolbarContexts": 36,
+    "b1": {
+      "contexts": 8,
+      "paletteBindings": 28,
+      "utilityOpenHitEscapeContexts": 8,
+      "status": "PASS"
+    },
+    "capture": {
+      "contexts": 6,
+      "widths": [
+        390,
+        980,
+        1280
+      ],
+      "phoneProxy": "980x2306 light; screen412/layout980 remains adopted, not exact physical device"
+    },
+    "search": {
+      "paletteBindings": 28,
+      "minimumRenderedColorContrast": 4.993443527975628,
+      "focus": "original submit keyboard focus/outline retained"
+    },
+    "semantic": {
+      "observations": 16,
+      "settledResourceRecords": 4,
+      "status": "EQUAL_IMMEDIATE_CONTROL_ONLY"
+    },
+    "public": {
+      "scope": "ANONYMOUS_GET_HEAD_GM_SHIM_NOT_EXTENSION",
+      "browser": "Chrome155.0.8059.85",
+      "cases": [
+        {
+          "theme": "light",
+          "http": 200,
+          "visibleDecodedImages": 10,
+          "overflow": 0,
+          "openings": [
+            {
+              "id": "category",
+              "x": 629.125,
+              "right": 769.125,
+              "height": 54,
+              "hit": true
+            },
+            {
+              "id": "utility",
+              "x": 678,
+              "right": 958,
+              "height": 324,
+              "hit": true
+            }
+          ]
+        },
+        {
+          "theme": "dark",
+          "http": 200,
+          "visibleDecodedImages": 10,
+          "overflow": 0,
+          "openings": [
+            {
+              "id": "category",
+              "x": 629.125,
+              "right": 769.125,
+              "height": 54,
+              "hit": true
+            },
+            {
+              "id": "utility",
+              "x": 678,
+              "right": 958,
+              "height": 324,
+              "hit": true
+            }
+          ]
+        }
+      ]
+    },
+    "visual": {
+      "pairs": 8,
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "referenceFidelity": "REVIEWED",
+      "productApproved": false,
+      "report": "artifacts/b1-list-cohesion-2026-10-23/visual-settled/review.json"
+    },
+    "detector": {
+      "scope": "Original pinned Impeccable4.7.0 one final settled source scan",
+      "exit": 2,
+      "unconfirmedWarnings": 1,
+      "cause": "Existing dynamic img serializer cannot be statically resolved; no ignore or clean-scan claim."
+    }
+  },
+  "evidence": [
+    {
+      "path": "src/targets/mobile/list-presenter.js",
+      "sha256": "17D0D94CE594F41D448802ADEA142D2D0E88B40727A046803DA044D3D91BF14F"
+    },
+    {
+      "path": "src/targets/mobile/header-shell-presenter.js",
+      "sha256": "0C3F794A5E42CDF07EBD1B4C34916CF07B1B3DB8DDFFEFD88E582443D2A362A7"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "8EBE0FDF26B5D27B4474C136E1B8872CAC3E4AE70A3949A90FEE86FCA1FF69E0"
+    },
+    {
+      "path": "testbed/run-b1-product.mjs",
+      "sha256": "865FB3184A4EC186082E5A3A4F97F1C110890F07AD72A7EF3B3CAE0B41FF7F66"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2AEE6D3534B3B158F888D0224E79CC48009078A0EEC1EE73873A10798A9B056A"
+    },
+    {
+      "path": "tools/visual-review.mjs",
+      "sha256": "C246970A547278767E453B065C71A5E5DE27988768D42F049005744EE1B78A5A"
+    },
+    {
+      "path": "verification/b1-header-visual-delta.json",
+      "sha256": "F03624F6557EBA183F586805ABDFF2566C0EA5C9772D0420930BD83C018BFB46"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/visual-manifest.json",
+      "sha256": "23293168E1F7E59C987565A80E4022F07FB4B1B3565678A1C64514AD71FC3897"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/visual-settled/review.json",
+      "sha256": "29F5A669C7512F5B7C58B3CB67B43FBD3DF8273E4F04DA8DAB6245AB9B96B0D3"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/metrics.json",
+      "sha256": "14431295FBD4BAEF674EDF995A04B2E4FB8738D17BC2E2B2F7059700AE4D8F27"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/settled-public/report.json",
+      "sha256": "58ABDEAB7DF2CF20BCC171B3596D343F4D4607116721ADC210F4BBBB6A5F88BB"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/settled-fixture/report.json",
+      "sha256": "326A72F6D0F797CCD8B5E4313640D8205F211CEC949D87EA0AAE2A6B501A35E0"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/control-side.json",
+      "sha256": "ED4190372DB2812C28047AF02F2DA0753C809664DED3AB53F5D15976E96BB448"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/candidate-side-settled.json",
+      "sha256": "439907DDBB17D963530065843BFE0D7FD0848468BEC2830D2B131453BE542FBC"
+    },
+    {
+      "path": "artifacts/b1-list-cohesion-2026-10-23/impeccable-settled.json",
+      "sha256": "BCEBC2F1EA5CC2A20655E806ABA7C0E3D643E97EABB2B2BD5064C9A17706B054"
+    }
+  ],
+  "retainedFailures": [
+    {
+      "kind": "product",
+      "cause": "Immediate8A bottom actions/paging span the viewport instead of the reading gutter.",
+      "reproduction": "artifacts/b1-list-cohesion-2026-10-23/control-topology.log",
+      "resolution": "Positive geometry assertion passes on final runtime."
+    },
+    {
+      "kind": "product",
+      "cause": "Public .darkmode .bottom_paging_box a wins over the earlier two-attribute page selector.",
+      "reproduction": "artifacts/b1-list-cohesion-2026-10-23/dark-cascade-red.log",
+      "resolution": "Existing semantic navigation/pages root owns ink; no important or global correction phase."
+    },
+    {
+      "kind": "product",
+      "cause": "Native LI::before horizontal pipes remain as blank vertical rows in the utility popover.",
+      "reproduction": "artifacts/b1-list-cohesion-2026-10-23/utility-red.log",
+      "resolution": "Shared native-shaped fixture models the pipes; popup-only pseudo retirement and original link hit/Escape checks pass."
+    },
+    {
+      "kind": "oracle",
+      "cause": "Legacy palette test expected a solid hit-area background after the prior accepted decorative primary-face change.",
+      "reproduction": "artifacts/b1-list-cohesion-2026-10-23/palette-presets.log",
+      "resolution": "Inspect face palette-base stop and retain base contrast; quiet search tests its input/ink role. No production behavior changed for this test."
+    },
+    {
+      "kind": "local-capture-workflow",
+      "cause": "Initial supplemental capture assumed a panel/category absent from the basic fixture; then a duplicate test binding caused a parse failure.",
+      "resolution": "Reuse the existing exported live-control fixture, remove the redundant local wait and integrate the check into the original menu-open path. Final captures/tests are bound above."
+    }
+  ],
+  "limits": [
+    "Scoped list cohesion, not new full144/raw/mixed/upper/release acceptance. Conservative impact routes are not falsely declared fully passed.",
+    "Selected native adaptation retains real content, branding, extra links, combined metadata and palette hue. Supplied image-bound judgement is subjective, same implementing agent; whole-list user approval is pending.",
+    "980x2306 is a layout proxy,390 stress; no new actual extension/physical phone/authenticated/older-engine qualification.",
+    "Native author-popup interiors remain isolated/site-owned; original behavior is checked, not silently redesigned. Article/comments/editor/dialog redesigns remain later.",
+    "Historical published raw +8-listener difference remains unwaived.",
+    "App-browser access to its existing error tab was denied by URL policy; no bypass attempted and automatic IAB display is not claimed. Local viewer files/public Chrome evidence remain available."
+  ]
+}

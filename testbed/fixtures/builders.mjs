@@ -51,9 +51,9 @@ export function liveListRows(variant = 'major', options = {}) {
     const totalRows = Number(options.totalRows) || (isMinor ? 53 : 51);
     const hiddenRows = isMinor ? 3 : 1;
     const rowOptions = {
-        1: { cssHidden: true, ordinary: false, includeDataAttrs: false, includeIdentityAttrs: false, utilityExtraCell: true, title: '설문 숨김 행' },
-        2: isMinor ? { hidden: true, ad: true, ordinary: false, includeDataAttrs: false, includeIdentityAttrs: false } : { notice: true },
-        3: isMinor ? { hidden: true, ad: true, ordinary: false, includeDataAttrs: false, includeIdentityAttrs: false } : { recommended: true },
+        1: { cssHidden: !options.firstRowsVisible, ordinary: false, includeDataAttrs: false, includeIdentityAttrs: false, utilityExtraCell: true, title: '설문 숨김 행' },
+        2: isMinor ? { hidden: !options.firstRowsVisible, ad: true, ordinary: false, includeDataAttrs: false, includeIdentityAttrs: false } : { notice: true },
+        3: isMinor ? { hidden: !options.firstRowsVisible, ad: true, ordinary: false, includeDataAttrs: false, includeIdentityAttrs: false } : { recommended: true },
         [hiddenRows + 1]: { notice: true },
         [hiddenRows + 2]: { recommended: true },
         [hiddenRows + 3]: { ad: true },

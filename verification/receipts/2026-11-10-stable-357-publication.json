@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "status": "PUBLISHED",
+  "sourceSha": "633deec7105ae599d55e2b4a15fd045f19a21d2c",
+  "mainCommit": "d5b8246b91d10d57d0cc08d150927a75e087578a",
+  "mobileCommit": "174d0a670967ae0feb58ef4f446254acc04b16d0",
+  "tag": "mobile-v3.5.7",
+  "mobile": {
+    "version": "3.5.7",
+    "sha256": "300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41"
+  },
+  "pc": {
+    "version": "2.0.0",
+    "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"
+  },
+  "releaseUrl": "https://github.com/domato153/dc-uidfiltering/releases/tag/mobile-v3.5.7",
+  "workflow": {
+    "runId": 42801017508,
+    "url": "https://github.com/domato153/dc-uidfiltering/actions/runs/42801017508",
+    "conclusion": "success",
+    "trustedMain": "2fa66fa1ffad9e4145f1fe8a980f92d3ee4df20f",
+    "environment": "mobile-release"
+  },
+  "checkpoint": {
+    "runId": 42800911530,
+    "sourceSha": "633deec7105ae599d55e2b4a15fd045f19a21d2c",
+    "conclusion": "success"
+  },
+  "canary": {
+    "status": "PASS",
+    "artifactSha256": "300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41",
+    "observations": 6,
+    "scope": "Exact 3.5.7, isolated Chrome/Tampermonkey desktop startup on major/minor list and major article; receipt replay passed."
+  },
+  "focusedContract": {
+    "passed": 11
+  },
+  "publicReadback": {
+    "releaseUrl": "https://github.com/domato153/dc-uidfiltering/releases/tag/mobile-v3.5.7",
+    "status": "PASS",
+    "results": [
+      {
+        "hash": "300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41",
+        "id": "canonical-mobile",
+        "sha256": "300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/Mobile/Dc_UserFilter_Mobile.user.js",
+        "status": "PASS"
+      },
+      {
+        "hash": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+        "id": "canonical-pc",
+        "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/main/dcinside_user_filter.user.js",
+        "status": "PASS"
+      },
+      {
+        "hash": "300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41",
+        "id": "release-mobile",
+        "sha256": "300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41",
+        "url": "https://github.com/domato153/dc-uidfiltering/releases/download/mobile-v3.5.7/Dc_UserFilter_Mobile_v3.5.7.user.js",
+        "status": "PASS"
+      },
+      {
+        "hash": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+        "id": "release-pc",
+        "sha256": "F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD",
+        "url": "https://github.com/domato153/dc-uidfiltering/releases/download/mobile-v3.5.7/dcinside_user_filter_v2.0.0.user.js",
+        "status": "PASS"
+      },
+      {
+        "id": "checksums",
+        "sha256": "794B000FEFFF70A1799E3691FF776C94D87FF990A5AECA2D9234D832E118EA1D",
+        "url": "https://github.com/domato153/dc-uidfiltering/releases/download/mobile-v3.5.7/SHA256SUMS.txt",
+        "status": "PASS"
+      },
+      {
+        "id": "readme-main",
+        "sha256": "57723756FB834EF166411B6B9F1292C9EAFB3D079B6BD66CF5D5F42B30DC237F",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/main/README.md",
+        "status": "PASS"
+      },
+      {
+        "id": "readme-mobile",
+        "sha256": "57723756FB834EF166411B6B9F1292C9EAFB3D079B6BD66CF5D5F42B30DC237F",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/Mobile/README.md",
+        "status": "PASS"
+      },
+      {
+        "id": "index-main",
+        "sha256": "20CB6E23BD22FE7DED9F6373506D65B8F780BB787CD01B0AA6ABC66464595A4B",
+        "url": "https://raw.githubusercontent.com/domato153/dc-uidfiltering/main/index.html",
+        "status": "PASS"
+      },
+      {
+        "id": "pages-index",
+        "url": "https://domato153.github.io/dc-uidfiltering/",
+        "sha256": "20CB6E23BD22FE7DED9F6373506D65B8F780BB787CD01B0AA6ABC66464595A4B",
+        "status": "PASS"
+      }
+    ],
+    "notes": "exact-match",
+    "checkedAt": "2026-11-10T10:41:27.7676798+00:00"
+  },
+  "pages": {
+    "url": "https://domato153.github.io/dc-uidfiltering/",
+    "status": "built",
+    "commit": "d5b8246b91d10d57d0cc08d150927a75e087578a"
+  },
+  "limits": [
+    "Physical phone and installed user extension combinations were not tested on the final build."
+  ]
+}

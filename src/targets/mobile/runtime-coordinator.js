@@ -124,7 +124,7 @@
             });
         },
 
-        getMutationSurfaceSelector() {
+        getMutationSurfaceSelector({includeHeaderCopyCleanup = true} = {}) {
             const pageContext = this.getPageContext();
             const shared = [
                 '#user_data_lyr',
@@ -133,11 +133,21 @@
                 '#um_picker_lay'
             ];
             const list = [
+                '.dcheader.typea',
+                '.page_head',
+                '#user_block',
+                '.gnb_bar',
+                '.newvisit_history',
                 '.list_wrap',
                 '.gall_listwrap',
                 '.gall_list',
                 '.issue_contentbox',
-                '#gall_top_recom'
+                '#gall_top_recom',
+                ...(includeHeaderCopyCleanup ? [
+                    '[data-dcuf-header-native-door]', '[data-dcuf-header-native-recom]',
+                    '[data-dcuf-header-relation-popup]',
+                    '[data-dcuf-header-relation-static]'
+                ] : [])
             ];
             if (pageContext.isList) return [...shared, ...list].join(', ');
             if (pageContext.isView) {
@@ -154,33 +164,37 @@
                 ].join(', ');
             }
             if (pageContext.isWriteSurface) {
-                return 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
+                const header = ['password', 'write-editor'].includes(document.body?.getAttribute('data-dcuf-native-form-state'))
+                    ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
+                return header + 'form#write, form[name="modify"][action*="modify_submit"], #write_wrap, .gall_write, .write_box, form[name="password_confirm"], form[action*="modify_password_submit"], .no_memberwrap';
             }
             if (pageContext.isDelete) {
-                return 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
+                const header = document.body?.getAttribute('data-dcuf-native-form-state') === 'password'
+                    ? '.dcheader.typea, .page_head, .gnb_bar, .newvisit_history, .visit_bookmark, ' : '';
+                return header + 'form[name="delete"], form[action*="delete_password_submit"], .no_memberwrap';
             }
             return shared.join(', ');
         },
 
-        isMutationSurfaceElement(element) {
+        isMutationSurfaceElement(element, options) {
             if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
             if (element === document.body) return true;
-            const selector = this.getMutationSurfaceSelector();
+            const selector = this.getMutationSurfaceSelector(options);
             return Boolean(selector && (element.matches(selector) || element.closest(selector)));
         },
 
-        mutationNodeTouchesSurface(node) {
+        mutationNodeTouchesSurface(node, options) {
             const element = node instanceof Element ? node : node?.parentElement;
             if (!(element instanceof Element) || this.isScriptOwnedElement(element)) return false;
             if (element === document.body) return true;
-            const selector = this.getMutationSurfaceSelector();
+            const selector = this.getMutationSurfaceSelector(options);
             if (!selector) return false;
             return element.matches(selector)
                 || Boolean(element.closest(selector))
                 || Boolean(element.querySelector?.(selector));
         },
 
-        prefilterMutationRecords(records) {
+        prefilterMutationRecords(records, options) {
             if (!Array.isArray(records) || records.length === 0) return [];
             return records.filter((record) => {
                 if (!record) return false;
@@ -188,17 +202,18 @@
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (record.target instanceof Element
                         && record.target !== document.body
-                        && this.isMutationSurfaceElement(record.target)) return true;
+                        && this.isMutationSurfaceElement(record.target, options)) return true;
                     return [...record.addedNodes, ...record.removedNodes]
-                        .some((node) => this.mutationNodeTouchesSurface(node));
+                        .some((node) => this.mutationNodeTouchesSurface(node, options));
                 }
                 if (record.type === 'attributes') {
                     if (this.isScriptOwnedElement(record.target)) return false;
                     if (this.IDENTITY_ATTRIBUTE_NAMES.has(record.attributeName)) return true;
-                    return this.isMutationSurfaceElement(record.target);
+                    if (this.isMutationSurfaceElement(record.target, options)) return true;
+                    return false;
                 }
                 if (record.type === 'characterData') {
-                    return this.isMutationSurfaceElement(record.target?.parentElement || null);
+                    return this.isMutationSurfaceElement(record.target?.parentElement || null, options);
                 }
                 return false;
             });
@@ -213,6 +228,9 @@
 
         isCommentImmediateMutationRecord(record) {
             if (record?.type === 'attributes') {
+                if (record.attributeName === 'class'
+                    && record.target instanceof Element
+                    && record.target.matches('div[id^="comment_wrap_"], .comment_wrap')) return true;
                 return ['data-uid', 'data-nick', 'data-ip'].includes(record.attributeName)
                     && this.isCommentVisibilityElement(record.target);
             }
@@ -442,8 +460,9 @@
             const measureDispatch = this._diagnosticsEnabled && typeof performance?.now === 'function';
             const dispatchStartedAt = measureDispatch ? performance.now() : 0;
 
-            this._mutationSubscribers.forEach((listener, key) => {
+            this._mutationSubscribers.forEach((subscriber, key) => {
                 try {
+                    const listener = typeof subscriber === 'function' ? subscriber : subscriber.listener;
                     listener(payload);
                 } catch (error) {
                     console.error('[DCUF runtime] mutation subscriber failed:', key, error);
@@ -497,6 +516,13 @@
             this.incrementDiagnostic('mutation.rawRecords', records.length);
             if (skippedRecords > 0) this.incrementDiagnostic('mutation.skippedRecords', skippedRecords);
             if (filteredRecords.length === 0) return;
+            // Small attribute projections must precede paint without moving their owner's
+            // heavier ordinary callback or allocating another subscription/observer.
+            this._mutationSubscribers.forEach((subscriber, key) => {
+                if (typeof subscriber?.beforePaint !== 'function') return;
+                try { subscriber.beforePaint(filteredRecords); }
+                catch (error) { console.error('[DCUF runtime] before-paint mutation subscriber failed:', key, error); }
+            });
             // MutationObserver callbacks run before the next paint. Critical visibility
             // subscribers must see the fresh records here; the ordinary bus remains
             // animation-frame batched for heavier UI and async work.
@@ -580,7 +606,7 @@
                 subtree: true,
                 attributes: true,
                 characterData: true,
-                attributeFilter: ['class', 'style', 'src', 'id', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
+                attributeFilter: ['class', 'style', 'src', 'id', 'disabled', 'aria-disabled', 'aria-pressed', 'data-uid', 'data-nick', 'data-ip', 'data-no', 'p-no']
             });
             this._mutationObserverTarget = observerTarget;
             this._mutationObserverReady = true;
@@ -605,7 +631,8 @@
                 return () => {};
             }
             this.ensureMutationBus();
-            this._mutationSubscribers.set(key, listener);
+            this._mutationSubscribers.set(key, typeof options.beforePaint === 'function'
+                ? {listener, beforePaint: options.beforePaint} : listener);
             this.setDiagnosticGauge('mutation.subscribers', this._mutationSubscribers.size);
             return () => {
                 this._mutationSubscribers.delete(key);

@@ -1,88 +1,38 @@
-# PC Filter Port Rail
+# PC filter port rail
 
-## Goal
-- Treat the mobile filtering feature bundle as the source of truth.
-- Future filter-rule changes should start in `src/shared/`.
-- Future filtering UI changes should start in the mobile filtering modules first.
-- The desktop filter script should follow those shared/mobile changes through a repeatable build step instead of one-off copy/paste edits.
+## Scope
 
-## Current rail
-- Shared source of truth:
-  - `src/shared/ip-data.js`
-  - `src/shared/storage-schema.js`
-  - `src/shared/storage-core.js`
-  - `src/shared/filter-core.js`
-- Mobile filtering feature bundle source of truth:
-  - `src/targets/mobile/filter-module.js`
-  - `src/targets/mobile/personal-block-module.js`
-  - future filtering and personal-block changes should start here first
-- Desktop build entry:
-  - `tools/build-pc-filter-userscript.mjs`
-- Desktop adapter sources:
-  - `src/targets/pc/filter-style.js`
-  - `src/targets/pc/filter-entry.js`
+Port the completed Mobile filter/owned-UI code;do not implement another PC UI or copy Mobile site styling. Native PC header,list,article,comments,writer and forms stay native. Current stage/result:docs/work/PC_FILTER_V7_PORT.md and CURRENT_STATE/NEXT_TASK.
 
-## What the PC build rewires to shared
-- telecom / proxy / KR dataset ownership
-- IP prefix parsing and legacy `blockConfig.ip` cleanup
-- shortcut parsing/formatting
-- threshold and ratio decision logic
-- sync guest / proxy / telecom / personal-block decision logic
-- normalized filter settings loading
+## One implementation,explicit target inputs
 
-## What remains PC-specific
-- desktop selectors and visibility updates
-- desktop settings popup shell and shortcut entry
-- any future personal block popup / management / backup UI where the desktop host markup requires an adapter difference
-- desktop observer wiring
-- desktop dark-mode class toggling and any host-page-specific styling differences
+`build/targets.json` is the current input authority. Both targets consume the same:
 
-## Porting rule
-- If a change belongs to filtering features, assume the mobile implementation is correct first.
-- Then port it through the desktop adapter/build without falling back to a legacy PC userscript baseline.
-- Do not re-design the desktop filtering UI separately unless the host desktop markup forces it.
-- PersonalBlock behavior should track mobile in this order:
-  - `createFab()`
-  - `handleSelectionClick()`
-  - `showSelectionPopup()`
-  - `createBackupPopup()`
-  - `createManagementPanel()`
+- `src/shared/storage-schema.js`, `ip-data.js`, `storage-core.js`, `filter-core.js`, `ui-contracts.js`, `theme-primitives.js`.
+- `src/targets/shared/filter-runtime.js`, `filter-settings-host-adapter.js`, `filter-host-adapter.js`.
+- `src/targets/shared/personal-block-module.js`, `personal-block-host-adapter.js`.
+- `src/targets/shared/settings-presenter.js`, `filter-ui-style.js`, `theme-presenter.js`, `theme-host-port.js`, `popup-geometry-host-adapter.js`, `ui-disposable-scope.js` and the existing UI state store.
+- `src/targets/shared/theme-material-values.js`:the unchanged adopted Mobile B1/v7 factory,now included by both builds. It declares values/recipes only;existing presenters retain shape and controls. PC target theme hook calls this factory without Mobile host CSS.
 
-## Manual parity checklist for PC UI
-- palette CSS must remain inside the shared DCUF-owned rail for all filter controls; do not place drawer, selection prompt, manual-block, management, or backup palette rules inside the mobile host-theme range
-- changing the shared palette rail requires computed-color coverage for the selection prompt, drawer icons, manual-block focus/active state, management header actions, and both backup export actions
-- quick-block FAB shape should match the current mobile pill style, not the old blue circle
-- quick-block FAB interaction should match mobile:
-  - mouse drag
-  - touch drag path still present in code
-  - click after drag should be ignored once
-- backup popup should keep both export modes:
-  - file download
-  - clipboard copy
-- backup popup import should support both:
-  - file picker
-  - textarea paste
-- when mobile `PersonalBlockModule` changes, review these three methods in the PC baseline:
-  - `createFab()`
-  - `createBackupPopup()`
-  - `createManagementPanel()`
-- dark mode should be checked for:
-  - selection prompt and drawer icons
-  - manual-block header, type tabs, and focus ring
-  - backup popup header / body shell
-  - block management panel body / list container
-  - quick-block FAB
-- if mobile changes only shared filter logic, rebuilding PC is usually enough
-- if mobile changes popup or personal-block UI, the PC baseline still needs a parity review
+The historical architecture component ID `mobile-theme-material-values` remains stable;its source and consumers are shared. Its existing mixed selector debt is not silently promoted to conforming. Some original source comments retain historical Mobile/PC-fallback wording;manifest and current source connections above determine execution.
 
-## Future update flow
-1. Change filter rules or datasets in `src/shared/` first.
-2. If the change is filtering or personal-block runtime behavior, change `src/targets/mobile/filter-module.js` or `src/targets/mobile/personal-block-module.js` first.
-3. Rebuild mobile with `node tools/build-userscript.mjs`.
-4. Rebuild desktop with `node tools/build-pc-filter-userscript.mjs`.
-5. Only touch `src/targets/pc/*.js` when the change is PC-host-specific, styling-specific, or entry-point-specific.
+The old description of extracting marked sections from Mobile filter/personal-block files is superseded. The PC builder reads explicit shared sources directly. Never re-port from a generated legacy userscript or use the version label as evidence that official/development code is equal.
 
-## Why this exists
-- The shared/mobile filter runtime now owns the rule logic.
-- The PC 1.9 rail no longer uses a legacy desktop userscript file as the build input.
-- This rail lets future mobile filter updates reach PC with a rebuild instead of another manual re-port.
+## PC-specific boundary
+
+`src/targets/pc/` owns only entry,host visibility/selectors,theme composition and style mounting. `filter-style.js` is a PC adapter rail;shared UI rules must not be copied back there. Preserve existing PC dark-state observation,shortcut,menu registration and boot behavior. A new target-specific exception needs an observed native-host difference.
+
+## Update flow
+
+1. Change the actual common source for shared filter/data/UI work. A Mobile host-only change does not enter PC.
+2. For a newly reusable Mobile-owned feature,inspect its dependencies and port the existing implementation through the shared rail;do not redesign/reimplement PC separately.
+3. Rebuild affected targets at their current versions with `tools/build-userscript.mjs` and `tools/build-pc-filter-userscript.mjs`. Build-manifest roles and architecture overlay must agree.
+4. Use the canonical `testbed/artifacts/runtime-under-test.user.js` guard for one target at a time. Set `DCUF_TESTBED_TARGET=pc` explicitly for PC. Restore the Mobile guard before a combined checkpoint;keep a separately named frozen PC runtime for comparisons.
+5. Select tests by changed consumers:owned filter/headtext/shortcut,palette14,menu/selection/size,manual/management/backup;palette preview/save/cancel,light/dark,drag/resize/keyboard,nested close and unsaved data. Native host styles/nodes must remain unchanged. Compare behavior with a distinct frozen prior PC in fresh contexts.
+6. Inspect actual same-size before/current images. A source-only connection check or screenshot alone does not certify behavior. Actual extension/device/submission coverage remains separate.
+
+## Stage2 port2026-11-04
+
+The pure material file moved byte-for-byte from the Mobile directory. Mobile output stays exactly2C14F66F;PC changes are limited to inserting that same factory and invoking it from its target hook. Existing20 common feature inputs were already current;no feature behavior,storage schema,metadata or version change was needed. The adopted brighter paired-ink dark primary,quiet auxiliary controls and label-sized backup actions transfer through existing variables/presenters.
+
+Stage3 site/index/README/screenshot proposal and stage4 approved official publication are separate;this development port does not publish either target.

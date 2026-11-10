@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-article-action-popup-family",
+  "status": "SCOPED_REVIEWED_SPLIT_COVERAGE_USER_PREFERENCE_PENDING",
+  "sourceBaseHead": "dd79dcaab0e7a83791c37f146d683559af6244ea",
+  "candidateFingerprint": "b9afa15985a58e1d19c0b1a4151171697775463860ed9739ad9402aabe5c4577",
+  "artifact": {
+    "mobileSha256": "77AD4210F54B3C6A5028BB530DC2AB19253C3EF3F91B605BB280151F3AD27893",
+    "controlMobileSha256": "84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "pcBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "article-recommendation native share/realbest/report/scrap/PUM",
+      "modeled PUM suggestion and guide children",
+      "X-theme",
+      "X-viewport",
+      "X-input",
+      "X-open-state"
+    ],
+    "owners": [
+      "mobile-article-host-adapter",
+      "mobile-article-presenter"
+    ],
+    "acceptedRegistryChanged": false,
+    "overlayActive": true,
+    "appearanceApproved": false
+  },
+  "checks": {
+    "mobile": {
+      "passed": 145,
+      "failed": 1,
+      "failures": [
+        {
+          "name": "comment add edit delete and detached replies stay root-scoped and filtered",
+          "group": "functional",
+          "status": "failed",
+          "durationMs": 2761,
+          "error": "AssertionError [ERR_ASSERTION]: {\"mutation.rawRecords\":17,\"mutation.immediateDispatches\":3,\"mutation.immediateRecords\":4,\"filter.immediateComment.runs\":3,\"mutation.bursts\":9,\"mutation.records\":17,\"mutation.dispatches\":5,\"mutation.collectMatches.cacheMisses\":51,\"scheduler.comment-normalize.raf\":2,\"ui.normalize.executed\":2,\"scheduler.reply-merge.raf\":5,\"scheduler.image-comment-nick-sync.raf\":1,\"scheduler.image-comment-width.raf\":1,\"scheduler.user-popup-layer.raf\":5,\"scheduler.list-memo-popup.raf\":1,\"scheduler.image-comment-nick-sync.delay:90\":1,\"scheduler.comment-normalize.delay:120\":2,\"ui.normalize.skippedUnchanged\":4,\"scheduler.reply-merge.delay:140\":4,\"filter.syncPass.comments.runs\":4,\"scheduler.comment-normalize.delay:420\":2,\"ui.articleAd.scans\":1}\n\nfalse !== true\n\n    at Object.run (file:///C:/Users/dign2/Documents/tampermonkey/Dcfilter/Dc_UserFilter_Mobile/artifacts/worktrees/mobile-development/testbed/run-tests.mjs:1487:16)\n    at async file:///C:/Users/dign2/Documents/tampermonkey/Dcfilter/Dc_UserFilter_Mobile/artifacts/worktrees/mobile-development/testbed/run-tests.mjs:13198:13"
+        }
+      ]
+    },
+    "focused": {
+      "tests": 1,
+      "contexts": 20,
+      "passed": true
+    },
+    "semantics": {
+      "controlSha256": "84AE80337CB73A0DAB0B98EA475C7C11D37C3B654E9EFA907204B7033FADA5D8",
+      "candidateSha256": "77AD4210F54B3C6A5028BB530DC2AB19253C3EF3F91B605BB280151F3AD27893",
+      "browser": "155.0.8059.85",
+      "observations": 22,
+      "behaviorDifferences": 0,
+      "falseCandidateInvariants": 0,
+      "persistentResourcesEqual": true,
+      "limits": "Immediate development control; observed article/recommendation/PUM lifecycle fixture, not a new native form submission or published raw baseline comparison."
+    },
+    "publicSourceInjected": {
+      "passed": 4,
+      "failed": 0,
+      "extension": false,
+      "theme": "light",
+      "nonGetHeadBlocked": true,
+      "pumNativeSubmissionVerified": false
+    },
+    "visual": {
+      "pairs": 10,
+      "status": "REVIEWED",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false,
+      "backingTransmission": "Rendered and inspected light/dark synthetic backing with current source; fields/media remain readable paper"
+    },
+    "independentReview": {
+      "sourceSha256": "43BB67895F722FF2EED266674CF7DD62149A0EF651583AC5D9C51247767CFA22",
+      "actionableFindings": 0,
+      "limits": "Read-only source review; subsequent detail fixes covered by RED/GREEN and author recheck, not a second review"
+    },
+    "detector": "Final-source JS-only regex detector; parsed-page rules not run; no clean-bill claim",
+    "commentCounterRecheck": {
+      "fullFailure": "4 sync comment passes versus <=3; other hidden-frame/full-refilter assertions passed",
+      "control": {
+        "passed": 1,
+        "failed": 0
+      },
+      "candidate": {
+        "passed": 1,
+        "failed": 0
+      },
+      "cause": "UNREPRODUCED_UNRESOLVED",
+      "thresholdOrProductChanged": false,
+      "fullFailureWaived": false
+    },
+    "viewer": {
+      "images": 36,
+      "decoded": 36,
+      "broken": [],
+      "overflow": 0
+    }
+  },
+  "rulings": [
+    "Original controls/form actions/hidden states retained; native scrap-view/footnote differences from proposal intentional.",
+    "Guide layers remain within original parent scroll flow; no portal.",
+    "Expanded part-only tracking is counted explicitly; prior non-part and runtime resource limits retained."
+  ],
+  "limits": [
+    "PUM fresh POST replay was denied by automatic approval review; inspect existing native DOM only.",
+    "No real registration, report, vote, account scrap iframe or native dialog action.",
+    "No current extension/device/authenticated/all-child/raw/mixed/upper/release approval."
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/focused-final-source.json",
+      "sha256": "DA1A44AACB17FBC18DAE1358A3644806DBEE929C4FFAD6275A56E0C9C2E5936F"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/mobile-final.json",
+      "sha256": "0C37DB473AF8DB8B571D38691AA135939DBAC1E8152D177A338B284B6ED0C7B8"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/semantic-summary.json",
+      "sha256": "B83814C6DCE412FB32B8816A656471D4B5BDC3253A8D4DAC11549D6A807752F4"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/article-control-final.json",
+      "sha256": "C608F26B44F8D3B4A57C9F3655828E363A77C87AF2BC0566B9C9329D63DB2483"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/article-candidate-final.json",
+      "sha256": "62B050C7535FF9BF2F1E023B32B4EF2CE05F78E1B80C0F8919590DBAD4336280"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/live-current.json",
+      "sha256": "595D431E6DBFC7A3A26035673AC655FE1D0AE0AF063CBA8C6E650336246C3D9F"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/review-manifest.json",
+      "sha256": "FA214899DC62092120F923E6291FEFFE9A90B56A3B7DF43AABD48469FD1BD774"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/comparison/review.json",
+      "sha256": "E4F4E5E4533760A6CCAE5DD1097F2E874B5529FD3857EA768899EBFCC0FA97E6"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/material.json",
+      "sha256": "BFE6A335C6DAB99D1B558FBE0C48B5944197D6B85D56AD77A47FA789C9AD1F9E"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/theme-details-red.json",
+      "sha256": "CF4D9B60CEA741FD935472AB780C2D88E0DA18CB445B4E57A0183CBAA0902327"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/native-rim-red.json",
+      "sha256": "32194C833B90CD9E4CB0AE59D11ED0BE2D2A039F4EFCD7B1365C0806A8105FF8"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/blue-header-red.json",
+      "sha256": "F2B485F0B8ABD2660A7998EDB06F191E01852BFF1DCCF5ECFC9A7F76FBE11843"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/comment-control-recheck.json",
+      "sha256": "5C5A579EC61A947F0041D31A15757543FAF271ABCBC2CC42BF6698FA10A9C256"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/comment-candidate-recheck.json",
+      "sha256": "990ED6FE2C820F13EC6CDB9BF68A2B8AE85C9D346332DC9B76E4F02D810BC592"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/viewer.json",
+      "sha256": "D72FFE87AA7FD1E1A737DE7472823EFE7C69B3C0894F325C3A9005A811A5805D"
+    },
+    {
+      "path": "artifacts/b1-article-actions-2026-10-24/impeccable-final-detect.log",
+      "sha256": "C26B5C10DA76ABD99B61781EC7E248BE9B030F71FC466594454751A0D14859A6"
+    }
+  ]
+}

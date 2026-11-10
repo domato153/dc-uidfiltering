@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "generator": "deterministic-first-cover-v1",
+  "profiles": [
+    {
+      "id": "ordinary-list-settings",
+      "strength": 3,
+      "risk": "R2",
+      "factors": {
+        "route": ["board-list", "mgallery-list", "mini-list"],
+        "surface": ["tokens-settings-palette", "list-search-paging"],
+        "auth": ["anonymous", "authenticated"],
+        "theme": ["light", "dark"],
+        "viewport": ["narrow", "regular", "wide"],
+        "dynamicDom": ["initial", "delayed-insert", "full-replace"],
+        "storageTiming": ["settled", "read-pending", "write-fails"],
+        "input": ["pointer", "keyboard"]
+      },
+      "forbidden": []
+    },
+    {
+      "id": "ordinary-content",
+      "strength": 3,
+      "risk": "R2",
+      "factors": {
+        "route": ["board-view", "mgallery-view", "mini-view"],
+        "surface": ["article-recommendation", "comments-replies", "header-navigation"],
+        "auth": ["anonymous", "authenticated"],
+        "theme": ["light", "dark"],
+        "viewport": ["narrow", "regular", "wide"],
+        "dynamicDom": ["initial", "delayed-insert", "full-replace"],
+        "popup": ["closed", "native-open"],
+        "input": ["pointer", "keyboard"]
+      },
+      "forbidden": []
+    },
+    {
+      "id": "native-form-popup",
+      "strength": 4,
+      "risk": "R3",
+      "factors": {
+        "route": ["write", "modify", "view"],
+        "surface": ["write-edit-delete-popup"],
+        "auth": ["anonymous", "authenticated"],
+        "theme": ["light", "dark"],
+        "viewport": ["narrow", "regular", "wide"],
+        "dynamicDom": ["initial", "full-replace"],
+        "popup": ["closed", "native-open", "error"],
+        "storageTiming": ["settled", "read-pending", "write-pending"],
+        "input": ["pointer", "keyboard"]
+      },
+      "forbidden": [
+        { "route": "write", "popup": "native-open" },
+        { "route": "modify", "popup": "native-open" },
+        { "route": "view", "popup": "closed", "input": "keyboard" }
+      ]
+    },
+    {
+      "id": "final-integrated",
+      "strength": 4,
+      "risk": "R3",
+      "factors": {
+        "route": ["board-list", "mgallery-list", "mini-list", "board-view", "mgallery-view", "write"],
+        "surface": ["integrated"],
+        "auth": ["anonymous", "authenticated"],
+        "theme": ["light", "dark"],
+        "viewport": ["narrow", "regular", "wide"],
+        "dynamicDom": ["initial", "delayed-insert", "full-replace"],
+        "popup": ["closed", "native-open"],
+        "storageTiming": ["settled", "read-pending", "write-pending"],
+        "input": ["pointer", "keyboard"]
+      },
+      "forbidden": [
+        { "route": "write", "popup": "native-open" }
+      ]
+    }
+  ]
+}

@@ -54,8 +54,10 @@
     const NativeRequestAnimationFrame = globalThis.requestAnimationFrame;
     const NativeCancelAnimationFrame = globalThis.cancelAnimationFrame;
     const activeTimeouts = new Set();
+    const activeTimeoutDetails = new Map();
     const activeIntervals = new Set();
     const activeAnimationFrames = new Set();
+    const activeAnimationFrameDetails = new Map();
     const callbackIds = new WeakMap();
     const targetIds = new WeakMap();
     const listenerKeys = new Set();
@@ -124,16 +126,25 @@
         const wrappedCallback = typeof callback === 'function'
             ? function (...callbackArgs) {
                 activeTimeouts.delete(timerId);
+                activeTimeoutDetails.delete(timerId);
                 state.timeoutCompleted += 1;
                 return callback.apply(this, callbackArgs);
             }
             : callback;
         timerId = NativeSetTimeout.call(this, wrappedCallback, delay, ...args);
-        if (typeof callback === 'function') activeTimeouts.add(timerId);
+        if (typeof callback === 'function') {
+            activeTimeouts.add(timerId);
+            activeTimeoutDetails.set(timerId, {
+                delay: Number(delay) || 0,
+                scheduledAt: performance.now(),
+                stack: String(new Error('setTimeout scheduled').stack || '')
+            });
+        }
         return timerId;
     };
     globalThis.clearTimeout = function (timerId) {
         if (activeTimeouts.delete(timerId)) state.timeoutCleared += 1;
+        activeTimeoutDetails.delete(timerId);
         if (activeIntervals.delete(timerId)) state.intervalCleared += 1;
         return NativeClearTimeout.call(this, timerId);
     };
@@ -159,15 +170,21 @@
         let frameId;
         const wrappedCallback = (timestamp) => {
             activeAnimationFrames.delete(frameId);
+            activeAnimationFrameDetails.delete(frameId);
             state.animationFrameCompleted += 1;
             return callback(timestamp);
         };
         frameId = NativeRequestAnimationFrame.call(this, wrappedCallback);
         activeAnimationFrames.add(frameId);
+        activeAnimationFrameDetails.set(frameId, {
+            scheduledAt: performance.now(),
+            stack: String(new Error('requestAnimationFrame scheduled').stack || '')
+        });
         return frameId;
     };
     globalThis.cancelAnimationFrame = function (frameId) {
         if (activeAnimationFrames.delete(frameId)) state.animationFrameCancelled += 1;
+        activeAnimationFrameDetails.delete(frameId);
         return NativeCancelAnimationFrame.call(this, frameId);
     };
 
@@ -307,8 +324,10 @@
             return {
                 ...state,
                 activeTimeouts: activeTimeouts.size,
+                activeTimeoutDetails: Array.from(activeTimeoutDetails.values(), (detail) => ({ ...detail })),
                 activeIntervals: activeIntervals.size,
                 activeAnimationFrames: activeAnimationFrames.size,
+                activeAnimationFrameDetails: Array.from(activeAnimationFrameDetails.values(), (detail) => ({ ...detail })),
                 mutationObserverCreationStacks: state.mutationObserverCreationStacks.slice(),
                 xhrRequests: state.xhrRequests.map((item) => ({ ...item })),
                 filterPasses: state.filterPasses.map((item) => ({ ...item })),

@@ -1,0 +1,467 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-05",
+  "scope": "Site/index and README prototype illustrations only",
+  "sourceBase": "4969beba593c62cb41f57983ed95b11aa1e1c78d",
+  "mobileSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+  "pcSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+  "runtimeChanged": false,
+  "latestUserDirection": "Phone/core-filter examples2026-11-05:Mobile screenshots use the adopted980x2306 portrait layout with screen412x1006,isMobile true and DPR1 PNG export;readback scale1/DPR1 is explicitly a proxy/export gap,not exact phone scale0.420684/DPR2.625 qualification. Remove max-height cropping from hero/showcase and show full portrait images in a phone-shaped wrapper;PC stays landscape. Menu must show actual open core 글댓합 filter settings,with an additional original-popup screenshot for readable detail. PC core filter is the representative PC tab/link;block management stays separate. Product runtime/GM settings/official files are unchanged. No test gallery or generated/replaced content.",
+  "readback": {
+    "inner": [
+      980,
+      2306
+    ],
+    "screen": [
+      412,
+      1006
+    ],
+    "scale": 1,
+    "dpr": 1
+  },
+  "captures": [
+    {
+      "id": "mobile-list",
+      "path": "design-prototypes/site-v7/assets/mobile-list.png",
+      "sha256": "7b569ffb32dd7892ff6de15f8f384c36b698e99ed563562152b3ff854794873d",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public DOM/content,current Mobile source-injection;no fixture/rewritten text.980x2306 layout proxy,screen412x1006,DPR1 export,isMobile true;not exact scale/DPR/device proof."
+    },
+    {
+      "id": "menu",
+      "path": "design-prototypes/site-v7/assets/menu.png",
+      "sha256": "127ca67f4da416b88d957bfb8128bd9558953165c3ba3d3de5910d54dc4658e4",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public DOM/content,current Mobile source-injection;no fixture/rewritten text.980x2306 layout proxy,screen412x1006,DPR1 export,isMobile true;not exact scale/DPR/device proof."
+    },
+    {
+      "id": "menu-detail",
+      "path": "design-prototypes/site-v7/assets/menu-detail.png",
+      "sha256": "2c52b4bdcba708f40c35b184c28d0992a74124c3f0937f8dc7f33c33d3bfcc6f",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public DOM/content,current Mobile source-injection;no fixture/rewritten text.980x2306 layout proxy,screen412x1006,DPR1 export,isMobile true;not exact scale/DPR/device proof."
+    },
+    {
+      "id": "palette",
+      "path": "design-prototypes/site-v7/assets/palette.png",
+      "sha256": "045e934f70927c3c7de0c83524bc13f0c75917125867ead137a2499f31b491c0",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "source": "Actual public DOM/content,current Mobile source-injection;no fixture/rewritten text.980x2306 layout proxy,screen412x1006,DPR1 export,isMobile true;not exact scale/DPR/device proof."
+    },
+    {
+      "id": "mobile-article",
+      "path": "design-prototypes/site-v7/assets/mobile-article.png",
+      "sha256": "f86800c1f2e7bd89e130f8531c0a6923a7277305270d30e2c91b6b04a2a0c68e",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/view/?id=wutheringwaves&no=2377010&page=1",
+      "source": "Actual public DOM/content,current Mobile source-injection;no fixture/rewritten text.980x2306 layout proxy,screen412x1006,DPR1 export,isMobile true;not exact scale/DPR/device proof."
+    },
+    {
+      "id": "mobile-write",
+      "path": "design-prototypes/site-v7/assets/mobile-write.png",
+      "sha256": "ba627b683ca5e1ef9ec9e93aa31116b61fed60907fdc75a35d5ab616cfd43b83",
+      "runtimeSha256": "80ec1567eb0d5d0dcdb0c56143eac32c6e4298dcd780afd003071042894db3e3",
+      "url": "https://gall.dcinside.com/mgallery/board/write/?id=wutheringwaves",
+      "source": "Actual public DOM/content,current Mobile source-injection;no fixture/rewritten text.980x2306 layout proxy,screen412x1006,DPR1 export,isMobile true;not exact scale/DPR/device proof."
+    },
+    {
+      "id": "pc-filter",
+      "path": "design-prototypes/site-v7/assets/pc-filter.png",
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "sha256": "1d66c87d7216c73fed24087dd97f9c5095fd813f4ee14e7cac934af30df33978",
+      "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+      "viewport": {
+        "width": 1280,
+        "height": 1000
+      },
+      "source": "Actual anonymous public PC page,current PC source-injected;native host retained,real filter UI open. No persistence or POST."
+    }
+  ],
+  "checks": {
+    "actual": "Anonymous GET/HEAD public list/article/writer;original settings UI open;no network writes or persistence",
+    "showcase": [
+      {
+        "width": 1440,
+        "hero": {
+          "box": {
+            "x": 843.625,
+            "y": 258.078125,
+            "width": 290,
+            "height": 682.375,
+            "top": 258.078125,
+            "right": 1133.625,
+            "bottom": 940.453125,
+            "left": 843.625
+          },
+          "natural": [
+            980,
+            2306
+          ],
+          "parent": {
+            "x": 843.625,
+            "y": 258.078125,
+            "width": 290,
+            "height": 682.375,
+            "top": 258.078125,
+            "right": 1133.625,
+            "bottom": 940.453125,
+            "left": 843.625
+          }
+        },
+        "installs": [
+          238.625,
+          238.640625
+        ],
+        "states": [
+          {
+            "shot": "mobile-list",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "mobile-article",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "mobile-write",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "menu",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "palette",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "pc-filter",
+            "dimensions": {
+              "natural": [
+                1280,
+                1000
+              ],
+              "width": 1132,
+              "height": 884.375,
+              "parentHeight": 884.375
+            }
+          },
+          {
+            "shot": "pc-management",
+            "dimensions": {
+              "natural": [
+                1280,
+                900
+              ],
+              "width": 1132,
+              "height": 795.9375,
+              "parentHeight": 795.9375
+            }
+          }
+        ],
+        "keyboard": "End/Home pass",
+        "pcLink": "core filter selected",
+        "errors": []
+      },
+      {
+        "width": 980,
+        "hero": {
+          "box": {
+            "x": 557.875,
+            "y": 230.078125,
+            "width": 290,
+            "height": 682.375,
+            "top": 230.078125,
+            "right": 847.875,
+            "bottom": 912.453125,
+            "left": 557.875
+          },
+          "natural": [
+            980,
+            2306
+          ],
+          "parent": {
+            "x": 557.875,
+            "y": 230.078125,
+            "width": 290,
+            "height": 682.375,
+            "top": 230.078125,
+            "right": 847.875,
+            "bottom": 912.453125,
+            "left": 557.875
+          }
+        },
+        "installs": [
+          192.875,
+          192.875
+        ],
+        "states": [
+          {
+            "shot": "mobile-list",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "mobile-article",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "mobile-write",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "menu",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "palette",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 328,
+              "height": 771.796875,
+              "parentHeight": 783.796875
+            }
+          },
+          {
+            "shot": "pc-filter",
+            "dimensions": {
+              "natural": [
+                1280,
+                1000
+              ],
+              "width": 904,
+              "height": 706.25,
+              "parentHeight": 706.25
+            }
+          },
+          {
+            "shot": "pc-management",
+            "dimensions": {
+              "natural": [
+                1280,
+                900
+              ],
+              "width": 904,
+              "height": 635.625,
+              "parentHeight": 635.625
+            }
+          }
+        ],
+        "keyboard": "End/Home pass",
+        "pcLink": "core filter selected",
+        "errors": []
+      },
+      {
+        "width": 390,
+        "hero": {
+          "box": {
+            "x": 49,
+            "y": 543.828125,
+            "width": 292,
+            "height": 687.09375,
+            "top": 543.828125,
+            "right": 341,
+            "bottom": 1230.921875,
+            "left": 49
+          },
+          "natural": [
+            980,
+            2306
+          ],
+          "parent": {
+            "x": 49,
+            "y": 543.828125,
+            "width": 292,
+            "height": 687.09375,
+            "top": 543.828125,
+            "right": 341,
+            "bottom": 1230.921875,
+            "left": 49
+          }
+        },
+        "installs": [
+          171,
+          171
+        ],
+        "states": [
+          {
+            "shot": "mobile-list",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 324,
+              "height": 762.390625,
+              "parentHeight": 774.390625
+            }
+          },
+          {
+            "shot": "mobile-article",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 324,
+              "height": 762.390625,
+              "parentHeight": 774.390625
+            }
+          },
+          {
+            "shot": "mobile-write",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 324,
+              "height": 762.390625,
+              "parentHeight": 774.390625
+            }
+          },
+          {
+            "shot": "menu",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 324,
+              "height": 762.390625,
+              "parentHeight": 774.390625
+            }
+          },
+          {
+            "shot": "palette",
+            "dimensions": {
+              "natural": [
+                980,
+                2306
+              ],
+              "width": 324,
+              "height": 762.390625,
+              "parentHeight": 774.390625
+            }
+          },
+          {
+            "shot": "pc-filter",
+            "dimensions": {
+              "natural": [
+                1280,
+                1000
+              ],
+              "width": 336,
+              "height": 262.5,
+              "parentHeight": 262.5
+            }
+          },
+          {
+            "shot": "pc-management",
+            "dimensions": {
+              "natural": [
+                1280,
+                900
+              ],
+              "width": 336,
+              "height": 236.25,
+              "parentHeight": 236.25
+            }
+          }
+        ],
+        "keyboard": "End/Home pass",
+        "pcLink": "core filter selected",
+        "errors": []
+      }
+    ],
+    "manual": "Viewed actual full Mobile+filter detail,PC filter and portrait hero at readable scale;no clipping or invented UI",
+    "omissions": "No product suite/build:runtime unchanged. Reused PC management image retains prior exact binding;not relabeled as newly captured."
+  },
+  "publication": {
+    "officialIndexReadmeStylesUnchanged": true,
+    "officialRefsUnchanged": true,
+    "userApproval": false
+  },
+  "limits": [
+    "Desktop Chrome source-injected screenshots,not installed-extension or exact-device qualification",
+    "DPR1/scale1 export differs from adopted physical phone",
+    "Official stage4 promotion remains separately approved"
+  ]
+}

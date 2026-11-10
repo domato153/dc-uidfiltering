@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-toolbar-header-detail-application",
+  "status": "BOUNDED_FUNCTIONAL_PASS_USER_VISUAL_REVIEW_PENDING",
+  "sourceBaseHead": "246a2b0488de1a011a89e3338f67c4fecdb9f687",
+  "artifact": {
+    "mobileSha256": "AF6C98F0ECD7351B3A4C2EFF47BC23636B8AAE9C47DFD2A9F16D3AA76187C589",
+    "pcSha256": "5FA25756C43864AA8C90C1347AE6A03652D901862F83ABEAEDDEBF6382CFA740",
+    "controlMobileSha256": "90EEEBFF27DC7C1B585A56D74F7AE4B27E34609806C38254AC54460DBA8F444F",
+    "versionChanged": false
+  },
+  "scope": {
+    "surfaces": [
+      "H-01",
+      "H-02",
+      "H-03",
+      "L-05",
+      "L-06",
+      "L-09"
+    ],
+    "productionChanges": "CSS only in existing list/header-shell/theme-host owners; no native DOM/event/storage/observer or UiPort change",
+    "environment": "980x2306 layout proxy;390 stress; not exact phone/device",
+    "sharedPc": "UNCHANGED",
+    "appearanceApproval": false
+  },
+  "checks": {
+    "mobile": {
+      "passed": 144,
+      "failed": 0
+    },
+    "b1": {
+      "contexts": 8,
+      "paletteThemeBindings": 28,
+      "functionalStatus": "PASS",
+      "visualStatus": "MANUAL_REFERENCE_REVIEW_REQUIRED",
+      "sameRowMaximumOffsetCssPixels": 0.703125,
+      "clearfixContexts": 8,
+      "allFindingsEmpty": true
+    },
+    "transfer": {
+      "referenceThemes": 2,
+      "shiftedNegativesRejected": 2,
+      "clearfixNegativesRejected": 2,
+      "narrowClearfixAlsoAsserted": true
+    },
+    "headerLayout": {
+      "contexts": 8,
+      "status": "PASS"
+    },
+    "scroll": {
+      "contexts": 5,
+      "status": "PASS"
+    },
+    "immediateSemantic": {
+      "observations": 16,
+      "settledRecords": 4,
+      "status": "PASS_WITHIN_IMMEDIATE_90_SCOPE"
+    },
+    "publicChrome": {
+      "browser": "155.0.8059.85",
+      "themes": 2,
+      "http": [
+        200,
+        200
+      ],
+      "visibleBrokenImages": 0,
+      "overflow": [
+        0,
+        0
+      ],
+      "controlToolbarHeights": [
+        70,
+        70
+      ],
+      "candidateToolbarHeights": [
+        58,
+        58
+      ],
+      "scope": "PUBLIC_ANONYMOUS_GET_HEAD_GM_SHIM_NOT_EXTENSION"
+    },
+    "pixelReports": {
+      "design": "DIFFERENCES_REQUIRE_REVIEW",
+      "sameFixture": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false
+    }
+  },
+  "review": {
+    "automaticEffect": "Prior13.296875px label drift is below1px after repair; live clearfix/grid gap reproduced and rejected before final fix",
+    "manualEffect": "Complete component review found the extra native grid row after the label-only check passed. Native toolbar70px becomes58px, with coherent labels/natural tab widths and one authored pencil.",
+    "headerMaterial": "Theme-aware translucent tint, diagonal glaze, rim and shadow refined. Difference is subtle; sufficient glass/beauty remains user judgement, not an automatic pass.",
+    "limitations": [
+      "No causal A/B efficiency or autonomous beauty guarantee",
+      "Public captures use GM shim, not a new real-extension/device/authenticated qualification",
+      "Published raw list +8-listener difference, mixed/upper/release admission and other UI families remain unqualified",
+      "Original detector retains one unconfirmed dynamic-img serializer warning; visible public broken images0, no ignore added"
+    ],
+    "discardedFixes": [
+      "Native .clear coupling rejected by existing source-boundary check",
+      "Incorrect list-host ancestor rejected by the new clearfix gate; toolbar is a sibling in the real shape",
+      "Legacy desktop tab-group200px expectation replaced by explicit44x40 per-control and minimum group132px; native behavior assertions retained"
+    ],
+    "interruptedRuns": "Earlier full-runtime run was interrupted by tool/session limit. Final exact AF6 runtime has a completed144/144 report; intermediate reports are not reused as final acceptance."
+  },
+  "evidence": {
+    "artifacts/b1-detail-2026-10-23/full-final-runtime.json": "BEEE5C9077AE58434466EA4B3765A972388635688BBA4299195FBDFE63ACC861",
+    "artifacts/b1-detail-2026-10-23/b1-delivered.json": "BACAA936A54A9C613CF05E0C68C9CC279FE47CD6DACE425FBC034379B0C902EB",
+    "artifacts/b1-detail-2026-10-23/layout-final.json": "139E7B9E1F65CD33A14AA813534EE958EEA85C7A927E81097FA34C1FD798BB17",
+    "artifacts/b1-detail-2026-10-23/scroll-final.json": "EF5D34C23214C93895C466BD59A4C634302CBD19393E5986FE03073A87101783",
+    "artifacts/b1-detail-2026-10-23/immediate-semantic.json": "23181477DC6FCF55D9B1398410BAD8C97EE49516824AF40C46F14EC2BDC801D6",
+    "artifacts/b1-detail-2026-10-23/control-side.json": "86EB8B0F9417EEF64FD83CE2C7FB0C20E6FAF893681D12AB28B704ABBDA72107",
+    "artifacts/b1-detail-2026-10-23/candidate-final-side.json": "02F3AFF07C327B5816611E7E39617849A4ED8AE1A30809114D57E22486043676",
+    "artifacts/b1-detail-2026-10-23/transfer-delivered.json": "DF900D88102B430E3A29628AB20BC64C3074D015D09D2C96D170A744A7478FA9",
+    "artifacts/b1-detail-2026-10-23/impeccable-delivered.json": "737A02275DD75DFBA6547C9FE2979ED67E09ECE7457E63DEB9CF5FD9FA49554E",
+    "artifacts/b1-detail-2026-10-23/public-control/probe.json": "9B7901DABD708C500E4FB0F2A670C3C3130765EEBA04D142028684C96850EABA",
+    "artifacts/b1-detail-2026-10-23/public-delivered/probe.json": "FF5390967C52A7056E7EA57790502E5BBBD55783FC7BC45DEF93DE18C59E62D6",
+    "artifacts/b1-detail-2026-10-23/paired-delivered/pairs.json": "DDE97366C2CF18CBC4718FBB45DE727EE12A157ED0C62387852E6789E8ED122C",
+    "artifacts/b1-detail-2026-10-23/paired-report-delivered/review.json": "05850FE747CD111B9A5AF8D9022F64145292FF14671B31E11C816DD6FA1B10D8",
+    "artifacts/b1-detail-2026-10-23/design-report-delivered/review.json": "8694553F37F2EDAD7A890FC85033DB9543084198C5F77AEE0BE500D37B47BA2B",
+    "artifacts/b1-detail-2026-10-23/component-images.json": "6C5D7BDC588A3E2A7546AA38B92AFBAC36467A202BDEB25966DF5B4955FF57F9",
+    "artifacts/b1-detail-2026-10-23/viewer/index.html": "C81E9D4ABFF0709DA9CF56A033E5681BA7213555CB19C88B08E4E4A8A3DDC1F2",
+    "artifacts/b1-detail-2026-10-23/clearfix-red.log": "3E1C9EB93B3FA224487B8793A30F8587D5EA6B23FB9AA7CC1E3B3D2E4B6E1151",
+    "artifacts/b1-detail-2026-10-23/b1-verified.log": "F50B095D87F72E3872327001B3E3C41EE3DB6BFD10B595949B8503FDA1ADF739",
+    "artifacts/b1-detail-2026-10-23/full-final.json": "CAFF2130BE3AF835A1D75FC243AECED6A41BFDFDCAFF5C26276437DCFCB3CB8E"
+  }
+}

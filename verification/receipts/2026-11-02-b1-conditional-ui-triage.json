@@ -1,0 +1,709 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_REMAINING_CONDITIONAL_UI_TRIAGE",
+  "status": "PREFLIGHT_COMPLETE_WITH_PRESENTATION_FINDINGS",
+  "sourceBaseHead": "1b36ca27f1a88c417671730528797c20d7a65ffe",
+  "candidateFingerprint": "a7959ba17296b33c68f2b06ec379115ef98cb88f2626c711a258c3fc262b5b0b",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "654FF89553A0B777FA5351726AE83BDCF49AF8D14AC7A102FEBAFAEC4F4A05D7",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "unchanged": true,
+    "rootDistGuardMatch": true,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "src/targets/mobile/comment-host-adapter.js",
+      "sha256": "b79969008152a7eb87e2859c3ac5c5580798fcb57c7a570548ce4a8f4004f603"
+    },
+    {
+      "path": "src/targets/mobile/comment-presenter.js",
+      "sha256": "bd864538b76b49f8b9cf7674a4e4319dc2dc0deba38faa9d78ca0c87a0cdf0d8"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "testbed/fixtures/b1-account-picker.mjs",
+      "sha256": "aa678eb3d5fd02f9fd03283d5f65e1a04b9b031ecf96b5ef10251006dc69a281"
+    },
+    {
+      "path": "testbed/fixtures/b1-content.mjs",
+      "sha256": "03185a7df5ea88e841401b5653f4f7cfe7c3681c394aa4d542fcfae7386a27f2"
+    },
+    {
+      "path": "testbed/ui-popup-batch-v7-contract.mjs",
+      "sha256": "2e9aa30aa9aadbb60aae66f03a0585aead9ba55bd1d0191c178f79ece02dbd52"
+    },
+    {
+      "path": "testbed/harness/live-site-browser.mjs",
+      "sha256": "864d895ebb90bfb45347b1ff08f227872f7a3839bab5bbd52385f25a060d1f80"
+    },
+    {
+      "path": "verification/live-site-canary.json",
+      "sha256": "f2d15b81de4c99879d336e7bc64ec26e4edcbc1119d838d0c7c55966cf3533dd"
+    },
+    {
+      "path": "docs/work/B1_CONDITIONAL_UI_TRIAGE.md",
+      "sha256": "6f95cf6979bf0e1eae1e3f78838145fd5b219ef994ec072afe389a9381d6ca9c"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "24d76ba043d8235effe160c62911b6f7561800f4356bd69c3bd80222d94d5abb"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/acquire.mjs",
+      "sha256": "d717271a7fce5db3c6c49ce71926c211918a421d9ca1c69685b551a71d42257d"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/acquire/report.json",
+      "sha256": "26bc630e2653659c5ed80cc8d440bf028c9289933b8d626541df09f4af3537e4"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/acquire/native-conditional-anatomy.json",
+      "sha256": "e8eafa3455b8cb17b09cea3a92bc9db359d279b18a9e8732c9c44675f0cfae6d"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-windows.mjs",
+      "sha256": "19879a24f06657b8bd935739985cd03aead282948e543520c85ee6f405152dcc"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-windows/report.json",
+      "sha256": "1ab7dfb080fd3037c924526b98d9cf1964a22cf1a2e2b18006761f7f81c6aa45"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup.mjs",
+      "sha256": "7e188ede688989f51504cc7f9f6945b67d2e49c0c0f67646e76fe33b29b6439f"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/report.json",
+      "sha256": "43664d957846fe27c910503f620917106579d916bb937533e91ad62fa1727e43"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-windows/native-bigcon.json",
+      "sha256": "0bfabbac5b32423512228476fbec303612b084fa90827bb7bf0690f8dbc0388f"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-windows/candidate-bigcon.json",
+      "sha256": "a8a05ac5588ae03d977980365af06341ad27551f55b3d218053f50e4c9eac535"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/native-package-detail.json",
+      "sha256": "7b88c7c7303f06bdf5bdaef44ac76e89e144cfd0f638a2f7bac5b9da780e6567"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/candidate-package-detail.json",
+      "sha256": "2964c3c668f046df2569077f064e60eb97ab2b05290617fac1c8041ae9018671"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/native-recent.json",
+      "sha256": "6c32a569fe94ff0ee30e0e087e1d564703d3b77d502f193ae49e8df5a44aabdd"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/candidate-recent.json",
+      "sha256": "f7c60836e603c347f72bbaec303df837cc5c2035915036d0b5534aec5c8c66d7"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/image-password-replay.mjs",
+      "sha256": "aada3553d42369de577c48a8c4ba0e40cd9e4cea90b80ef023d7628a09aca5a7"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/image-password-replay.json",
+      "sha256": "f9649b35b654b8b5d3ce59db3693e97fc5d79a5fc7367841317521a328fac196"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/native-script-bindings.json",
+      "sha256": "d04dee5ff8abdc5946569929cfc4f6280cde65ebe6315dd94402a484f263433f"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/disposition.json",
+      "sha256": "52b7b46194d8e30c33b85ec603f301c00a66e29b2298d8169c10609f0c6880c8"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/visual-assessment.json",
+      "sha256": "00b5416a4f7cd725a771498a48f08f11f34fcf2ae93dc2ed7840afb30d259919"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/impact-final.json",
+      "sha256": "aed598ff198eb69151ffc3fe04d575c3fc0909c10989512382af609b7ab3e244"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/record.mjs",
+      "sha256": "0b8ef2bc8b52671389bcadb193929bb2eceb193cb63463b1754fbf162892e5c1"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/enabled-bigcon.mjs",
+      "sha256": "90ce2aac32273780d16ed5d6435a530d36e765ee703e767c096eb290882576a4"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/enabled-bigcon/report.json",
+      "sha256": "fc6d0def503545338e58d2b695cd9232f15b5fc7f6b373525f9526ffee8ba8c7"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/enabled-bigcon/native-bigcon.json",
+      "sha256": "e82dea1a72f65c8e8fec78c3164a119df357a6ce472824a8731dc055b2442a76"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/enabled-bigcon/candidate-bigcon.json",
+      "sha256": "457360370ba8e70e6f88108260f1cd334bb4af6b7f1cc694622566cf3f28b744"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/update-issued.mjs",
+      "sha256": "9cdea88032837402eb24e7e5539fc11215153eab4b258845e3f030c735195633"
+    }
+  ],
+  "nativeScripts": [
+    {
+      "url": "https://gall.dcinside.com/_js/dccon/dccon.js?v=261026",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/dccon.js",
+      "sha256": "427c47d876f8ab9808051c5b2150fa26c5166b8f813da2586056069a304f17ab",
+      "bytes": 65817
+    },
+    {
+      "url": "https://gall.dcinside.com/_js/dccon/dccon_favorite_folder.js?v=20260507",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/dccon_favorite_folder.js",
+      "sha256": "01da46a93f81f6118d531636b6535d9888dd12cf79e5d5488a579de12a1bd574",
+      "bytes": 44090
+    },
+    {
+      "url": "https://gall.dcinside.com/_js/dccon/txtcon_view.js?v=260902",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/txtcon_view.js",
+      "sha256": "c20c6d18eacf5791e29cfbf1218c1bc9b2b2358e4a5553f6a3a042a924036190",
+      "bytes": 6460
+    },
+    {
+      "url": "https://gall.dcinside.com/_js/dccon/txtcon.js?v=261020",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/txtcon.js",
+      "sha256": "de1f122883c37426f6198dad68de8928918045aeb5115871cfff186a8736fb3a",
+      "bytes": 23209
+    },
+    {
+      "url": "https://gall.dcinside.com/_js/comment.js?v=261029",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/comment.js",
+      "sha256": "b2f074c6756ddb428f4ddad57679f898dac6b393ea53617bfb4b1f789ba6b99a",
+      "bytes": 119585
+    },
+    {
+      "url": "https://dccon.dcinside.com/_js/dc_common2.js?v=261016",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/dc_common2.js",
+      "sha256": "18484048b71fdc5d9fe716c75ddbfff506ac7fe2d8e1d05918234d56abe0da30",
+      "bytes": 22076
+    },
+    {
+      "url": "https://gall.dcinside.com/_js/image_comment.js?v=261029-2",
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/image_comment.js",
+      "sha256": "61de606dbbd314733ad8d8140efdfe14a77f231ecb110a155ee0b92f062e6913",
+      "bytes": 45244
+    }
+  ],
+  "images": [
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-windows/native-bigcon.png",
+      "sha256": "046cd78b5c87f89466d16fc398f3801e24e1def79031c9474a3fedca75f4b2de",
+      "width": 360,
+      "height": 152
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-windows/candidate-bigcon.png",
+      "sha256": "11463d6ce20ad6cbe1ec64e3b21827a0a94fbb3b76dab9751bad01eaa4b3bc3e",
+      "width": 424,
+      "height": 193
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/native-recent.png",
+      "sha256": "a97c2b918219c725c5a18ad04a6f02ece1ed4e805feaf05b1abbc45a69ce5c84",
+      "width": 640,
+      "height": 249
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/candidate-recent.png",
+      "sha256": "d576e36b2ff3bb0b73656c0b7ce1df524ee773f843d447101be6144de02b01b0",
+      "width": 480,
+      "height": 398
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/native-package-detail.png",
+      "sha256": "9885834a32875db48a7899d2bb914f09b8c8b9ffecf83142a540ef268045ca6b",
+      "width": 715,
+      "height": 580
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/candidate-package-detail.png",
+      "sha256": "842763a6907610618696adffc60ce3b709e98b4ed5d55901b9068450ce6ca2d6",
+      "width": 715,
+      "height": 579
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/replay-image-password-light.png",
+      "sha256": "d045e1aca48cade0f5a3a32ddf16b8a97490233c54d4c303561575af8b0d4a81",
+      "width": 218,
+      "height": 32
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/replay-image-password-dark.png",
+      "sha256": "42afd1c996b37a16951c588befa40763e5867db6099d8016457d953bb530864c",
+      "width": 218,
+      "height": 32
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/enabled-bigcon/native-bigcon.png",
+      "sha256": "bb9a37e2d8ba9a8bcd93dc5bb73798156419137415a2e1e126df2b76831e483d",
+      "width": 360,
+      "height": 138
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/enabled-bigcon/candidate-bigcon.png",
+      "sha256": "7f5b63d3f268fe82cf6690644b2cafba354cfe96935b9bda7a1dbeb8519462fc",
+      "width": 312,
+      "height": 178
+    }
+  ],
+  "disposition": [
+    {
+      "id": "bigcon-info",
+      "surface": "C-11",
+      "status": "NEEDS_WORK",
+      "evidence": "Actual native/current disabled-not-eligible and later user-issued enabled information branches opened/closed;zero overflow and positive close hits. No issuance request.",
+      "finding": "Current grey close receives text-action display/font;accessible close text leaks vertically over the original X.",
+      "cause": "comment-host-adapter.js icon classification omits poply_greyclose;native help body is not a fully mapped v7 family."
+    },
+    {
+      "id": "package-detail",
+      "surface": "C-11/C-04",
+      "status": "NEEDS_WORK",
+      "evidence": "Original hover300ms → /dccon/package_detail read → original close observed in native/current.",
+      "finding": "Current outer glass applies,but title,metadata links and use/purchase button retain native blue/white paint.",
+      "cause": "Root matches generic comment-popup;button/field interior projection returns early for every non-picker except the ordinary password ID. Equivalent shell does not imply child material finish."
+    },
+    {
+      "id": "image-comment-password",
+      "surface": "C-13",
+      "status": "NEEDS_WORK_CONSTRUCTOR_REPLAY",
+      "evidence": "No safe current guest image-delete entry in either live phase. Exact official getImgCmtPwdInputHtml structure replayed locally in2themes on654FF895.",
+      "finding": "Image password root is comment-popup;field/primary/close roles absent,confirm remains rgb59/72/144 and field white in both themes.",
+      "cause": "Password recognition uses #cmt_delpw_box.cmt_delpw_box only;native #img_cmt_delpw_box shares the class but misses that branch. Live permission/focus behavior remains UNKNOWN."
+    },
+    {
+      "id": "populated-recent",
+      "surface": "C-11",
+      "status": "OBSERVED_REUSE",
+      "evidence": "Authenticated native/current recent read200,populated3visible media items;current root overflow0,pager positive hits36x36.",
+      "finding": "Recent glyphs look small but outer original buttons already have36px v7 hit boxes. No new defect established;retain existing owner.",
+      "cause": "Do not infer a17px native sprite means a17px action target. No new recent-state implementation or full media-format claim."
+    },
+    {
+      "id": "favorite-folder-management",
+      "surface": "C-11",
+      "status": "MUTATION_DEPENDENT_UNKNOWN",
+      "evidence": "Actual closed folder roots and native handlers acquired;test account has no populated folder route.",
+      "finding": "Folder mode checkbox can write dccon_tar to localStorage;creation/edit/save/delete use original persistence callbacks. Never toggled or saved for this audit.",
+      "cause": "Use non-sensitive native-template replay for future appearance work;closed DOM is not open-state/live acceptance."
+    },
+    {
+      "id": "favorite-add-select",
+      "surface": "C-11",
+      "status": "MUTATION_DEPENDENT_UNKNOWN",
+      "evidence": "Native star handler acquired.",
+      "finding": "An existing favorite can remove immediately;one-folder addition can save immediately. Star is not a harmless universal dialog opener.",
+      "cause": "No star/package/order change;folder selection/add UI not declared live-qualified."
+    },
+    {
+      "id": "bigcon-eligible-issuance",
+      "surface": "C-11",
+      "status": "ISSUANCE_BRANCH_NOT_EXECUTED",
+      "evidence": "User reported issuance;fresh native/current state confirmed enabled and info open/close. Original eligible entry still has automatic set_bigcon branch.",
+      "finding": "Already-enabled info is now acquired. Agent did not manufacture eligibility or issue/renew a usage right.",
+      "cause": "User-performed issuance is a live-state change;recheck status before opening and never replay the eligible issuance branch."
+    },
+    {
+      "id": "weekly-tip",
+      "surface": "C-11",
+      "status": "PERSISTENT_DISMISSAL_NOT_USED",
+      "evidence": "Native con_weekly_tip writes a long-lived con_weekly cookie.",
+      "finding": "Tip dismissal is a preference change and was not used to clear an obstruction.",
+      "cause": "Keep native visibility/handler and acquire an already-visible state if it becomes relevant."
+    },
+    {
+      "id": "use-buy-and-editor",
+      "surface": "C-11",
+      "status": "ACTION_OR_EXTERNAL_SCOPE",
+      "evidence": "Native btn_buy flow includes account info/use/purchase paths;my-DCCon edit navigates to the separate DCCon site.",
+      "finding": "Use/buy/password/gift/account editor outcomes were not entered. No purchase,attachment,content submission or external editor styling claim.",
+      "cause": "Retain original action/price/media semantics;buttons are styled without invoking them."
+    },
+    {
+      "id": "own-keyed-admin-delete",
+      "surface": "C-13",
+      "status": "DESTRUCTIVE_BRANCH_NOT_A_DISCOVERY_DIALOG",
+      "evidence": "Actual ordinary/image-comment deletion handlers distinguish own/keyed/admin immediate actions from guest password views.",
+      "finding": "Never click own/member/admin delete merely to search for a confirmation UI.",
+      "cause": "Submission outcomes and authorization combinations remain separate from the appearance finish."
+    },
+    {
+      "id": "captcha-server-errors-device",
+      "surface": "C-08/C-10/C-13/W",
+      "status": "SEPARATE_QUALIFICATION_UNKNOWN",
+      "evidence": "Existing named fixture/role receipts retained;no new runtime change.",
+      "finding": "No fabricated CAPTCHA/error response,submission or device certification.980x2306 remains layout proxy,390 stress.",
+      "cause": "Not a reason to repeat unaffected whole product suites."
+    },
+    {
+      "id": "retired-deferred",
+      "surface": "C-07/W-11–14/N",
+      "status": "EXCLUDED_AS_ALREADY_DECIDED",
+      "evidence": "Current user-adopted checklist.",
+      "finding": "Image replies N/A;four external uploads user-deferred;browser/OS dialogs outside web CSS;guidebook discussion after whole UI finish.",
+      "cause": "Do not revive these as new implementation tasks."
+    }
+  ],
+  "actual": {
+    "browserVersion": "156.0.8078.76",
+    "executableSha256": "66885D764FA17C7A7C53E1F94148E46959C5EC21FA5BC3AC22143EB2A1F7731A",
+    "extension": {
+      "version": "5.5.0",
+      "sha256": "BCAEC082C439E11C4DF683F43D07E9AC3D4439251D72B91C5B452F977DAC15D5"
+    },
+    "installRoute": "Official unmodified pinned Tampermonkey / original Utilities Import Install;fresh isolated Chrome profile",
+    "sourceInjection": false,
+    "gmShim": false,
+    "mode": "window",
+    "viewport": [
+      980,
+      900
+    ],
+    "runs": [
+      {
+        "role": "source-acquisition",
+        "authenticated": true,
+        "authRequests": 1,
+        "status": "OBSERVED",
+        "cleanup": {
+          "chrome": true,
+          "profile": true,
+          "vendor": true
+        }
+      },
+      {
+        "role": "safe-info-and-recent",
+        "authenticated": true,
+        "authRequests": 1,
+        "status": "OBSERVED",
+        "cleanup": {
+          "chrome": true,
+          "profile": true,
+          "vendor": true
+        }
+      },
+      {
+        "role": "native-hover-and-recent-followup",
+        "authenticated": true,
+        "authRequests": 1,
+        "status": "OBSERVED",
+        "cleanup": {
+          "chrome": true,
+          "profile": true,
+          "vendor": true
+        }
+      },
+      {
+        "role": "user-issued-enabled-info",
+        "authenticated": true,
+        "authRequests": 1,
+        "status": "OBSERVED",
+        "cleanup": {
+          "chrome": true,
+          "profile": true,
+          "vendor": true
+        }
+      }
+    ],
+    "nativeAndCandidate": [
+      [
+        {
+          "phase": "native",
+          "safeGate": {
+            "bigconStatus": "disabled",
+            "issuanceWouldRun": false,
+            "folderEntryAvailable": false
+          },
+          "children": [
+            {
+              "id": "bigcon-info",
+              "observed": true,
+              "closed": true,
+              "overflow": 0
+            },
+            {
+              "id": "recent-entry",
+              "observed": true,
+              "populated": true
+            },
+            {
+              "id": "package-detail",
+              "observed": false,
+              "reason": "No visible native detail trigger after original hover"
+            },
+            {
+              "id": "image-password",
+              "observed": false,
+              "reason": "No current safe non-own password-allowed guest image-comment entry"
+            }
+          ]
+        },
+        {
+          "phase": "candidate",
+          "safeGate": {
+            "bigconStatus": "disabled",
+            "issuanceWouldRun": false,
+            "folderEntryAvailable": false
+          },
+          "children": [
+            {
+              "id": "bigcon-info",
+              "observed": true,
+              "closed": true,
+              "overflow": 0
+            },
+            {
+              "id": "recent-entry",
+              "observed": true,
+              "populated": true
+            },
+            {
+              "id": "package-detail",
+              "observed": false,
+              "reason": "No visible native detail trigger after original hover"
+            },
+            {
+              "id": "image-password",
+              "observed": false,
+              "reason": "No current safe non-own password-allowed guest image-comment entry"
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "phase": "native",
+          "safeGate": {
+            "bigconStatus": "disabled",
+            "issuanceWouldRun": false,
+            "folderEntryAvailable": false
+          },
+          "children": [
+            {
+              "id": "recent-entry",
+              "observed": true,
+              "populated": true,
+              "overflow": 1,
+              "mediaCount": 3
+            },
+            {
+              "id": "package-detail",
+              "observed": true,
+              "closed": true,
+              "overflow": 0
+            },
+            {
+              "id": "image-password",
+              "observed": false,
+              "reason": "No current safe non-own password-allowed guest image-comment entry",
+              "diagnostic": {
+                "imageAreas": 16,
+                "imageRoots": 2,
+                "moreLinks": 2,
+                "deleteEntries": 0,
+                "safeEntries": 0
+              }
+            }
+          ]
+        },
+        {
+          "phase": "candidate",
+          "safeGate": {
+            "bigconStatus": "disabled",
+            "issuanceWouldRun": false,
+            "folderEntryAvailable": false
+          },
+          "children": [
+            {
+              "id": "recent-entry",
+              "observed": true,
+              "populated": true,
+              "overflow": 0,
+              "mediaCount": 3
+            },
+            {
+              "id": "package-detail",
+              "observed": true,
+              "closed": true,
+              "overflow": 0
+            },
+            {
+              "id": "image-password",
+              "observed": false,
+              "reason": "No current safe non-own password-allowed guest image-comment entry",
+              "diagnostic": {
+                "imageAreas": 16,
+                "imageRoots": 2,
+                "moreLinks": 2,
+                "deleteEntries": 0,
+                "safeEntries": 0
+              }
+            }
+          ]
+        }
+      ],
+      [
+        {
+          "phase": "native",
+          "safeGate": {
+            "bigconStatus": "enabled",
+            "issuanceWouldRun": false,
+            "folderEntryAvailable": false
+          },
+          "children": [
+            {
+              "id": "bigcon-enabled-info",
+              "observed": true,
+              "closed": true,
+              "overflow": 0
+            }
+          ]
+        },
+        {
+          "phase": "candidate",
+          "safeGate": {
+            "bigconStatus": "enabled",
+            "issuanceWouldRun": false,
+            "folderEntryAvailable": false
+          },
+          "children": [
+            {
+              "id": "bigcon-enabled-info",
+              "observed": true,
+              "closed": true,
+              "overflow": 0
+            }
+          ]
+        }
+      ]
+    ],
+    "readPostAllowlist": [
+      "/dccon/lists",
+      "/dccon/setting",
+      "/dccon/package_detail",
+      "/board/comment/",
+      "/board/comment/getImageCommentByNos",
+      "/board/comment/getImageComment",
+      "/board/comment/getImageCommentTotalCount"
+    ],
+    "allOtherNonGetBlocked": true,
+    "noMutationAttempts": true,
+    "noContentSelectionOrSubmission": true,
+    "notGenericStartupCanaryPass": true
+  },
+  "localReplay": {
+    "kind": "NATIVE_CONSTRUCTOR_SHAPE_REPLAY_NOT_LIVE_ENTRY",
+    "contexts": [
+      "980x900 light",
+      "980x900 dark"
+    ],
+    "records": [
+      {
+        "dark": false,
+        "role": "comment-popup",
+        "primaryRole": null,
+        "fieldRole": null,
+        "closeRole": null,
+        "fieldBg": "rgb(255, 255, 255)",
+        "confirmBg": "rgb(59, 72, 144)",
+        "overflow": 0
+      },
+      {
+        "dark": true,
+        "role": "comment-popup",
+        "primaryRole": null,
+        "fieldRole": null,
+        "closeRole": null,
+        "fieldBg": "rgb(255, 255, 255)",
+        "confirmBg": "rgb(59, 72, 144)",
+        "overflow": 0
+      }
+    ],
+    "scope": "Native official image-password constructor structure in existing synthetic comment fixture;no native action invoked or real request. Does not prove permission/focus behavior."
+  },
+  "visual": {
+    "status": "DIAGNOSTIC_DIFFERENCES_REVIEWED",
+    "productApproved": false,
+    "readableImages": 10,
+    "pairs": 4,
+    "constructorReplayImages": 2,
+    "pixelMatcher": "NOT_RUN:diagnostic native/current different dimensions and dynamic GIF frames;not a design-adoption or regression golden",
+    "viewer": {
+      "url": "http://127.0.0.1:10067/conditional-triage/index.html",
+      "userIabDecoded": [
+        312,
+        178
+      ],
+      "oneImageAtATime": true
+    }
+  },
+  "checks": {
+    "sourceRuntimeUnchanged": true,
+    "productSuite": "NOT_RUN_READ_ONLY_NO_SOURCE_CHANGE",
+    "build": "NOT_RUN_UNCHANGED_BYTES",
+    "selectedDiagnostic": "Two-theme exact-constructor role probe only",
+    "priorScopedFinishRetained": "verification/receipts/2026-11-02-b1-account-picker-finish.json"
+  },
+  "contrary": [
+    {
+      "kind": "HARNESS",
+      "detail": "First detail check preceded native300ms hover reveal;follow-up waits for actual visible trigger and acquires the native/current window."
+    },
+    {
+      "kind": "HARNESS_AND_DATA",
+      "detail": "Initial image probe used count instead of getMoreComment. Corrected original entry still had no safe current image-delete controls in either native/candidate;not an extension failure."
+    },
+    {
+      "kind": "FALSE_POSITIVE_REJECTED",
+      "detail": "Recent arrow looks17px but current button bounds are36x36 with positive hits and root overflow0;kept existing implementation."
+    },
+    {
+      "kind": "CAPTURE",
+      "detail": "Apparent detail crop-edge X difference is not called a product containment defect;recorded native/current close bounds remain inside root and close works."
+    }
+  ],
+  "impact": {
+    "changedFiles": [
+      "docs/agent-maintenance-notes.md",
+      "docs/work/B1_CONDITIONAL_UI_TRIAGE.md",
+      "docs/work/INDEX.md",
+      "docs/work/NEXT_TASK.md",
+      "docs/work/UI_REVIEW_CHECKLIST.md"
+    ],
+    "profiles": [
+      "policy"
+    ],
+    "scope": "Tracked triage/checklist/maintenance/continuity only;no changed product consumers. No repeated unrelated product suite."
+  },
+  "next": "b1-v7-conditional-children-reference",
+  "limits": [
+    "Three confirmed role/material finish targets remain unimplemented in this read-only unit",
+    "Folders/issuance-action/use-buy/editor/own-admin permissions/CAPTCHA/server outcomes/device remain separately unqualified",
+    "Image-password constructor replay is not actual entry or submission evidence",
+    "980x2306 layout proxy and390stress remain adopted elsewhere;current live acquisition is wide light only",
+    "Image replies N/A;four uploads user-deferred;guidebook discussion after whole UI ends",
+    "Formal header admission/accepted architecture overlay not promoted"
+  ],
+  "hashMode": "Canonical LF text;raw runtime/image/source-download bytes"
+}

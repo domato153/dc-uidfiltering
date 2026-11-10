@@ -9,10 +9,12 @@ export async function resolveBuiltUserscript() {
     if (process.env.DCUF_TESTBED_USERSCRIPT) {
         return path.resolve(rootDir, process.env.DCUF_TESTBED_USERSCRIPT);
     }
-    const buildText = await readFile(path.join(rootDir, 'tools', 'build-userscript.mjs'), 'utf8');
-    const version = buildText.match(/const VERSION = ['"]([^'"]+)['"]/)?.[1];
-    if (!version) throw new Error('Unable to read mobile VERSION from tools/build-userscript.mjs');
-    return path.join(rootDir, `Dc_UserFilter_Mobile_v${version}.user.js`);
+    const buildTargets = JSON.parse(await readFile(path.join(rootDir, 'build', 'targets.json'), 'utf8'));
+    const mobileTarget = buildTargets.targets?.mobile;
+    if (!mobileTarget?.version || !mobileTarget?.outputPattern?.includes('{version}')) {
+        throw new Error('build/targets.json: mobile version or output pattern is missing');
+    }
+    return path.join(rootDir, mobileTarget.outputPattern.replace('{version}', mobileTarget.version));
 }
 
 export async function loadHarnessSource({ storage = {}, gmBehavior = {}, boot = {}, bfcacheVariant = 'current' } = {}) {

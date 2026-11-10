@@ -1,0 +1,138 @@
+{
+  "schemaVersion": 1,
+  "kind": "comment-frame-and-header-replacement-pilot",
+  "status": "PASS",
+  "scope": "OUTER_COMMENT_FRAME_AND_FOUR_BOUNDED_HEADER_REPLACEMENT_SCENARIOS",
+  "sourceBaseHead": "d5c5f1c8146b0b466a5d5966236818a6916caa64",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "9889C9A9270880F01A3A813611442C1A2AD59AA8B60E4A7928C74F660535DA29",
+    "pcVersion": "1.9.9",
+    "pcSha256": "C14D163F2757DB02117E3F93204B56B6AA22D464541729315A6B40C4128C7D37",
+    "pcChanged": false
+  },
+  "productionDelta": {
+    "path": "src/targets/mobile/comment-presenter.js",
+    "change": "Existing comment-box border declaration changes from1px themed border to0; no other production UI/function change",
+    "canonicalSha256": "9c45245ee52fa827131e06e2e2d55bdb56de83d42fbd8185cbd3e3a00655dffa"
+  },
+  "commentFrame": {
+    "status": "PASS",
+    "contexts": 12,
+    "coverage": [
+      "major/minor/mini",
+      "980/390",
+      "light/dark",
+      "main/reply/image composers",
+      "outer box all four borders zero",
+      "individual card borders remain",
+      "original controls/input/focus"
+    ],
+    "red": {
+      "path": "artifacts/comment-shell-2026-10-21/red.log",
+      "sha256": "6C898EB9B356FBE33A00A7BB39BD5FE34540A30369CC87DCB99D6945ABC51017"
+    },
+    "green": {
+      "path": "artifacts/comment-shell-2026-10-21/green-native.log",
+      "sha256": "85DA3905AF2C3CD5C260B4CFDE58CC2C77A525BBCF686F76881239CD7D7AE429"
+    },
+    "nativeCss": {
+      "path": "artifacts/comment-shell-2026-10-21/native-shell-css.json",
+      "sha256": "04142BD040B73C63CAB86E8DE7BDB743B85294986AA3EC16266962CE18F7EE0D"
+    },
+    "nativeRule": ".comment_box{position:relative;border-top:2px solid #3b4890}",
+    "nativeRuleSource": "https://nstatic.dcinside.com/dc/w/css/common.css?v=260918",
+    "screenshot": {
+      "path": "artifacts/comment-shell-2026-10-21/after.png",
+      "sha256": "0BA3B9F479300DFED04B71B3BC43925FBB3195D90F244A65895268987069FA21"
+    },
+    "visionReviewed": true,
+    "liveGap": "Sampled public GET article routes did not expose a comment container during this run. Native CSS was read directly and modeled; dynamic visible public comments were not observed. No POST allowance/capability blocker is inferred."
+  },
+  "pilot": {
+    "status": "PASS",
+    "report": {
+      "path": "testbed/artifacts/header-replaceability-pilot-reviewed-2026-10-21/report.json",
+      "sha256": "87D4450A026C888E5E80261CDBBE2FF673EDB1AF78474686E1CB60077E3298C9"
+    },
+    "runner": {
+      "path": "testbed/run-header-replaceability-pilot.mjs",
+      "sha256": "C5358DF01A2F71FFFC61F77329275E6376FA2C178B5088F1D2763DBA795D23B0"
+    },
+    "freshContexts": 30,
+    "positiveVariants": 4,
+    "controlAndRestoreVariants": 2,
+    "selectedChecklistIds": [
+      "H-05",
+      "H-06",
+      "H-07",
+      "H-11"
+    ],
+    "cases": [
+      "980 light",
+      "980 dark",
+      "1280 wide with390→1280 resize/restore",
+      "390 short/dark stress",
+      "980 major recommendation"
+    ],
+    "productionFilesNeededForEachVariant": [
+      "src/targets/mobile/header-drawer-presenter.js"
+    ],
+    "adapterApplicationEdits": 0,
+    "outsidePresenterRuntimeBytesUnchanged": true,
+    "addedPriorities": 0,
+    "newGlobalCorrectionPhases": 0,
+    "storageAndSemanticReceiptsEqual": true,
+    "contentRefreshAndReset": true,
+    "disposalAndReconnect": true,
+    "negatives": {
+      "hardcodedAdapterAnchorError": -80,
+      "unchangedVariantRejected": true,
+      "hiddenAdapterEditRejected": true,
+      "globalCssRejected": true
+    },
+    "restoredArtifactSha256": "9889C9A9270880F01A3A813611442C1A2AD59AA8B60E4A7928C74F660535DA29",
+    "sourceHashes": {
+      "src/targets/mobile/header-drawer-host-adapter.js": "47208A2505592FBB01E8F49FEC95871E65656D9E3552FF87DFFB4C217CC0E540",
+      "src/targets/mobile/runtime-coordinator.js": "089E9A8BDA1E5EE14B3C73D12EE3D2126E7A5D38A3E8DEE1B04F156F9373F303",
+      "src/shared/ui-contracts.js": "4106BDCA9D76179698FF3C42152C350509735033BA4CE413495DB7DA237820CC"
+    },
+    "visionReviewed": [
+      "control",
+      "composition",
+      "replacement",
+      "native open body",
+      "restored"
+    ],
+    "mode": "Build-time isolated presenter source replacement; actual production presenter and guarded artifact restored/unchanged. Not runtime hot swapping or adopted Concept01."
+  },
+  "boundaries": {
+    "status": "PASS",
+    "activeSourceFiles": 38,
+    "evidence": {
+      "path": "artifacts/comment-shell-2026-10-21/boundaries.log",
+      "sha256": "CA64A21868337A62001DA3540A5971D1B05D3F5CD6BDD8297D602D47A8B9B610"
+    }
+  },
+  "installer": {
+    "path": "artifacts/manual-install-2026-10-21/DC_UserFilter_Mobile_Draft_Test_NoCommentFrame_20261021.user.js",
+    "sha256": "0011055109915DDA30F59D7BCC7A29F1D2978CE0518855951A35D1639563D86E",
+    "metadataOnly": [
+      "name",
+      "namespace"
+    ],
+    "bodyEqualsRuntime": true
+  },
+  "preview": {
+    "path": "artifacts/ui-overview-2026-10-17/repairs/comment-shell-20261021/index.html",
+    "url": "http://127.0.0.1:10062/repairs/comment-shell-20261021/index.html"
+  },
+  "limits": [
+    "Full product/actual-extension parent receipts remain bound to their original1677/08BC identities; no relabeled fresh full pass for9889",
+    "Header pilot only: no whole-UI/Concept01/release/physical-phone/authenticated claim",
+    "No editing-time speedup percentage or runtime hot-swap claim",
+    "Six mixed visual criteria and prior raw header palette FAIL remain unchanged"
+  ],
+  "nextTask": "concept01-presentation-trial",
+  "architectureTransitionAdmitted": false
+}

@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "scope": "List-page global first-row centering only",
+  "baseCommit": "6c13b07f8b91329b4583646857eea987beb1f090",
+  "mobileSha256": "b0ecb45d60477e30dabc389d3c34a8f5e3197e09879fd2ecdb87812ddc1ac918",
+  "controlSha256": "cc3e01f5f0b45001e55c1645eb949e868423fb451bd0970e31f69e502e6e2ba0",
+  "cause": "Grid first-row center included8px above the glass plate;controls were4px above its visible center.",
+  "change": "Use margin in the existing shell/exploration/recent presenters;no transforms,priority escalation,observer,node moves or scroll changes. Narrow search/recent row keeps its own row center.",
+  "publicChromeObservations": [
+    {
+      "kind": "major",
+      "width": 1630,
+      "dark": false,
+      "target": 36,
+      "searchTarget": 36,
+      "centers": [
+        36,
+        36,
+        36,
+        36,
+        36
+      ],
+      "maximumErrorPx": 0,
+      "adjacentRowsUnchanged": true
+    },
+    {
+      "kind": "minor",
+      "width": 980,
+      "dark": true,
+      "target": 36,
+      "searchTarget": 36,
+      "centers": [
+        36,
+        36,
+        36,
+        36,
+        36
+      ],
+      "maximumErrorPx": 0,
+      "adjacentRowsUnchanged": true
+    },
+    {
+      "kind": "mini",
+      "width": 390,
+      "dark": false,
+      "target": 31,
+      "searchTarget": 78,
+      "centers": [
+        31,
+        31,
+        31,
+        78,
+        78
+      ],
+      "maximumErrorPx": 0,
+      "adjacentRowsUnchanged": true
+    }
+  ],
+  "selectedTest": {
+    "name": "Header followup: exploration utilities anchored categories and scroll reuse",
+    "status": "PASS",
+    "logSha256": "e8c29111abf199ec3b9d80649b8f664e15c03d40aeec1f5f8eee4e72b3362bc9"
+  },
+  "omitted": [
+    "Unaffected article/comment/media/storage/PC suites",
+    "Exact physical phone"
+  ],
+  "userDisposition": "Retain the previously accepted design and second row;review only this first-row adjustment"
+}

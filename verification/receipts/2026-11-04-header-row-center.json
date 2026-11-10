@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "scope": "List-page second-row visual centering only",
+  "baseCommit": "a3090b4eab39bcb00cab2118e17ee21abe6bde80",
+  "mobileSha256": "cc3e01f5f0b45001e55c1645eb949e868423fb451bd0970e31f69e502e6e2ba0",
+  "controlSha256": "5ebf265bd0a737771e33546baf299808d68631fdeb4312cf4042fb4eebdb1aa7",
+  "changes": "Gallery title/tools move down6px through existing owner padding19/13;the gap to lower controls remains balanced. Narrow stacked rule,non-list header and scroll logic unchanged.",
+  "publicChromeObservations": [
+    {
+      "kind": "major",
+      "width": 1630,
+      "dark": false,
+      "top": 64,
+      "bottom": 134,
+      "centers": [
+        99,
+        99
+      ],
+      "maxErrorPx": 0
+    },
+    {
+      "kind": "minor",
+      "width": 1630,
+      "dark": false,
+      "top": 64,
+      "bottom": 134,
+      "centers": [
+        99,
+        99
+      ],
+      "maxErrorPx": 0
+    },
+    {
+      "kind": "mini",
+      "width": 1630,
+      "dark": false,
+      "top": 64,
+      "bottom": 134,
+      "centers": [
+        99,
+        99
+      ],
+      "maxErrorPx": 0
+    },
+    {
+      "kind": "major",
+      "width": 980,
+      "dark": true,
+      "top": 64,
+      "bottom": 134,
+      "centers": [
+        99,
+        99
+      ],
+      "maxErrorPx": 0
+    }
+  ],
+  "selectedTest": {
+    "name": "Header followup: exploration utilities anchored categories and scroll reuse",
+    "status": "PASS",
+    "logSha256": "0f6f628f55fcefe6bd9942b3809a3017ab6c298e01b284a23dacbf7082ba3d0f"
+  },
+  "fixtureNote": "Native fixture nodes are inserted after boot;issue carrier owner projection settles before dispatching the existing resize measurement. Assertions unchanged.",
+  "omitted": [
+    "Unaffected article/comment/media/storage/PC suites",
+    "Exact physical phone"
+  ],
+  "userDisposition": "Overall prior header composition accepted;this centering refinement awaits review"
+}

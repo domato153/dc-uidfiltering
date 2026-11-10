@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT",
+  "status": "READ_ONLY_PREFLIGHT_COMPLETE_IMPLEMENTATION_PENDING",
+  "sourceBaseHead": "f9e34bb76a95ffc8f0785f5e40ee93f78cb27d5a",
+  "candidateFingerprint": "f5b2951d87377a0f386865c3827616d37061ddfab594c2258fd431e19691d77e",
+  "artifacts": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "43FEF086A3757227819A8D562E271E2AC2603525304DD7FFD83C6D848496FBCE",
+    "pcVersion": "1.9.9",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "rootDistGuardsMatch": true,
+    "runtimeChanged": false,
+    "rebuildNeeded": false,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "docs/work/B1_NATIVE_HEADER_POPUPS_V7_PREFLIGHT.md",
+      "sha256": "7a72b40036b503e5969770fc7d9771509f3623256dfd9a50b3b8bd27e22f6fc9"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "8e346ab341483f0e2e7c6d2bed2459c67293d8909a1b739f738216981e336cbe"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "2588cd8b00fcc3136fdb844b95237fe1ba88567f8d187a69aa4a1422b9f3c60d"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "0728f72cc40e57aa0e4ade646839861f98ea368c9e3a4e0c3f74110e761a7d56"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "c2b0c47c78e433fd654dc20ba4a0e9ff602f2f0c8bde03b34784f5f2f1f60494"
+    },
+    {
+      "path": "docs/ui-surface-contracts.md",
+      "sha256": "3c926fb1b160d49dc818af22ec2869f8e22d1d2e17c57b1e8eccb5b3289a1948"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "276e750793bfa24b8d90dc0ff4a1dfd0fa19e16077044720045e7768f637df42"
+    },
+    {
+      "path": "src/targets/mobile/header-shell-presenter.js",
+      "sha256": "20235b6e7ce052611870c59fbfbcc25147d47d719a0f633c8771565f741353ec"
+    },
+    {
+      "path": "src/targets/mobile/header-shell-host-adapter.js",
+      "sha256": "547243da02722e0575fb44fc0f3a84f028d7ec5ad27c089050357a72109cc722"
+    },
+    {
+      "path": "src/targets/mobile/header-recent-visit-presenter.js",
+      "sha256": "490607013a4771bce3919c3460c1fe49aed6ea32bc2cb80316d4c285a75bfdf8"
+    },
+    {
+      "path": "src/targets/mobile/header-recent-visit-host-adapter.js",
+      "sha256": "a8d44300bd1ba46a8e2219c63c6ec33a519cc65a7001b643e8a76d1c2c7d8842"
+    },
+    {
+      "path": "src/targets/mobile/header-drawer-presenter.js",
+      "sha256": "8a1178218d3506dc4500812bbf4a69d1f4865f316021ffadeb16892c7bc6acab"
+    },
+    {
+      "path": "src/targets/mobile/header-drawer-host-adapter.js",
+      "sha256": "9dd5da944c6459f3b8a4276a51ceece0a46c8e89223f6fa03af74aac5fbb1a17"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-list.mjs",
+      "sha256": "2aee6d3534b3b158f888d0224e79cc48009078a0eec1ee73873a10798a9b056a"
+    },
+    {
+      "path": "testbed/fixtures/b1-gallery-search.mjs",
+      "sha256": "e888e66c10915bc26df9e35ceef0f572eb3db4ce916824ac6b8ad196a506c1ff"
+    },
+    {
+      "path": "testbed/fixtures/b1-gallery-search-mount.mjs",
+      "sha256": "5fd488f70c037a35ecff329040b1957fe53e64642f97be63a7d9fd8baf5a0f32"
+    },
+    {
+      "path": "testbed/fixtures/b1-form-header.mjs",
+      "sha256": "ba4f312790ce7dcb4052226077d794ee9cfc9f71c1ca498187e5383fb897fb84"
+    },
+    {
+      "path": "testbed/harness/ui-review-preparation.mjs",
+      "sha256": "2efc5ea49dea0f84ead88c0b043a7d1ffb88a2ba17d128c33cc587b5971e56a2"
+    },
+    {
+      "path": "testbed/harness/surface-observation.mjs",
+      "sha256": "b296dabd39becf2f8f8519e1bb33b071fdb2171cf0c8f4bf707fda70d6086ef3"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-light-recent-2026-11-01.png",
+      "sha256": "7d75d114152c3ab1d6753a8a475ca35d98139a7e3417325bebab6f3165ea1004"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-dark-recent-2026-11-01.png",
+      "sha256": "4f0db25a132b0cb985a76f39b65d92bddea16e1176924d6959b29cc7a99c811a"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-light-search-history-2026-11-01.png",
+      "sha256": "ef4b92710e08716f8415f45d9ec3e69dab0720a5b3e7bee2f6c9e42889c8b6e2"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-dark-search-history-2026-11-01.png",
+      "sha256": "75b8b91d06016317b587da1786994bce08e6340b66d347118321e30cc1813906"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-light-door-2026-11-01.png",
+      "sha256": "46b11c000875da0e7ca7e24ed99f55ef8347b3f4384af249c7ad4dca9f560e19"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-dark-door-2026-11-01.png",
+      "sha256": "8e9bb3a5cc2e8108617f5dd82081d0a0184344308e35f27eaaea0d6c6a86fb4a"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-light-rank-2026-11-01.png",
+      "sha256": "45d47b6732105045f631f4c1d4bcb491e578a37ac891c44674369ede7693cb22"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-980-900-dark-related-2026-11-01.png",
+      "sha256": "086002a33dafea48c96a1773b8f11ecc21c59b575aca58e35e88689a9e835272"
+    },
+    {
+      "path": "docs/design/b1-native-header-v7-preflight-390-520-dark-door-2026-11-01.png",
+      "sha256": "ce10885b37c3d59612a54bc919525b092996d1a59f0f1006d135e037da0e364f"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/inspection.json",
+      "sha256": "c61a02e9985a422f00c9c19dc5cf04c90a43d0bf8f710847ad91ab3ae5614abf"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/inspect.mjs",
+      "sha256": "d1dce7b5473a19fa6eee521ca9f02756099b298b7b91abe43e291423e6c22a3a"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/captures/capture-metadata.json",
+      "sha256": "afdc42e32f59a6868aa0c0772a9b5dbeff1df9f53407452ef4d02675d3de1528"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/clearance.json",
+      "sha256": "534f6171ae03f467dcba1e17e691ba6086025410ace2fa11decd42ad7b6b6799"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/probe-clearance.mjs",
+      "sha256": "3c454cd4abebcb3191831210842fa8d832705daf7ddc1b95d1fffda8a7d1e076"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/probe-captures/capture-metadata.json",
+      "sha256": "51ee33d684d3f6232ac71a0c8b3f407fa1510d34fcffd012fa40715b1e4ee3c2"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/live-recent.json",
+      "sha256": "a27a48cf223c056019dc14d318884a14ef80e842e240c974262f4d08aafa5af2"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/live-recent.mjs",
+      "sha256": "ff0fbf4b605ae2673c5eb47556dc41fb9cd0f18fb6aa95f8b975820d177254ec"
+    },
+    {
+      "path": "artifacts/b1-native-header-v7-preflight-2026-11-01/impact-final.json",
+      "sha256": "a774baac44ba8b6b1696f7e57d2b8a24714ff4dffd22f9be91dd6b0f51ea118b"
+    }
+  ],
+  "scope": [
+    "H-01 header search",
+    "H-03 recent",
+    "H-05 door",
+    "H-06 door interior",
+    "H-07 rank",
+    "H-08 help",
+    "H-09 related"
+  ],
+  "observations": {
+    "browser": "156.0.8078.76",
+    "syntheticMainContexts": 7,
+    "syntheticMainCaptures": 41,
+    "targetedContexts": 2,
+    "targetedCaptures": 4,
+    "nativeParentsCallbacks": "Unchanged for recorded connected nodes;original synthetic actions exercised",
+    "runtimeErrors": 0,
+    "publicRecent": {
+      "url": "https://gall.dcinside.com/mgallery/board/lists/?id=wutheringwaves",
+      "status": "OBSERVED",
+      "contexts": 1,
+      "labels": [
+        "최근 방문",
+        "즐겨찾기",
+        "삭제",
+        "전체 삭제"
+      ],
+      "allNonGetHeadBlocked": true
+    },
+    "viewer": {
+      "entries": 46,
+      "httpPageAndDefaultImage": 200,
+      "defaultDecodedWidth": 980,
+      "defaultDecodedHeight": 900,
+      "checkedInUserIab": true,
+      "oneImageAtATime": true
+    }
+  },
+  "findings": [
+    {
+      "id": "compact-door-fab-obstruction",
+      "classification": "CONFIRMED_PRODUCT_GEOMETRY_PENDING_FIX",
+      "context": "390x520 dark stress",
+      "intersectionArea": 1231.875,
+      "centerHit": true,
+      "right90PercentHit": false,
+      "cover": "dc-personal-block-fab",
+      "cause": "Hero door max-height reserves32px unlike floating leaves;root/center-only checks miss partial overlap",
+      "resolutionPlanned": "Same-owner compact clearance and positive action-edge/scroll checks;no new observer/portal"
+    },
+    {
+      "id": "clipped-suggestion-center",
+      "classification": "EXPECTED_SCROLLPORT_CLIPPING_NOT_PRODUCT_FAILURE",
+      "contexts": [
+        "390x520 dark",
+        "980x420 light"
+      ],
+      "lastItem30ReachableAfterMaxScroll": true,
+      "closeReachable": true
+    },
+    {
+      "id": "older-v7-detail",
+      "classification": "PLANNED_VISUAL_ADAPTATION",
+      "areas": [
+        "Recent double selected cue",
+        "Door outlined rank summary/boxed action",
+        "Rank/related boxed pagers"
+      ],
+      "alreadyReusable": [
+        "Outer transmitting material",
+        "Quiet search rows/remove/close/switch",
+        "Simple help leaf"
+      ],
+      "composition": "Retain current native composition;reuse adopted memo details. No new generated composition needed unless implementation materially changes grouping."
+    }
+  ],
+  "implementationPlan": {
+    "nextAction": "b1-native-header-popups-v7-implementation",
+    "existingMobileOwnersOnly": true,
+    "commonGlassFormulaChange": false,
+    "preserveNativeFixedTopologyAndPaging": true,
+    "paletteChecks": "Actual changed accent consumers;representative colors unless common palette/formulas change",
+    "deferred": [
+      "Native settings children",
+      "Article/editor popup interiors",
+      "Password confirmation card",
+      "Authenticated variants",
+      "Four separate uploads",
+      "Guidebook consolidation"
+    ]
+  },
+  "impact": {
+    "delta": "Documentation/curated current evidence only;source/fixtures/harness/runtime unchanged",
+    "productSuites": "No unrelated full product/PC/filter/writer/128-child suite repeated",
+    "formalHeaderAdmission": "UNKNOWN"
+  },
+  "limits": [
+    "Preflight only;confirmed door defect is not repaired yet",
+    "Source injection and existing synthetic fixtures are not actual extension/device/account qualification",
+    "980x2306 layout-only;390 stress",
+    "Public observation covers only one current recent root,not every category/data/account variant",
+    "Bounded root/ancestor observations and sampled controls are not full DOM/all-control hit certification",
+    "No automatic beauty approval,new pixel baseline,formal Impeccable dual-agent critique or lifecycle/performance claim"
+  ],
+  "hashMode": "Canonical LF text;raw image/runtime bytes"
+}

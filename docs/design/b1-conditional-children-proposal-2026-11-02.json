@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "kind": "GENERATED_UI_COMPOSITION_PROPOSAL",
+  "status": "DRAFT_PENDING_USER_REVIEW",
+  "tool": "built-in image_gen",
+  "useCase": "ui-mockup",
+  "mode": "Operate/Read",
+  "productImplemented": false,
+  "productApproved": false,
+  "image": {
+    "path": "docs/design/b1-conditional-children-proposal-2026-11-02.png",
+    "sha256": "de2a2c316d4359f6db82e18e5fd6518834130a040d6a149079845b7200f596e0",
+    "dimensions": [
+      1536,
+      1024
+    ]
+  },
+  "inputs": [
+    {
+      "path": "docs/design/b1-memo-workbench-light-2026-10-29.png",
+      "role": "adopted-light-detail",
+      "sha256": "f40c243d8789e412d1d59cba5d0661a6711821baf3c042082308015136eb0fa5"
+    },
+    {
+      "path": "artifacts/b1-conditional-ui-triage-2026-11-02/safe-followup/native-package-detail.png",
+      "role": "actual-public-native-content-and-capabilities",
+      "sha256": "9885834a32875db48a7899d2bb914f09b8c8b9ffecf83142a540ef268045ca6b"
+    },
+    {
+      "path": "docs/design/b1-dark-refinement-memo-dark-2026-10-31.png",
+      "role": "current-dark-context-and-paired-ink",
+      "sha256": "e0f89cb6bbfd8a44ac1f8154f4258cb36bc9f17a9e76fb263882d7ec4c7de793"
+    }
+  ],
+  "prompts": {
+    "initial": "Use case: ui-mockup.\nCreate ONE polished high fidelity UI design proposal board, landscape 1536x1024. This is a DCInside userscript v7 local popup family, not a marketing page. Inherit the established restrained visual language; do NOT reinvent the product or add features.\n\nInput images, references only:\nImage1 actual adopted light memo implementation: PRIMARY authority for restrained glass exterior, subtle rim/depth, readable ink, spacing precision, pale tinted small primary buttons.\nImage2 actual native DCCon package/detail: FUNCTION AND CONTENT anatomy; preserve title, hero thumbnail, description, author/date, linked tags, use action, scrollable sticker grid, close. Reuse the pictured cat/rabbit sticker artwork faithfully as media content, not as UI decoration.\nImage3 actual dark memo: dark exterior/reading context and brighter pale primary with DARK ink; do not make dark buttons saturated teal or white text on dark fills.\n\nBoard layout: LEFT roughly 870px wide show one complete large LIGHT detail popup floating over an ordinary faintly visible DCInside article behind it. RIGHT roughly 540px wide show three compact family specimens stacked: LIGHT active Bigcon information; DARK same active information; DARK image-comment password strip. A few quiet board labels outside surfaces are okay: \"디시콘 상세 · 라이트\", \"대왕콘 안내\", \"이미지댓글 비밀번호\". Each specimen readable, not a tiny contact sheet. Give full margins, do not crop any control.\nThe large detail popup: approx715x580 in product proportions, soft rectangular corners12px, thin glass rim, moderate translucent pearl exterior with visible subdued lines/shapes from an ordinary background (NO vivid colored synthetic blobs, NO white fog). Top title \"디시콘 정보\" left and quiet single X right. Hero/info row underneath, generous 16px gutters: cat thumbnail left about130px square; to right title \"괴렘콘 촉촉팩\", short description \"깜찍하고 귀여운 괴렘콘과 함께해요~\", native update note \"[업데이트 : 10.28]\", small author/date \"제작  사날  2026.07.27\", plain theme-ink linked tags \"이터널리턴  이리  괴렘  이렘  고양이\". Modest action \"사용\" at upper right of info row: content-sized, around70x36, PALE TEAL tinted glass with dark teal ink, crisp thin top highlight, subdued single shadow, no thick bezel or pill capsule. This sample uses native \"사용\"; do not invent purchase/price badges.\nBelow info row stable nearly opaque paper reading/media plane:6 columns of roughly90px sticker previews,3 visible rows of native cat/rabbit images with natural spacing and original imagery colors; a slim unobtrusive vertical scroll cue on right. No individual outlined card or button chrome around each sticker. Keep sticker artwork sharp. No selected sticker, favorite stars, search, added footer, navigation or invented settings.\nBigcon light and dark specimens: compact360x145-ish cards with translucent outer glass, only quiet X in upper right; title \"대왕디시콘 사용중\", expiration \"2026.11.03 17:52까지 사용 가능\" with native semantic warm-red time emphasis (example time, not a new rule), muted explanatory line \"안내 글 2개, 댓글 4개 작성 시 1일간 사용\". No issue/renew/purchase action. Information hierarchy left aligned or centered with breathing room. Thin rim, native-sized crisp X with larger invisible hit area; never visible \"닫기\" text.\nPassword specimen: compact horizontal strip about320x50, modest translucent dark shell, stable dark password field placeholder \"비밀번호\", compact pale glass \"확인\" button with dark ink, then one quiet X, all aligned and separated. NO heading, body copy, extra cancel, giant modal or dummy password dots. This is an anchored native inline popup, not a screen-sized dialog.\nAesthetic: confident, quiet, useful, crisp Korean system sans-serif; subtle transmission, not blurry milky acrylic. Paper stays readable. Dark surfaces charcoal with mild cool tint, bright paired-ink button as actual dark reference. Color accent is an illustrative teal theme, implementation will use dynamic theme roles. No gradient noise, mottling, thick top gloss, embossed plastic, glow, blue native borders, repeated boxed utilities or invented content. All reference images support the same v7 family. This image is a composition proposal only; final implementation must retain original DOM/events/media/permissions and use existing memo detail tokens.",
+    "refinement": "Edit the supplied UI proposal board with ONE tightly scoped refinement to the detail popup's information row. Preserve the entire board, all popup geometry, glass materials, layout, background, Korean text, thumbnails/stickers, the two Bigcon cards and password strip exactly. In the LEFT large detail popup ONLY: change the BLUE underlined creator link \"사날\" and every BLUE underlined tag link to a restrained dark desaturated TEAL theme ink matching the \"사용\" button label; underline may remain. Eliminate all legacy blue UI links in that information row while keeping media colors unchanged. Also make that existing \"사용\" action content-sized: reduce its face width from about114px to about88px and height from50px to42px at this board scale, preserving its RIGHT alignment, pale glass fill, dark ink, subtle rim and top light. Keep its label centered and do not move the title, description, metadata or thumbnail. No other changes. Output the same landscape1536x1024 board."
+  },
+  "iterations": [
+    {
+      "id": "initial",
+      "disposition": "SUPERSEDED_LOCAL_ONLY",
+      "finding": "Native-blue metadata links remained;use action was larger than intended."
+    },
+    {
+      "id": "refinement",
+      "disposition": "CURRENT_DRAFT",
+      "change": "Theme-ink metadata links and more compact use action."
+    }
+  ],
+  "authority": "Actual adopted memo and current v7 rules govern fine detail;generated board governs proposed grouping only. Original native content/events/permissions supersede raster.",
+  "limitations": [
+    "Static generated UI,not an implemented screenshot or behavioral evidence",
+    "Background and media are generated reference depictions;use original native media in production",
+    "Example expiry is illustrative,never a fixed product value",
+    "Dark detail,disabled info and light password must adapt existing roles;not all states shown"
+  ]
+}

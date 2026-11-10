@@ -1,0 +1,480 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_V7_INTEGRATED_GAP_REVIEW",
+  "status": "REVIEW_COMPLETE_UI_NEEDS_WORK",
+  "sourceBaseHead": "9c56030edb025de736b7b349837d71f95f98b9db",
+  "candidateFingerprint": "8a1dee335bb2d31619db1f7b0dba0a17ea5c4495a3869565ab6bfbb69ebf779c",
+  "artifacts": {
+    "mobileSha256": "0E1A75FD460E27F803D8AEE92946ACEF819F6983D7DFAB9296965D258E6D722E",
+    "pcSha256": "E4706617DE96D3E0719144724FDAE1B62D7511674D6564DCBD82F2C702802E14",
+    "unchanged": true,
+    "rebuildNeeded": false,
+    "officialRelease": false
+  },
+  "inputs": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "112d4060c251174de01ea3a12bfdfa41079e59a9b37e1907443397816f095b1b"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "b1b1afd0df7dd159ac845a3de2b50d0e748e87e5178c2ede01c19cab16d46f3c"
+    },
+    {
+      "path": "architecture/registry.json",
+      "sha256": "2275e39d9fd10662c755354df6e8c8161d9a6e19924de12a9e8d83cc0971f191"
+    },
+    {
+      "path": "docs/work/B1_V7_INTEGRATED_REVIEW.md",
+      "sha256": "8ad3be9132b7f458ab3ac0ce1e270525cd9cfec0cbe5fbf239ccb1840c801f6c"
+    },
+    {
+      "path": "docs/work/B1_NATIVE_RESIDUAL_V7.md",
+      "sha256": "b7d15e51b73585c6e71e8dadd212f763bce7ff9292c1c2aeec15c9e810a3c76b"
+    },
+    {
+      "path": "docs/work/NEXT_TASK.md",
+      "sha256": "15c0649e8a6b93362f6c8d72318c98e24f06d0014b9a2bcb69e34e84025b5172"
+    },
+    {
+      "path": "docs/work/B1_CONTROL_MATERIAL.md",
+      "sha256": "a2dd026ad49d92683829906498d00ad3beba3733ed59f32f8a347ea45981e87c"
+    },
+    {
+      "path": "docs/work/UI_REFERENCE_GUARD.md",
+      "sha256": "e23fc60e018cd7c835130fb7f1eeaf1c8f5d255cb07e0134efb76497c4ff982a"
+    },
+    {
+      "path": "docs/work/INDEX.md",
+      "sha256": "2526a88244d0683dd9ce290064783dcd10350081b92ea8ee47758b57ab5b86d1"
+    },
+    {
+      "path": "docs/work/UI_REVIEW_CHECKLIST.md",
+      "sha256": "5d89c62ecf71794bd08a5e73a0b4c99929bef562a4ec9200f2f1b761f735f251"
+    },
+    {
+      "path": "docs/agent-maintenance-notes.md",
+      "sha256": "31a625db1a2951021c3a3af1596e44b1511dbef3698f3f2cfdb6db1d6a492c9f"
+    },
+    {
+      "path": "src/targets/mobile/gallery-page-head-presenter.js",
+      "sha256": "244e43128157e2c86ecc2236c7c9263e6b59a3b6b3eaa1d1360048448db37575"
+    },
+    {
+      "path": "src/targets/mobile/native-author-presenter.js",
+      "sha256": "dc2d1c0ae4f14ecaf9f9161644a9d6d63e5f8ce8128392948ae17a0e8f9fb036"
+    },
+    {
+      "path": "src/targets/mobile/native-form-presenter.js",
+      "sha256": "f578418bfb8058c46c6bd345848a9d4f05d17f2f9cc144133028b9803914fac7"
+    },
+    {
+      "path": "src/targets/mobile/login-presenter.js",
+      "sha256": "41512bca8ca1f28d89cb2cb76e12f5ab906b915951c641cbc64da60ac61e21bc"
+    },
+    {
+      "path": "src/targets/mobile/theme-material-values.js",
+      "sha256": "da6cc37a3f71f5ff696aa57fddf6c52e254aa01ce2dfb0b856c0979a6aac189c"
+    },
+    {
+      "path": "testbed/ui-b1-native-settings-contract.mjs",
+      "sha256": "4c96ca024ee74227c33039a94ba26ab81bdbd4aeb60186c0d580bd764393dfa3"
+    },
+    {
+      "path": "testbed/ui-b1-native-author-contract.mjs",
+      "sha256": "ab239861a7945ff20583c0cd801823e460e1e89cc6244e7b8a09a256d5f05be0"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-settings.mjs",
+      "sha256": "01f8f7aa6a2100b565a987aa926c7fcd44f30c1c3a9e7dfc27affde578e0fce5"
+    },
+    {
+      "path": "testbed/fixtures/b1-native-author.mjs",
+      "sha256": "2123f6100f889641dccc7245af7f345fb5363acbc309f9091add7a8b6b85daab"
+    },
+    {
+      "path": "testbed/fixtures/b1-password.mjs",
+      "sha256": "0939926f45c37745acacaf83c93e8f0044a0b6223781eaa34ba559ca9620780c"
+    },
+    {
+      "path": "testbed/fixtures/login-native.mjs",
+      "sha256": "ca3429532ce917060491e86bd0a65acb703ae742b8ccd07303159f00b97e143b"
+    },
+    {
+      "path": "testbed/fixtures/login-native.html",
+      "sha256": "2d8649666f8a9d8f3f62aa183ffe50ba0e272c4de4f1ad0ee634fd18cfc71f42"
+    },
+    {
+      "path": "testbed/fixtures/login-native.css",
+      "sha256": "b5e0a47f9341cbcaaf3133a895b7aac281ca49021748eb2be3e330bf4b22c7cc"
+    },
+    {
+      "path": "testbed/fixtures/write-pages.mjs",
+      "sha256": "0e7910d95506bb428b35420c5868a60bd0126af54786351131c19bcf3a0600ed"
+    },
+    {
+      "path": "testbed/fixtures/host-compatibility.mjs",
+      "sha256": "57d19152916fb9d17a0c9c3d6ec9f0ca2258ccb01dfd24976000da44c3ec20cf"
+    },
+    {
+      "path": "testbed/harness/runner-utils.mjs",
+      "sha256": "fd7d7d24c1984e635eed3bc2c83f21a9e274f1f34d5416010a1595fbe3d5a5ab"
+    },
+    {
+      "path": "testbed/harness/userscript-loader.mjs",
+      "sha256": "a9da81c03e53b6d25b949fc6993e532830e179e8bad2c73b6d3f6d5a3a92abc0"
+    }
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/inspect.mjs",
+      "sha256": "08900759b06734101f32bcc25dd6f1652751506a4bff47ad297fcb1231135078"
+    },
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/inspection.json",
+      "sha256": "8a6c90b387aa244bf1f313cdbb2899b23da268fd094fb50e50bcf89f0dc48c0b"
+    },
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/probe-edges.mjs",
+      "sha256": "1bc84b1dfed4725953d98215c7a90bcd24a1e19d22c4d257503f135d14feb388"
+    },
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/edges.json",
+      "sha256": "40f4da02289c39051626886947b623fc18ba864a710b6892fb7fd0384333b71e"
+    },
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/edges-first.json",
+      "sha256": "d2a4a0f622449c17539eaa9917ba06084fa9faebd2e3c8756be4333d17c0c392"
+    },
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/inventory.json",
+      "sha256": "4c145ba9b657b06c3fa0d8d1935c2993279e01fe1bd092c44486f85ba29a6314"
+    },
+    {
+      "path": "artifacts/b1-v7-integrated-review-2026-11-01/prepare-review.mjs",
+      "sha256": "d15389cd3e80c5f9f3c0bcaa7068d50f57154d63c738533c465f8ea34ca47cc4"
+    }
+  ],
+  "curatedActual": [
+    {
+      "path": "docs/design/b1-v7-gap-settings-block-dark-2026-11-01.png",
+      "sha256": "9e5a0b1d1bcfa869901590aa9f6fcefabfe8badf66e0a0088fd18cd8d9d1670e"
+    },
+    {
+      "path": "docs/design/b1-v7-gap-author-memo-dark-2026-11-01.png",
+      "sha256": "6b2c83eb4957347c945a92e6a5a9149b561b78190b892dc3981f1b3a809171a9"
+    },
+    {
+      "path": "docs/design/b1-v7-gap-write-leave-dark-2026-11-01.png",
+      "sha256": "0e5ccb9dacba20b01d6dcc921db2a2494e99d7ac931c4994dcc0c48751318efb"
+    },
+    {
+      "path": "docs/design/b1-v7-gap-login-dark-2026-11-01.png",
+      "sha256": "25acf5aa82bcad69f9ba846b1b1b2342e295b74fc792116fecb881ec188c90d7"
+    }
+  ],
+  "inventory": {
+    "rows": 128,
+    "uniqueIds": 128,
+    "currentBuildJsInputCount": 60,
+    "dispositions": {
+      "SCOPED_EVIDENCE_UNKNOWN_VARIANTS": [
+        "G-01",
+        "G-02",
+        "G-04",
+        "L-10",
+        "A-04",
+        "A-05",
+        "C-04",
+        "C-05",
+        "C-13",
+        "C-14",
+        "C-15",
+        "C-16",
+        "C-17",
+        "C-18",
+        "W-16",
+        "W-19",
+        "X-01",
+        "X-02",
+        "X-03",
+        "X-04",
+        "X-05",
+        "X-06",
+        "X-07",
+        "X-08"
+      ],
+      "OUTSIDE_WEB_CSS": [
+        "G-03",
+        "N-01",
+        "N-02",
+        "N-03",
+        "N-04",
+        "N-05",
+        "N-06",
+        "N-07"
+      ],
+      "NAMED_V7_DETAIL_REMAINS": [
+        "H-01",
+        "H-10",
+        "L-03",
+        "A-02",
+        "C-12",
+        "W-18",
+        "W-20",
+        "W-21",
+        "W-22"
+      ],
+      "SCOPED_V7_EVIDENCE_RETAINED": [
+        "H-02",
+        "H-03",
+        "H-04",
+        "H-05",
+        "H-06",
+        "H-07",
+        "H-08",
+        "H-09",
+        "H-11",
+        "L-01",
+        "L-02",
+        "L-04",
+        "L-05",
+        "L-06",
+        "L-07",
+        "L-08",
+        "L-09",
+        "A-01",
+        "A-03",
+        "A-06",
+        "A-07",
+        "A-08",
+        "A-09",
+        "A-10",
+        "A-11",
+        "A-12",
+        "C-01",
+        "C-02",
+        "C-03",
+        "C-06",
+        "C-08",
+        "C-09",
+        "C-10",
+        "W-01",
+        "W-02",
+        "W-03",
+        "W-04",
+        "W-05",
+        "W-06",
+        "W-07",
+        "W-08",
+        "W-09",
+        "W-10",
+        "W-15",
+        "W-17",
+        "W-23",
+        "W-24",
+        "S-01",
+        "S-02",
+        "S-03",
+        "S-04",
+        "S-05",
+        "S-06",
+        "S-07",
+        "S-08",
+        "S-09",
+        "S-10",
+        "S-11",
+        "S-12",
+        "P-01",
+        "P-02",
+        "P-03",
+        "P-04",
+        "P-05",
+        "P-06",
+        "P-07",
+        "P-08",
+        "P-09",
+        "P-10",
+        "P-11",
+        "P-12",
+        "P-13",
+        "P-14",
+        "V-01",
+        "V-02",
+        "V-03",
+        "V-04",
+        "V-05",
+        "V-06",
+        "V-07",
+        "V-08"
+      ],
+      "NOT_APPLICABLE": [
+        "C-07"
+      ],
+      "V7_SYNTHETIC_ONLY_LIVE_MEDIA_UNKNOWN": [
+        "C-11"
+      ],
+      "DEFERRED_USER_ACCEPTED": [
+        "W-11",
+        "W-12",
+        "W-13",
+        "W-14"
+      ]
+    },
+    "meaning": "Inventory disposition,not all-child/runtime/live PASS"
+  },
+  "observations": {
+    "browser": "156.0.8078.76",
+    "viewport": "980x900 readable review,not exact phone",
+    "currentCaptures": 28,
+    "compositions": 14,
+    "directReadableInspection": 15,
+    "positiveSampledPrimaries": 20,
+    "olderMaterialSamples": 20,
+    "settingsAuthorOriginalIdentity": "Recorded true;not every account/native branch",
+    "runtimeChanged": false,
+    "tests": "No product suite/rebuild repeated on unchanged source;current observations and two targeted ambiguity probes only",
+    "headtail": {
+      "before": {
+        "top": 701.984375,
+        "bottom": 785.984375,
+        "height": 84,
+        "hits": [
+          true,
+          false,
+          false
+        ],
+        "scrolls": [
+          {
+            "role": "settings-field-wrap",
+            "scroll": 0,
+            "height": 84,
+            "total": 84
+          },
+          {
+            "role": "settings-section",
+            "scroll": 0,
+            "height": 130,
+            "total": 130
+          },
+          {
+            "role": "settings-panel",
+            "scroll": 0,
+            "height": 693,
+            "total": 693
+          }
+        ]
+      },
+      "after": {
+        "top": 554.984375,
+        "bottom": 638.984375,
+        "height": 84,
+        "hits": [
+          true,
+          true,
+          true
+        ],
+        "scrolls": [
+          {
+            "role": "settings-field-wrap",
+            "scroll": 0,
+            "height": 84,
+            "total": 84
+          },
+          {
+            "role": "settings-section",
+            "scroll": 0,
+            "height": 130,
+            "total": 130
+          },
+          {
+            "role": "settings-panel",
+            "scroll": 0,
+            "height": 693,
+            "total": 693
+          }
+        ]
+      }
+    },
+    "writeClose": {
+      "position": "static",
+      "clip": "auto",
+      "width": 40,
+      "height": 33,
+      "whiteSpace": "normal",
+      "fixtureHasBlindRule": false
+    },
+    "viewer": {
+      "url": "http://127.0.0.1:10067/integrated-v7-review/index.html",
+      "httpStatus": 200,
+      "checkedInUserIab": true,
+      "decodedWidth": 620,
+      "decodedHeight": 522,
+      "oneImageAtATime": true
+    }
+  },
+  "findings": [
+    {
+      "id": "native-settings-author-detail",
+      "status": "NEEDS_WORK",
+      "owners": [
+        "gallery-page-head-presenter",
+        "native-author-presenter"
+      ],
+      "change": "Older primary/auxiliary/selected recipes;retain adopted management memo/menu and native authored colors"
+    },
+    {
+      "id": "native-form-confirmations",
+      "status": "NEEDS_WORK",
+      "owner": "native-form-presenter",
+      "change": "Password/delete/leave roles,ordinary action sizing and leave-heading detail;preserve destructive semantics"
+    },
+    {
+      "id": "login-primary",
+      "status": "NEEDS_WORK",
+      "owner": "login-presenter",
+      "change": "Paired bright primary only;reuse fitting chrome/fields and purposeful full-width submit"
+    },
+    {
+      "id": "dccon-actual-media",
+      "status": "UNKNOWN_LIVE",
+      "change": "Synthetic8-cell media is not proof of actual /dccon/lists/packs/images;older blocked read request retained"
+    },
+    {
+      "id": "headtail-last-input",
+      "status": "REACHABLE_AFTER_NATIVE_SCROLL",
+      "change": "10/50/90percent hits pass;no trap repair planned"
+    },
+    {
+      "id": "leave-close-wrapped-label",
+      "status": "FIXTURE_FIDELITY_ROBUSTNESS_GAP",
+      "change": "Missing fixture .blind host CSS;not confirmed identical live product breakage"
+    }
+  ],
+  "reuse": {
+    "retained": [
+      "Named list/article/comments/image/write/owned-settings v7 scope",
+      "Combined popup7 affected contracts/42 semantic pairs on unchanged0E",
+      "Adopted memo workbench and author link menu",
+      "Native glass shells and reading/field roles"
+    ],
+    "notClaimed": "Older receipts are retained at their own SUT/scope;not fresh all-green0E/fullUI evidence"
+  },
+  "next": {
+    "id": "b1-native-residual-v7-implementation",
+    "brief": "docs/work/B1_NATIVE_RESIDUAL_V7.md",
+    "oneBatch": true,
+    "presentationOwners": 4,
+    "productImplementationComplete": false
+  },
+  "limits": [
+    "UI_NEEDS_WORK despite review completion",
+    "Current native-shaped synthetic observations,not actual site/device/extension/account or permission/data branches",
+    "No actual DCCon pack/image load proof",
+    "No actual submit/upload/settings save/authentication",
+    "C-07 N/A;N/browser OS outside CSS;four uploads user-deferred",
+    "No pixel golden/fidelity/beauty/fullUI approval or new design framework",
+    "Ignored capture drivers had strict-login and hidden-tab selector errors;corrected only drivers,not product"
+  ],
+  "hashMode": "Canonical LF tracked text;raw image/runtime bytes"
+}

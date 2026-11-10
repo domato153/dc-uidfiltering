@@ -1,0 +1,330 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-11-04",
+  "scope": "Stage2:port existing Mobile common material through PC rail,without another PC UI implementation",
+  "baseCommit": "a4f6f17fbabb9e667dd5f675251093db06079eeb",
+  "mobileSha256": "2c14f66fb22c8155ec266f9e1c91bc4a9ab1a31ac230a6b559106880c880b62b",
+  "pcSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+  "controlPcSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+  "factory": {
+    "source": "src/targets/shared/theme-material-values.js",
+    "formerSource": "src/targets/mobile/theme-material-values.js",
+    "sha256": "7ce848c5bf3230d184f6d84e74ef6cff5befd29ff9a6873cb6f1f04f4dfcd941",
+    "contentChanged": false,
+    "componentId": "mobile-theme-material-values",
+    "boundaryState": "mixed",
+    "note": "Stable historical ID;only location/consumers changed,not debt exit or accepted registry promotion."
+  },
+  "implementation": {
+    "sharedBehavior": "Existing20 feature inputs already shared/current. No filter/settings/personal-block/network/storage/metadata/version/lifecycle change.",
+    "connection": "Add same factory to PC prelude and invoke from existing target theme hook. Mobile manifest/builder/static references follow unchanged file move.",
+    "nativeIsolation": "No Mobile host CSS/presenters in PC;original PC header/list/article/comments/write/forms remain native.",
+    "mobileByteIdentical": true,
+    "pcExactAdditiveProof": true,
+    "proof": "Reversing ONLY the unchanged factory insertion and PC hook reconstructs the entire frozen previous PC output exactly;no behavior normalizer."
+  },
+  "selectedChecks": {
+    "missingConnectionControl": "EXPECTED_FAIL:PC material role absent",
+    "pcMaterial": "PASS:light/dark existing primary material,glass,14 palette previews/cancel,unsaved storage,nested backup close,native host unchanged",
+    "existingPcPalette": "PASS:14 options,preview/save,drag/resize/internal scroll,selection/manual/management/backup and original native isolation. Only approved v7 paint expectations updated.",
+    "quickBlock": {
+      "status": "PASS",
+      "kind": "test-outcome-differential",
+      "testsPerSide": 1,
+      "fields": [
+        "test identity",
+        "status"
+      ],
+      "rawSemanticCertificate": false
+    },
+    "rawPairs": {
+      "status": "PASS",
+      "contexts": 2,
+      "fields": [
+        "native geometry/style/control-node attributes",
+        "settings values",
+        "filter output",
+        "forms",
+        "owned surfaces"
+      ],
+      "path": "artifacts/pc-v7-port-2026-11-04/evidence.json",
+      "sha256": "ae08e02c997f0bc6fe957b4672795c33c67cdeba57ff57866ff8080f2426eec6",
+      "note": "The GM snapshot requests fallback is not a network oracle;no network observation claim. Exact additive pure-code proof establishes no network implementation change."
+    },
+    "pcDeleteIsolation": "PASS",
+    "static": "PASS:UI boundaries43,header palette/reset/door ownership and architecture9 links",
+    "artifacts": "PASS:verify-repo release;current versions/root/dist match;not a publication",
+    "logs": {
+      "red": {
+        "path": "artifacts/pc-v7-port-2026-11-04/red.log",
+        "sha256": "4b3cef4b4e5d7765142d0e05c881acdb41afd6bb88b9f9f836335abae020a3d6"
+      },
+      "green": {
+        "path": "artifacts/pc-v7-port-2026-11-04/green.log",
+        "sha256": "d1c195ca399193f5a965998080254673d9eb5bfaed1cc1ecccd6ddeb4f3fea6f"
+      },
+      "palette": {
+        "path": "artifacts/pc-v7-port-2026-11-04/palette.log",
+        "sha256": "89992d77633ef31281e618ccdbc731acb3578c41ffa8def24911ca93ea3ed647"
+      },
+      "evidence": {
+        "path": "artifacts/pc-v7-port-2026-11-04/evidence.log",
+        "sha256": "aa435009a9940fe83014fd04902cc4fc5fb430b56d8a20688325a7c699861b4b"
+      },
+      "quick-block-differential": {
+        "path": "artifacts/pc-v7-port-2026-11-04/quick-block-differential.log",
+        "sha256": "39525909f6e38ca57a1260b097a2c295ed8cf3806321eec8f14649ba17630737"
+      },
+      "delete-isolation": {
+        "path": "artifacts/pc-v7-port-2026-11-04/delete-isolation.log",
+        "sha256": "b42496daa03f79bd9df16172cfb1d9bc78cc742b11c579e2451056d6cad4ced7"
+      },
+      "mobile-static": {
+        "path": "artifacts/pc-v7-port-2026-11-04/mobile-static.log",
+        "sha256": "fe5938056805e684cf0a4d5452a0de32f558f2628b3af5053bd96d32e20a1fc0"
+      },
+      "release-check": {
+        "path": "artifacts/pc-v7-port-2026-11-04/release-check.log",
+        "sha256": "d53224eebf806b1906d11ee7283c2faab7d083ec69bd4cd3605e56979964d795"
+      },
+      "viewer-check": {
+        "path": "artifacts/pc-v7-port-2026-11-04/viewer-check.log",
+        "sha256": "5869a3ac2810048d6684ed8ec2c42bac3367f9d2e4532d1bd3da8fb0f20ebb3b"
+      }
+    }
+  },
+  "visual": {
+    "status": "MANUALLY_REVIEWED_SCOPED_PORT_USER_PREFERENCE_PENDING",
+    "fixtureCaptures": [
+      {
+        "mode": "before",
+        "id": "filter",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/before-filter-light.png",
+        "sha256": "a3fc7b3df31796c7d148dee4d72fd6f17862d874217615e525b557edcc9d41b7",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d"
+      },
+      {
+        "mode": "before",
+        "id": "management",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/before-management-light.png",
+        "sha256": "1c99226ad5be7dbffc6ae1753e460a5a31e55dc41555af2073c017e95cd2062f",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d"
+      },
+      {
+        "mode": "before",
+        "id": "backup",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/before-backup-light.png",
+        "sha256": "a73a6fde434e17e5715e206a820cde1ddaa6b414aa33d23be09606b00ddd12ad",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d"
+      },
+      {
+        "mode": "before",
+        "id": "filter",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/before-filter-dark.png",
+        "sha256": "dd27c2489eedacf7b67220e25d3b0698cb490f864bfed8892c5f14550098e21f",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d"
+      },
+      {
+        "mode": "before",
+        "id": "management",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/before-management-dark.png",
+        "sha256": "da802ec11e63ae1df697e92cd869624aeb71cdcb18244b38ca10c18979a3205d",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d"
+      },
+      {
+        "mode": "before",
+        "id": "backup",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/before-backup-dark.png",
+        "sha256": "bf04dd64042f36cc91d43e46c3bbfc29c60051238483d09942e148a1ee301717",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d"
+      },
+      {
+        "mode": "after",
+        "id": "filter",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/after-filter-light.png",
+        "sha256": "ace89c0c1d001fc04142ff573a79471fb5d9ceeab2f373b68e2644f7dad16b60",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91"
+      },
+      {
+        "mode": "after",
+        "id": "management",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/after-management-light.png",
+        "sha256": "2f6b4eb8ee0f1fa02a7d6734d4b54702559beec476841c5ae96b50aa93e4969e",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91"
+      },
+      {
+        "mode": "after",
+        "id": "backup",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/after-backup-light.png",
+        "sha256": "ca24f0cf15e2f2d17f733aa8d72d4f6245c987ae1511ee69c6f451fbfb48dbe2",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91"
+      },
+      {
+        "mode": "after",
+        "id": "filter",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/after-filter-dark.png",
+        "sha256": "8ac11babf0773611cbbf224f5b998c7aa6a8b221951aa79af899a96a89007439",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91"
+      },
+      {
+        "mode": "after",
+        "id": "management",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/after-management-dark.png",
+        "sha256": "d19aaebde9f98266ccf52b1fa7d9604af866d47aefb30300ff4955f42c9f20fd",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91"
+      },
+      {
+        "mode": "after",
+        "id": "backup",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/images/after-backup-dark.png",
+        "sha256": "949845d012bcae49f1f2282d2f71de258d8aa6273b1b62ca29191ee7804a3252",
+        "width": 1280,
+        "height": 900,
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91"
+      }
+    ],
+    "publicCaptures": [
+      {
+        "mode": "before",
+        "id": "management",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/before-management-light.png",
+        "sha256": "07d0860f780544849575a0897ac382b38a73dbe4be1bb912bda9fdb008e00824",
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "before",
+        "id": "backup",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/before-backup-light.png",
+        "sha256": "8bd3dbf17066f5def04e19390ee6e60d7fa4d6fd2b9f7f173bb7b5bbb7e550ea",
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "before",
+        "id": "management",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/before-management-dark.png",
+        "sha256": "d442cb24653e3536766de8535c94cdb3ea31bc5909260da8934b8aa77337c22c",
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "before",
+        "id": "backup",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/before-backup-dark.png",
+        "sha256": "6c817e1896b7e783ffdb1cdf965b1381f9fcc3e9f2061f74d4327d9e6077fb72",
+        "runtimeSha256": "0d5f7d071f7a29aba932f1ed52039d04647a10b3b5baf98e62392305e50eda4d",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "after",
+        "id": "management",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/after-management-light.png",
+        "sha256": "e1dbf8da52a8160ba65a164cca22a2ffbe1d5fb0d5c7444650ca145be6370fa8",
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "after",
+        "id": "backup",
+        "dark": false,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/after-backup-light.png",
+        "sha256": "e33906dab1e5c814ac440ac0494aa3dca874a021939f16001c4a793994ac27b4",
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "after",
+        "id": "management",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/after-management-dark.png",
+        "sha256": "0caa5862b0eac67c94cc07175c4210e65a46cd414ef795bfe0a6de231cadf460",
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      },
+      {
+        "mode": "after",
+        "id": "backup",
+        "dark": true,
+        "path": "artifacts/pc-v7-port-2026-11-04/public/after-backup-dark.png",
+        "sha256": "c1c9a77f5cee481f96a154e46dd7e57650c350b0c103dfe9f8c49ee0ad8a324d",
+        "runtimeSha256": "ce1b9db0164b55c34b9cfe9ad82862abce4f2836b00801b99a7052bb4a136b91",
+        "width": 1280,
+        "height": 900,
+        "source": "Public GET/HEAD source-injected,synthetic local block list;not actual extension or device."
+      }
+    ],
+    "provenance": "Actual public GET/HEAD source-injected Chrome156 with synthetic local block list;dark is PC detection replay,not acquired native site dark stylesheet. Fixture filter background is deliberately raw native harness,not a real site appearance claim.",
+    "comparison": {
+      "path": "artifacts/pc-v7-port-2026-11-04/visual-report/review.json",
+      "sha256": "5b9fba774ead057b60d2c8e80d2e5a16bb4b95435ce824968a7c445ee6c1cc1c",
+      "status": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false,
+      "note": "Expected old-PC→existing-v7 material/geometry differences and changing public content/ads are not automatic regressions or design approval."
+    },
+    "reviewed": "Public management and backup in both modes;local filter top/primary. Transmitted native background is visible;reading fields remain stable. Existing v7 light/dark primary and quiet controls retained without new PC design.",
+    "viewer": "/pc-v7-port/index.html",
+    "reviewScriptSha256": "b507f1d91d8b1e8c52fcb1aebd0db7e72a15392372a97742c702e1738d84f2c5"
+  },
+  "omissions": [
+    "No whole Mobile/PC suite:Mobile artifact exactly unchanged and PC exact additive material/hook proven.",
+    "Impact route conservatively selects acceptance/proof/promotion from build/registry/test inputs;not run or silently declared passed. Selected affected runtime checks above.",
+    "No installed-extension/device/account/real submission/bfcache/performance or all-state accessibility certification.",
+    "No official publication/version bump/index/README changes.",
+    "Earlier Mobile OS-tab recovery actual-use qualification remains distinct from user adoption of toolbar appearance."
+  ],
+  "next": "Review PC port separately;stage3 site/docs/screenshot proposal and stage4 approved promotion remain separate."
+}

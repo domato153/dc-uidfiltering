@@ -1,0 +1,152 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_OWNED_CONDITIONAL_SCOPED_RECORD",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "f181502d9d90cbe4ed6ac02107b1b40e49948186",
+  "candidateFingerprint": "f388080d63f281a0359bf1d29b593be42f804d4bb15bfb2f2e9f92b9fb868348",
+  "artifact": {
+    "mobileSha256": "DC0BEFDEE0F976A43A0074EFB7289EF3FD0F81F32BCA200D6D5A3598BC7909FF",
+    "pcSha256": "4121B55DA92393FCDEFB958218CEFE8FD703DD6A8A5485CDC44DA81F1D92F2C9"
+  },
+  "control": {
+    "mobileSha256": "2E99E11A71183CDCC9F516E1E33CF9C28E30B20A5DFBA6FED1319A594D300426",
+    "pcSha256": "AF7FE72FF8EBF7312237D84AD7E2B8C45EAC4918021AE1807C5F37E96BFEFA29"
+  },
+  "scope": {
+    "checklist": [
+      "P-06",
+      "P-07",
+      "P-08",
+      "P-09",
+      "P-11",
+      "P-14",
+      "S-10"
+    ],
+    "conditionalStatesPerTheme": 12,
+    "ordinaryGlassAndButtonFaces": "UNCHANGED",
+    "presentationOwner": "shared-settings-presenter with optional Mobile hooks",
+    "feedbackOwner": "existing personal-block-host-adapter clears previous attempt status",
+    "newOwners": false,
+    "newObservers": false,
+    "newPriorities": 0,
+    "metadataStorageVersionChanged": false,
+    "actualLiveWrites": false,
+    "officialRelease": false
+  },
+  "reference": {
+    "family": "docs/design/b1-glass-ordinary-target-light-2026-10-27.png",
+    "familySha256": "95B99AE75111ED1C15A374786509EBC548ACADEECC9DD9AA057B46BD6DC3CFEF",
+    "recipe": "docs/design/b1-owned-conditional-proposal-2026-10-28.css",
+    "recipeSha256": "9FBF126D1649B1A111DAC7DB8EB336B2F16082A98BA304500DAC561519AB796D",
+    "kind": "INDEPENDENT_2E99_PLUS_SEPARATE_CONDITIONAL_RECIPE"
+  },
+  "verification": {
+    "mobileFunctional": {
+      "passed": 107,
+      "mode": "SPLIT_97_QUALIFIED_PER_TEST_LOG_PLUS_9_TAIL_REPORTS_PLUS_1_STRENGTHENED_CONTRACT",
+      "interruption": "Usage limit interrupted aggregate report. Isolated pending-capture contract strengthened after independent review and rerun; its old result is excluded. Other direct test code/runtime/shared runner/fixtures unchanged. No uninterrupted full-run or final interrupted-process cleanup claim."
+    },
+    "mobileWrite": 36,
+    "pcFunctional": 15,
+    "ownedLayoutStates": 72,
+    "heights": [
+      900,
+      560,
+      2306
+    ],
+    "layoutWidth": 980,
+    "minimumMeasuredConditionalContrast": 5.456796029801144,
+    "defaultPcStyleContexts": 6,
+    "pcStyleDifferences": 0,
+    "immediateMobileSemanticObservations": 6,
+    "rawSemanticDifferences": 4,
+    "normalization": "Parse only the UID-cache JSON object (object key serialization order ignored); normalize only positive execution-specific ts fields. IDs/counts/ratios/all other values and original-row topology compare exactly. Raw strings retained; cache expiry/eviction are outside this witness.",
+    "normalizedSemanticDifferences": 0,
+    "visualPairs": 16,
+    "visualMatcherPassed": 16,
+    "visualFidelity": "REVIEWED",
+    "productApproved": false,
+    "uiBoundaryFiles": 38,
+    "detector": "Regex scan of2 JS targets returned no findings; parsed-page contrast/tiny-text rules did not run. Rendered conditional contrast has independent controls.",
+    "review": "Independent read-only source review found one P2 evidence gap: pending captures could complete after saving. Added immediate post-capture state/disabled/empty-feedback assertions; fresh conditional run and short/tall capture suites pass. No important runtime regression or PC-fallback issue found. No second review claimed.",
+    "visualRawHashEqualPairs": 7,
+    "visualToleranceOnlyPairs": 9,
+    "impactFallback": "Fresh resolver retains policy/proof/runtime/acceptance fallback routing for source/harness changes. This receipt closes only the scoped UI evidence; upper formal acceptance is NOT_RUN and not certified."
+  },
+  "failureClassification": {
+    "product": "Hardcoded status colors, missing informational rule, group opacity on active pending-delete row, stale error while retrying.",
+    "oracle": "Old normalized-srgb parsing/ancestor-opacity omissions fixed with rendered foreground patch and independent controls.",
+    "capture": "One palette comparison differed in original options scroll position; capture-only alignment retained14 options/error/save focus and original failed images. Product/harness unchanged.",
+    "environment": "Interrupted full functional run at usage limit;98 individual passes retained and remaining9 run separately.",
+    "review": "Post-capture timing assertion gap in the new evidence harness; final900/560/2306 checks verify the write is still pending after capture."
+  },
+  "evidence": [
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/split-functional.json",
+      "sha256": "30A850E082945DB90BC20A0E0FE8B10BFDBB72760FB6A8C3A560921E9A21529B"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/mobile-write.json",
+      "sha256": "3C4B6AF76440629811F9906312000ECA494D24B53AE39C4B7B9E9F698A51BE20"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/pc-functional.json",
+      "sha256": "4A99C60F5CDB2A6BF5D949F59D06D19486C7B4E4B9ED3C58E946EDB20780702A"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/pc-style-comparison.json",
+      "sha256": "8D375150BC8FE4436068BEB679F78F786A9C9C637CD61DE9B0E4AFFA376A6A13"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/behavior-comparison.json",
+      "sha256": "2B480A95B061B810D6D158B24FBD9B854BDD55E6E09D5A44C34738999D3CC1D3"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/after-560/observations.json",
+      "sha256": "243290DF56526592A526BCC36081C369AC97F2975DDB6B47575652AB04FA0C91"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/after-2306/observations.json",
+      "sha256": "B2023AEEBDAC80EA5D716DA79AB6D319322C0020494A3CA9E26588229A6EFAD6"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/palette-scroll-alignment.json",
+      "sha256": "1227BE50BDBE3AE23B4EA679A48E7076298C7E243CC54E6149353F328A5C5557"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/visual-final-aligned/review.json",
+      "sha256": "1760BA9BFCF625896F72E7EAC8D53914C71400F76E0F3322A145C5735C0919D2"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/viewer-checks.json",
+      "sha256": "05719B4AEFFB28BE5A14634BA915A5A10DE138DB33D11FFA9BD369B6FD99D222"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/boundaries.log",
+      "sha256": "CA64A21868337A62001DA3540A5971D1B05D3F5CD6BDD8297D602D47A8B9B610"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/impeccable-detect.json",
+      "sha256": "37517E5F3DC66819F61F5A7BB8ACE1921282415F10551D2DEFA5C3EB0985B570"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/conditional-final.json",
+      "sha256": "260433D20B50F0E2E03ECC635EF0D0285A9E9AACFD2572BF533B3F16B67F1BE4"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/short-final.log",
+      "sha256": "A57353BA671671AD3314319DD432F58C106F9872E9FC7DF0C8E63BA9227CC2BC"
+    },
+    {
+      "path": "artifacts/b1-conditional-2026-10-28/phone-final.log",
+      "sha256": "9B4D772E45B3061CE8E05F767DCC902847BC951A93877F1AEABDC3CA706BAD09"
+    }
+  ],
+  "remaining": [
+    "Unobserved shortcut/headtext/author-choice/backup-input/size children, selected from prior actual coverage",
+    "All128 child visual/account/device/current-extension/formal acceptance",
+    "General secondary-text/palette-wide contrast outside sampled conditional labels"
+  ],
+  "qualificationScope": "SCOPED_UI_CHANGE",
+  "workSuccessCertified": false
+}

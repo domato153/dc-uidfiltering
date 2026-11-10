@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "kind": "b1-native-password-header-reuse",
+  "status": "SCOPED_PASSWORD_HEADER_PASS",
+  "sourceBaseHead": "066993a40e0543a6cd5076fb3d1526c3e5139f44",
+  "candidateFingerprint": "8532c427a735676267db3579740a160086175ceb775294cf90f0cffcee6822bd",
+  "artifact": {
+    "mobileSha256": "AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB",
+    "controlMobileSha256": "7718A9B425E6E131823D3628C59AC2353F0FEE88A7BAE0EF5FE65719BB0FF30B",
+    "pcSha256": "61C539769BA160A5FC4DCD164B3CD26025244AB6FC1BBC7A4A520416FE5A41A5",
+    "pcBytesChanged": false,
+    "versionChanged": false
+  },
+  "scope": {
+    "roots": [
+      "anonymous-modify-password",
+      "anonymous-delete-password"
+    ],
+    "sharedFixes": [
+      "page-head-top-row-utilities",
+      "recent-trigger-chevron",
+      "recent-remove-decoration",
+      "native-form-idempotent-state-projection"
+    ],
+    "nativeAdapterChanged": true,
+    "hasListSurfaceChanged": false,
+    "listRuntimeActivated": false,
+    "acceptedRegistryChanged": false,
+    "overlayActive": true,
+    "formalHeaderAdmissionClosed": false,
+    "appearanceApprovedByUser": false
+  },
+  "checks": {
+    "mobileFull": {
+      "passed": 150,
+      "failed": 0
+    },
+    "focusedHeader": {
+      "contexts": 8,
+      "mutationIdleFrames": 4,
+      "actualFormRemovalAndReinsertion": true
+    },
+    "nativeSemanticComparison": {
+      "controlSha256": "7718A9B425E6E131823D3628C59AC2353F0FEE88A7BAE0EF5FE65719BB0FF30B",
+      "candidateSha256": "AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB",
+      "observations": 25,
+      "semanticDifferences": [],
+      "scope": "Separate-process existing native-form observer. Unchanged7718 control is reused; finalAEF0633C candidate is fresh. Four password header subscriptions are declared separately; raw resources/geometry are retained, not normalized as equal."
+    },
+    "publicSourceInjected": {
+      "states": 4,
+      "submitAllowed": false,
+      "extension": false,
+      "dark": "source-theme proxy",
+      "horizontalOverflow": 0,
+      "uniqueHeaderStyles": 4,
+      "footer": "concealed",
+      "recentPopup": "visible and reachable",
+      "liveNonemptySearchHistory": "UNVERIFIED"
+    },
+    "visual": {
+      "pairs": 4,
+      "fidelity": "REVIEWED",
+      "pixelStatus": "DIFFERENCES_REQUIRE_REVIEW",
+      "productApproved": false,
+      "viewer": {
+        "images": 12,
+        "decoded": 12,
+        "states": 11,
+        "broken": 0
+      }
+    },
+    "review": {
+      "oneFreshReadOnlyReview": true,
+      "inheritedClassLoop": "resolved",
+      "sameValueRecentAriaWrites": "resolved",
+      "actualFormRemovalGap": "resolved",
+      "followupArtifact": "AEF0633CC474E67756B3E68FCFE6CE92652E5515E37A6B00DBE3446258CACEDB",
+      "scope": "Same reviewer verified its two concrete findings on final source, both routes. No fresh-head independent certificate or whole-UI approval."
+    }
+  },
+  "resourceDelta": {
+    "passwordRoutesAddedHeaderSubscriberKeys": [
+      "header-shell-style",
+      "header-gnb-style",
+      "header-recent-visit-navigation",
+      "gallery-page-head-style"
+    ],
+    "newGlobalObserver": false,
+    "newPersistentTimer": false,
+    "idleScope": "Mutation queue/RAF/timer and generation only; bounded stable frames plus reviewer500ms. Not global lifecycle closure."
+  },
+  "retainedFailures": [
+    {
+      "artifact": "424C7F21",
+      "classification": "product",
+      "finding": "Native-form parent constrained the shared heading; RED geometry."
+    },
+    {
+      "artifact": "66140BE4",
+      "classification": "product",
+      "finding": "Inherited class churn amplified by header refresh; idle RED."
+    },
+    {
+      "artifact": "66140BE4",
+      "classification": "oracle",
+      "finding": "Full149/1: old exact native-form CSS payload hash; reconciled to authorized visual delta. Result retained."
+    },
+    {
+      "artifact": "54790679",
+      "classification": "product",
+      "finding": "Removal transition missed after churn fix; RED."
+    },
+    {
+      "artifact": "54790679",
+      "classification": "invalidated-in-progress-suite",
+      "finding": "Overlapping full attempt aborted after guarded source changed; no qualification."
+    }
+  ],
+  "limits": [
+    "Formal header admission remains open",
+    "No final actual Tampermonkey/device/account/submission qualification",
+    "Write/editor/tools and unopened native children remain separate",
+    "User appearance preference is not inferred from screenshots/tests"
+  ],
+  "localEvidence": [
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/mobile-full.json",
+      "sha256": "DD24B0C7AA6B1105D774C9D9355F27F8898B39BCE332B8DF095259C3D6E1CBA6"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/semantic-summary.json",
+      "sha256": "05677FA83003C35FABCC45F8412730ADE23CC70232E150402D6FC18AD63B2436"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/semantic-candidate.json",
+      "sha256": "E844F72EA42946474FE61BBD65C07435A202FD32651E114258888B97C2215320"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/semantic-control.json",
+      "sha256": "8093CFF91BFDBA003476347691E2860F0BAC6D412CFDE1A5C60B6D9643D9CD34"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/live/result.json",
+      "sha256": "3064D1619174C51EC49A22BD149A4DF835C51E812D3DC5ADEFEC7272D65570C3"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/fixtures/contexts.json",
+      "sha256": "30E0F1CA5E2855BB8F0FAC59465150480A8A2CBDCCF16775BBA0DFCA8DEC708F"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/visual/review.json",
+      "sha256": "39C25C2BFE58B6A4A3E14FC643A097C301B6A94BA0A11B51AFDD093C6B9E8BF7"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/comparison.json",
+      "sha256": "67A331F7E91B5E8C0CAD2483F6813B13C2896D6841CC88E7456F28603E64BDD7"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/completed/viewer-check.json",
+      "sha256": "7820618DFB41F13C547F7BE3A752EB4CB177CE32EE8FE59FEFD8D60C44CF3335"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/route-causes/result.json",
+      "sha256": "98C390DA8C5129C8792FDF3DEE4D6F5B9F1DEB4F0D2AF39E5D2F8FFEFDF139CD"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/repaired/idle-red.json",
+      "sha256": "C8EC483F1FE765793DC294B6DAF55CB3692704602A6D9F4E0A823C480C917F18"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/final-closed/removal-red.json",
+      "sha256": "083DEB440B2AA0A37EBEFD34B142DC973A4C0CBA4ED4F8ACEED139EC0B9A39E9"
+    },
+    {
+      "path": "artifacts/b1-form-header-2026-10-25/final-closed/removal-green.json",
+      "sha256": "5263F9FC2C4366789B9B972EF5CB83F2FFE4EDDE982476E57CA1F39F6BE64F94"
+    }
+  ]
+}

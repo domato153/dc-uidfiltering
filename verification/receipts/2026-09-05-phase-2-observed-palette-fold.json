@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "candidateId": "phase-2-observed-palette",
+  "candidateSha256": "aecd3cd954e92337384b53b7c121694bd6280238035d855bf8322348b8dc0503",
+  "beforeRegistrySha256": "b84d22af2a64adaff32403ef036170c0ca874140cac3a78eac0c06c7c97258c8",
+  "afterRegistrySha256": "353157572edf4a2d04f702befb68a47ccf2411cfa7de691555b676f29a01d6e8",
+  "resultingRegistryVersion": 4,
+  "candidateRemoved": true,
+  "idempotencyReplayMatched": true,
+  "temporaryRefLeakDetected": false
+}

@@ -55,17 +55,14 @@
         window.addEventListener('keydown', async (e) => {
             if (!activeShortcutObject || !activeShortcutObject.key) return;
 
-            const isMatch = e.key.toUpperCase() === activeShortcutObject.key &&
-                e.ctrlKey === activeShortcutObject.ctrlKey &&
-                e.shiftKey === activeShortcutObject.shiftKey &&
-                e.altKey === activeShortcutObject.altKey &&
-                e.metaKey === activeShortcutObject.metaKey;
+            const isMatch = DCUF_SHARED_STORAGE.matchesShortcutEvent(e, activeShortcutObject);
 
             if (!isMatch) return;
+            if (document.getElementById(FilterModule.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
             e.preventDefault();
 
             const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-            if (settingsPanel) settingsPanel.remove();
+            if (settingsPanel && !settingsPanel.inert) settingsPanel.querySelector(`#${FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON}`)?.click();
             else await FilterModule.showSettings();
         }, true);
     }

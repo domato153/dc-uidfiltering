@@ -1,0 +1,273 @@
+{
+  "schemaVersion": 1,
+  "kind": "B1_PREVIEW_DRAFT_AND_RECOMMENDATION_SCOPED_FINISH",
+  "status": "SCOPED_IMPLEMENTATION_REVIEWED",
+  "sourceBaseHead": "1442a1de46c9f907c07ed10b3e6a692be6fe1071",
+  "candidateFingerprint": "4aea21e88dab01a9ddeefa82dba8ae5302b4dc2c56b5aad6a64b941ec6011bfb",
+  "artifact": {
+    "mobileVersion": "3.5.5",
+    "mobileSha256": "06CA05EC44A1F8B46966425780CAF6249CAE041518623C80AAEEACAC2869BE4A",
+    "pcVersion": "1.9.9",
+    "pcSha256": "8915F36E5B8887DC58EF9F932E39CCA28CCE1AC1020FD96460CCD10C08913581",
+    "pcUnchanged": true,
+    "officialRelease": false
+  },
+  "control": {
+    "mobileSha256": "F87E31ED06E223E066913F5BC0063A8DA38009067BCA57E83CC9FB8CF64D47CB",
+    "sourceCheckpoint": "1442a1de46c9f907c07ed10b3e6a692be6fe1071"
+  },
+  "delta": {
+    "visual": [
+      "preview/draft B1 chrome,C885 controls,opaque reading",
+      "owned root/action marker and draft close label",
+      "vote-card native-height reset,14px padding,148px basis"
+    ],
+    "newStateStorageNetworkObserverOwners": false,
+    "metadataOrVersionChanged": false,
+    "legacySettingsHostStillMixed": true,
+    "acceptedRegistryEdited": false,
+    "newCandidateVisualSurface": "convenience-preview-draft"
+  },
+  "verification": {
+    "newConvenienceStates": 6,
+    "correctedVoteThemeStates": 2,
+    "missingHeightResetNegative": true,
+    "finalContracts": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/settled-finish.json",
+      "sha256": "0790BEA1F22280EC8832D9417823B1D87464F15B5C94F9F4D0B91F3B52B0C6A0"
+    },
+    "adjacentSettings": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/adjacent-settings.json",
+      "sha256": "CFECB7CFCDD71EE762327FB5EE403E0A23AAD46D3F782DA8694C41FCBA5924D5"
+    },
+    "controlPreview": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/control-preview.json",
+      "sha256": "7CD49550234FBBEFED6419F132EABA75D4F4ADD0CE382B75FDFDC5B339BCF88C"
+    },
+    "controlDraftHost": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/control-draft-host.json",
+      "sha256": "6A34A0FB82B93FFCC2BAC7F2A70C1E6F819E24B4DD9FB18441A7D5B1DB910220"
+    },
+    "candidatePreview": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/candidate-preview.json",
+      "sha256": "7B7D6A901ED69CFEA30D4FA87679430EAA1D276E643990E9B6038BA6A3189632"
+    },
+    "candidateDraftHost": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/candidate-draft-host.json",
+      "sha256": "96A8913AD8DF0EF44F0723252668DE2940FF8564D6C6AE53742B6FCF07A52803"
+    },
+    "relatedBehavior": "Same five original preview + one draft-host tests PASS in separate control/current contexts; not full semantic acceptance.",
+    "nativeRecommendationRed": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/control-native-recommendation.json",
+      "sha256": "2B7E652E333AFD03E64A02E6B05407C31C3D14A19004A65AAD7D5657BE0FCF9B"
+    },
+    "nativeRecommendationGreen": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/candidate-native-recommendation.json",
+      "sha256": "0515CFB9E7BF24EF5CD1719057335B4C2C065136E8AF4492B9ACACC27BDF8DFD"
+    },
+    "paletteChangedLabels": {
+      "contexts": 28,
+      "labelsPerContext": 3,
+      "minimum": 4.993443527975628,
+      "evidence": {
+        "path": "artifacts/b1-preview-draft-2026-10-28/palette-contrast.json",
+        "sha256": "1F0724F18038238F0A8B8879C3313261F4066A2CCD3BE9EC9715133C98FE8EE7"
+      },
+      "initialInterruptedProbe": "Nine completed label states reused on unchanged runtime/contrast branch; focus moved before outside click,which correctly closes preview."
+    },
+    "longError": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/edge-geometry.json",
+      "sha256": "C21B6EAF645DB8BFDBE045E153A87C19656A19501A6D1DC05D546B86A56195A7"
+    },
+    "impeccableDetector": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/impeccable-detect.json",
+      "sha256": "A5338D955B09046EC0B16F3A9625B7955C763AAE07DC722E474E6078745F932F"
+    },
+    "fullProductSuite": "NOT_RUN_USER_IMPACT_SELECTED",
+    "pcProductSuite": "NOT_RUN_NO_PC_CONSUMER_CHANGE",
+    "actualExtension": "NOT_RUN_NO_METADATA_OR_HOST_ENTRY_CHANGE"
+  },
+  "visual": {
+    "designComparison": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/visual-review-qualified/review.json",
+      "sha256": "7C87F3DD23034ED9864FA258611D1BDAC570B0DCBBF8D91D33C0A0C2855AACB2"
+    },
+    "manifest": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/visual-manifest.json",
+      "sha256": "730192CA8DA620D95A27F7F62487000E98BD91959605BEF35B07486D13D79C1E"
+    },
+    "independentTargets": [
+      {
+        "path": "docs/design/b1-convenience-preview-light-2026-10-28.png",
+        "sha256": "237F1CCEA0DBE1E6E7F3FE40F7DFED016CCFEC334E6502C9FFA6626B7C03A01C"
+      },
+      {
+        "path": "docs/design/b1-convenience-preview-dark-2026-10-28.png",
+        "sha256": "939D43C41879ADA1E8176BE491A871873BAA9AF4B2DFDAC2AE2BC34DD9C18A54"
+      },
+      {
+        "path": "docs/design/b1-convenience-draft-light-2026-10-28.png",
+        "sha256": "4AF8CA01F6129D8D3174AF068A49A01DC787B4D3F6806711E66164D8DFEB4AFD"
+      },
+      {
+        "path": "docs/design/b1-convenience-draft-dark-2026-10-28.png",
+        "sha256": "610F3BA1E2E2C41E84936F4638BC32AF1844852C4B4C8E19384D2897A254753F"
+      }
+    ],
+    "currentImages": [
+      {
+        "path": "artifacts/b1-preview-draft-2026-10-28/current-preview-light.png",
+        "sha256": "7B735F21F2FC310B1CE62BBCEA4763CABF41CA3407588A36889702A83395E4D3"
+      },
+      {
+        "path": "artifacts/b1-preview-draft-2026-10-28/current-preview-dark.png",
+        "sha256": "ACC2E12FD2D3C8FF1A89381316DCB80E636AC4488DFC18E3F6DFB0BC23722063"
+      },
+      {
+        "path": "artifacts/b1-preview-draft-2026-10-28/current-draft-light.png",
+        "sha256": "4AF8CA01F6129D8D3174AF068A49A01DC787B4D3F6806711E66164D8DFEB4AFD"
+      },
+      {
+        "path": "artifacts/b1-preview-draft-2026-10-28/current-draft-dark.png",
+        "sha256": "610F3BA1E2E2C41E84936F4638BC32AF1844852C4B4C8E19384D2897A254753F"
+      }
+    ],
+    "pixelMatch": 3,
+    "pixelDifference": 1,
+    "darkDifference": "553 header glyph-edge pixels; fresh root/header/title/link/body computed styles equal. Waiting for color transitions did not eliminate difference. Accepted only for bounded readable-scale composition; native diff retained,no threshold weakening.",
+    "styleParity": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/dark-computed-difference.json",
+      "sha256": "FE3AF5D13502F14C2FB9408CFA866D21EBD8B20E2AC2797BAC0061003D42CA1F"
+    },
+    "originalLinkDarkContrast": {
+      "before": 1.5915864849782362,
+      "after": 13.033851591316639
+    },
+    "productOrUserAestheticApproved": false
+  },
+  "publicObservation": {
+    "url": "https://gall.dcinside.com/mgallery/board/view/?id=aoegame&no=31813776&page=1",
+    "kind": "anonymous native/current source-injected,not actual extension",
+    "badgeEvidence": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/badge-observation.json",
+      "sha256": "4A2EB462A2D77896DE3FBA1290FB9B0482097B2C51D25B3987C80389375F4B9D"
+    },
+    "visibleImages": 46,
+    "decodedBroken": 0,
+    "overlappingVisibleRectangles": 0,
+    "memberMarkNaturalAndRendered": "12x11",
+    "nativeVoteWrapperClass": "inner",
+    "nativeWrapperHeight": 59,
+    "currentCardWidth": 148,
+    "currentVerticalPadding": 14,
+    "currentGroups": [
+      {
+        "width": 148,
+        "height": 89,
+        "padding": "14px 16px"
+      },
+      {
+        "width": 148,
+        "height": 89,
+        "padding": "14px 16px"
+      }
+    ],
+    "liveComments": "NOT_ACQUIRED_READ_POST_NOT_TRANSMITTED",
+    "credentialsHiddenValuesOrAuthenticationRead": false,
+    "submissionsOrVoteAttempted": false,
+    "publishedControlEdited": false,
+    "nativeShapedCommentBadgeInspection": {
+      "states": 2,
+      "naturalSize": "12x11",
+      "renderedSize": "height13px/auto width14.17px",
+      "source": "src/targets/mobile/post-main-fixes.js",
+      "sourceSha256": "6681D17C82ADE04CA29BD94BC530E37F31643C1B140A800FCDE5D41C0516A957",
+      "inlineNoOverlap": true,
+      "evidence": {
+        "path": "artifacts/b1-preview-draft-2026-10-28/comment-badges.json",
+        "sha256": "98DB14F097F710C1F050EC1AA1074FA53FEAECEB80E7A96F7A0E42D05B96F6B2"
+      },
+      "liveComments": false,
+      "productPatchNeeded": false
+    },
+    "beforeImage": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/before-live-recommendation.png",
+      "sha256": "EC8F9D84769D2AFB0853EA3694E16F0422F19E03E68051C2E4D5FB048055F018"
+    },
+    "currentImage": {
+      "path": "artifacts/b1-preview-draft-2026-10-28/current-recommendation.png",
+      "sha256": "554FD93816759B7AF422138960420B792227560E5085E78FDD00E16DFB5254A5"
+    }
+  },
+  "review": {
+    "freshReadOnlyReviewer": true,
+    "initialP2": "Guessed height selector matched no fixture nodes; original RED alone proved width,not height.",
+    "resolution": "Observed actual native .inner/59px and56x59 down button; precondition now asserted and height-reset removal must fail. Fresh re-review resolves P2; no additional product-code findings."
+  },
+  "failureClassification": {
+    "intermediateBuild": "Explicit role was in manifest but omitted from builder prelude; guarded startup caught missing factory. Builder fixed,canonical/guard rebuilt. No success evidence from that artifact.",
+    "initialRecommendationOracle": "Nonmatching .up_btn_box/.down_btn_box rule retired; corrected native-shaped RED/GREEN kept separately.",
+    "paletteProbe": "Outside-click closure is expected; probe focus ordering fixed,not product.",
+    "darkTransitionHypothesis": "Not supported by settled recapture/style parity; retain difference without inventing cause."
+  },
+  "guidebook": {
+    "status": "DEFERRED_DISCUSSION",
+    "trigger": "After the whole UI replacement/finish ends,discuss consolidation of existing reuse/visual/maintenance notes; no guidebook implementation/gate now.",
+    "source": "docs/work/B1_UI_EXPANSION_PREFLIGHT.md"
+  },
+  "sources": [
+    {
+      "path": "src/targets/mobile/convenience-presenter.js",
+      "sha256": "13CC3BEEE78E9AE9D6C928A2D2F0D2479C265A2A6605B3A1ABB94704C94BFADA",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/convenience-host-adapter.js",
+      "sha256": "A1A303842090BDF4FCE73EA55C7BD5EB91749A40400305DF01AFF8779CFB76D8",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/write-draft-host-adapter.js",
+      "sha256": "7CAC620DC1D2472EFFBB6AB761EED4E981D6DF96297DC79095A1A7A75C36EF8F",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "src/targets/mobile/article-presenter.js",
+      "sha256": "FBEE2D51F0E31629820435018FFF14A1A0A4CB9D59E4A34CDE51D8BD3FCB8163",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "tools/build-userscript.mjs",
+      "sha256": "475B79091E25EDBB1F44636BBF5CECBC2856CA8CA8A5662F34CAB074C029DBA8",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "build/targets.json",
+      "sha256": "5E16900C0B7E49ED2FB23BA794FE2811FD0F05631EF63FAFE4672EB87CE22653",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "testbed/ui-b1-convenience-contract.mjs",
+      "sha256": "B0BA94D80220137E6249456804E4B8DC116B616AAA7A1F233AD5E05E955BF866",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "testbed/run-tests.mjs",
+      "sha256": "82DA6F925BC9F3874552B72127989E87F75A67A4014EA8A48DC57BB32926C2AB",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "architecture/ui-surfaces.json",
+      "sha256": "80566FF91113A52214094C606D48F506C9FBC7639C5FC79FC4EF4DF144F4534A",
+      "textNormalization": "LF"
+    },
+    {
+      "path": "architecture/candidates/mobile-ui-modernization-assurance.json",
+      "sha256": "B85AF27D83520081D93141EC6287E5BF6DA4D84C5901E796945D6454A9C58D79",
+      "textNormalization": "LF"
+    }
+  ],
+  "nextAction": "b1-native-author-preflight",
+  "remaining": "Native author/memo/editor/settings/account/media children per inventory; actual phone/authentication/formal upper/header/whole-UI UNKNOWN; C-07 N/A and four uploads deferred.",
+  "workSuccessCertified": false
+}

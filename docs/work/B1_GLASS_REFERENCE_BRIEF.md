@@ -1,0 +1,108 @@
+# Glass window redesign — references before implementation
+
+## Current instruction and status
+
+User2026-10-29 rejects the CSS-first memo-window experiments and asks for this order: consolidate references, generate an attractive whole-window raster proposal, review it, then implement against the selected image. Status: IMAGE_PROPOSAL_READY_FOR_USER_REVIEW. No proposed image is a production golden or an approved design until selected. The6BAA runtime remains unchanged.
+
+The rejected CSS recipes are retained only under `artifacts/b1-glass-window-trial-2026-10-29/discarded-css-spike/`,alongside the local captures. They are diagnostic history. Do not resume their layout,treat their checks as aesthetic approval,or relabel their screenshots as the requested image-generated proposal.
+
+## Reference set and what transfers
+
+| Source | Useful input | Limits |
+| --- | --- | --- |
+| [User's Dark Glassmorphism image/MD](https://designmd.app/library/dark-glassmorphism-infographic) | A coherent translucent plane, fine light-catching rim, diffuse depth, background light/shape transmitted through the shell. | A dark hero composition;its cyan primary button is substantially solid. Do not copy neon, marketing spacing, fixed cyan/purple or numeric opacity into this forum. Light mode needs its own design. |
+| [ButtonGlass live variants](https://artyhoo.github.io/shadcn-glass-ui-library/?path=/story/components-core-buttonglass--variants), [AI MD guide](https://github.com/artyhoo/shadcn-glass-ui-library/blob/main/docs/AI_USAGE.md), [actual registry source](https://raw.githubusercontent.com/artyhoo/shadcn-glass-ui-library/main/public/r/button-glass.json) | Coordinated primary/secondary/quiet/selected roles, thin translucent secondary faces, documented theme-variable consumption. | Reference material/state rules;do not transplant React, new click handlers, ripple timers, looping glow/shine or the whole library. Its own accessibility claims do not certify our result. |
+| [designmd general glass MD](https://designmd.app/library/glassmorphism) | Glass as a temporary floating layer;readable solid main content;fine edges and fallback thinking. | Generic alpha template with inconsistent component detail. The MD's presence is not quality evidence. |
+| User-supplied Korean reconstruction of [Madia Design's AI dashboard feedback](https://www.youtube.com/watch?v=IFVKj-gBoFM),provided2026-10-29 | Information hierarchy,density,grouping,restrained effects,consistent states and reusable controls. | This is the user's reconstruction from English captions,not a full transcript or independently frame/timestamp-verified record. Use contextual principles;do not canonize its8px radius,36px button,12–16px spacing or type sizes. |
+| Existing B1 and acquired native memo anatomy | Palette roles,ordinary forum backing,opaque reading/editing paper,Korean labels,native scope/swatch/register/list/sort/copy/delete/search/backup/close functions. | B1/C885 is the current accepted implementation,not an immutable authority for a new proposal. Native composition is a functionality inventory,not a layout to copy unquestioningly. |
+
+## Selected principles from the supplied video summary
+
+- Make content and the next action legible before adding material effects. The forum and management window are reading/operating surfaces,not marketing heroes.
+- Keep the shell glass recognizable. Give primary actions a stronger but controlled tint;quiet actions and sorting must not compete with it. Avoid a glow,gradient,inner shadow and drop shadow on every control.
+- Group related content;inside-group spacing must be tighter than the gaps between functional groups. Remove redundant dotted lines,nested boxes and the old textarea wrapper's dead space.
+- Use a clear title/label/value/help hierarchy. Not every label is bold. Give small Korean labels enough size and contrast rather than shrinking them to increase density.
+- Distinguish selected,hover,focus,disabled and destructive roles;retain non-color cues and reachable controls. Contextual example sizes are not universal touch-target rules.
+- Reuse the selected material and components later. Changing appearance must preserve native nodes/events/form semantics,stored settings and UI/behavior separation.
+
+## First image brief — one native memo-management window
+
+Generate one side-by-side light/dark board of the same redesigned window. Show it above a plausible ordinary DCInside-style forum page,with subtle underlying row/title contours visibly transmitted through the shell. Use neutral white/charcoal and an illustrative restrained teal accent;all chromatic emphasis must remain replaceable by the existing14 theme presets during implementation. No saturated wallpaper/neon backing to fake glass.
+
+Composition should be redesigned intentionally: concise header and close;clear gallery-scope segment;grouped memo input/color/register area;subordinate short guidance and backup link;organized memo list/count/sorting/copy/delete;compact aligned search footer. All named native functions remain present. Synthetic example rows may illustrate density and must never be treated as real saved data. Opaque fields and readable list text;glass belongs to chrome and the surrounding layer. Moderate radii,thin coherent light edge,one restrained depth treatment,quiet secondary buttons;no inflated plastic pills or a box around every subregion.
+
+The rejected experiments failed because they mostly overlaid tint/blur on an unrefined native composition. A later widened CSS experiment also exposed panel-width and grouping defects. None is an implementation target. First judge the generated whole composition and useful details with the user;only then derive role tokens/component rules and implement the selected image. Do not use a generated raster as runtime button artwork.
+
+## Order and validation boundary
+
+1. This brief consolidates the references and user constraints.
+2. Built-in image generation produces a new project-local light/dark proposal,with provenance and its conceptual limits recorded here.
+3. User selects or revises the image. Resolve any illustrative/missing/duplicated native controls before implementation.
+4. Implement through existing presentation owners;retain original nodes and palette settings. Select checks by actual change impact and compare the implementation against the selected image,whole plus relevant detail. No routine full-suite repeat.
+
+This turn changes only design/continuity artifacts;no product build,version,metadata,storage,account,release or C-13 permission submission. C-13 remains the deferred continuation after this design decision. Guidebook discussion stays after the full UI work.
+
+## Generated proposal v1
+
+- File: `docs/design/b1-glass-window-image-proposal-v1-2026-10-29.png`;SHA256 `31CFA853BDBFF12EC0A62E8D20D53486474CCC3213B1DDE0BF97C4D3B3601AC3`.
+- Provenance: built-in image_gen,2026-10-29. Functional-anatomy input is the acquired/current6BAA memo screenshot;B1 ordinary dark screenshot supplies surrounding identity only. Prompt combines the sources/constraints above and explicitly redesigns the old composition. No selected runtime or regression golden was replaced.
+- Actual output: one1536×1024 light/dark board,shared whole-window composition. Crisp header/scope selector,input/guidance/register group,list/sorting/actions and search footer;synthetic two-row data. Glass is concentrated on the shell;paper fields and strong text remain.
+- Review: viewed at whole scale. It is an image proposal,not measured CSS/contrast/geometry or proof of runtime behavior. User aesthetic decision remains pending. The image does not independently verify any video's spoken content.
+- Translation obligations: keep original scope/color/register/list/sort/copy/delete/search/backup/close actions and the14 palette IDs. Restore the native select-all control;the raster's row ellipses do not authorize new menus. The shortened guide must not remove the device-local/precedence semantics. Generated row-card outlines and decorative search/icon details remain revisable. Do not reproduce raster inaccuracies as product requirements.
+- Supplied video summary is sufficient for this decision. Further video retrieval is unnecessary: browser export yielded no transcript,vidIQ had0 credits,TinyFish's anonymous attempt reached a sign-in/bot check,and local Edge exposed a video frame before further computer use stopped. Do not restart tool research or infer timestamped spoken lessons from those partial observations.
+
+## Button revision and rejected rendering artifacts
+
+V2 used the actual ButtonGlass screenshot as an image input,not only its textual description. File `docs/design/b1-glass-window-image-proposal-v2-2026-10-29.png`,SHA256 `D101FF0142D5D6F4EBBE62E374ED9F997C4E4D80300A90AC62290C9BD388C4B9`. User identifies uneven/bumpy registration-button reflections and excessive overall haze. V2 is not selected.
+
+Correct the material model before implementation: planar smooth button faces,one continuous quiet highlight,fine rim,no mottled/cloudy/specular lumps or inflated bevel. Blur only the scenery behind a glass plane;foreground text,borders,controls and paper reading/editing areas stay crisp. Avoid a milky/fog overlay or texture spread across the whole dialog. Keep translucency modest and intentional;the design must not depend on saturated backing. Preserve the proposal's useful grouping while fixing material. No CSS implementation follows an unselected raster.
+
+## Latest proposal v3 — clarity correction, still unselected
+
+File: `docs/design/b1-glass-window-image-proposal-v3-2026-10-29.png`;SHA256 `305F05C64EB1EFBB76E2A868D3B2EAF2A929636E85BDA3B1E0F18146ADF776B0`. Built-in image_gen edit of v2,2026-10-29. Same1536×1024 light/dark composition;the correction requests smooth button planes,continuous restrained highlights,and crisp foreground UI with optical blur limited to backing scenery. The actual output is visually inspected as a proposal: primary faces are smoother and text/edges clearer;exact tint/transmission/contrast is not measured or certified. User selection remains pending. Earlier v1/v2 are provenance/history,not fallback authorities. V1's translation obligations still apply,including native select-all,original guidance and no invented row menu.
+
+## Superseding direction — design freely,not local retouching
+
+User2026-10-29 says revisions must remain aggressive and broad,then explicitly asks to focus entirely on design and make the whole window clearly different using the collected references. The pale/over-white light rendition and near-identical v1–v3 composition are not adopted. Do not keep editing them with a preserve-layout instruction.
+
+Next image is generated afresh without the old raster as an input. Carry over the functional inventory and research principles only. Proposed new light master: a wider two-pane workbench,organized saved-memo area beside a clear entry area,compact hierarchy and toolbar,slate/pearl surfaces with a visible tonal separation from the glass frame. Avoid a white-on-white stack,fog across foreground,bumpy reflections and decorative effect accumulation. Accents remain illustrative/theme-derived;no code is implemented before the user reviews the new concept. A dark counterpart can follow the selected light master rather than consuming this attempt with a duplicated old board.
+
+## Fresh v4 — current proposal for user review
+
+File: `docs/design/b1-glass-window-image-proposal-v4-2026-10-29.png`;SHA256 `8A183BF63622E5E2E90631C9212EA488FDACC235F3C7D23E9352CF8964F1E05D`. Provenance: built-in image_gen,2026-10-29,fresh generation without old-image inputs. One1536×1024 light master. This replaces v1–v3 as the current proposal,not the accepted implementation.
+
+Actual composition: wider shared glass frame,two panes with saved memo/search/selection/sorting/copy/delete on the left and memo color/multiline editor/guidance/backup/register on the right. Neutral cool slate glass contrasts with the pearl reading/editing surfaces. Synthetic3-row data and reimagined forum background illustrate the design;neither changes actual data/features or authorizes a sitewide redesign. Native sorting actions must not become new dropdown features merely because generated arrows appear. Search submit remains reachable even if the raster depicts only a search icon. Preserve original page branding and all native controls in a later implementation.
+
+Visual review: the overall silhouette,grouping and surface-tone hierarchy are materially different from the rejected tall stack. This is not a measured contrast/geometry/transmission or aesthetic acceptance result. User selection remains pending. The user requests broad/aggressive revisions;do not revert to preserve-layout micro-edits if this proposal still misses the brief. The input list/guidance and14 theme IDs remain functional constraints,not restrictions on creative composition. No product CSS/DOM or generated userscript changed.
+
+## Colored-crystal material proposal — current image for review
+
+User2026-10-29 requests an image applying the discussed direction: reduce the two large white planes,make the list a gently transmitting pearl/blue-gray plane,keep the actual text-entry field stable/readable,and explore a thin colored-crystal primary action with a smooth planar face and fine light-catching edge. Hue must remain supplied by the existing theme setting during later implementation. This is permission to explore an image,not production adoption.
+
+Latest file: `docs/design/b1-glass-window-crystal-proposal-v6-2026-10-29.png`;SHA256 `AF06CFCED67F4205BE8DA7227C4C140301DE4FC880E51FB8D53AC35105323909`. Built-in image_gen edits of v4,2026-10-29. One intermediate render amplified the button's luminous rim;the agent revised it to reduce the halo and irregular reflections. That intermediate is not a selected target or an attributed user rejection.
+
+Actual visual review: the list plane is visibly more transmitting and less white than v4;the textarea remains light. The final primary has a smoother colored face and quieter edge than the first crystal render. Its exact optical/contrast behavior is not measured;whether it is sufficiently crystal-like remains a user aesthetic decision. Do not claim all material issues resolved or resume implementation automatically. Current v6 supersedes v4 only as the latest proposal;no generated image is adopted. Functional/illustrative obligations recorded above remain.
+
+## Professional button-weight research — user2026-10-29
+
+Question: v6's wide,dark primary looks too visually heavy beside the light glass UI. User requests professional/academic/commercial guidance and a new image based on the findings. Scope is a proportionate first-party/practitioner review,not an experiment or proof that a particular aesthetic is best.
+
+| Source,read2026-10-29 | What it supports | Transfer/contrary evidence |
+| --- | --- | --- |
+| [Apple HIG Color](https://developer.apple.com/design/human-interface-guidelines/color),Liquid Glass color | Glass can be tinted like stained glass;apply color sparingly to important actions. A prominent action may use colored glass background. | Supports the tinted primary,not uniform accent fill on every control. It does not prescribe making every primary pale. |
+| [Apple HIG Materials](https://developer.apple.com/design/human-interface-guidelines/materials) | Glass distinguishes navigation/controls from content;use it sparingly. Regular material preserves legibility;clear material is for visually rich media backing. Larger text-heavy surfaces may be more opaque. | Counterevidence to turning every memo/list/text plane into highly transparent crystal. Transfer the hierarchy principle to the web;do not claim native Apple rendering from our CSS or copy its dimming percentages. |
+| [Material3 Buttons](https://m3.material.io/components/buttons/guidelines) | High-priority actions need more visual emphasis than secondary actions;filled/tonal/outline/text are different emphasis levels. Label-fit and responsive wider widths are both valid. | Tonal is normally lower-emphasis than filled,not a universal replacement for primary. For this one-primary dialog,a compact distinct tinted action is a proposed local adaptation. Full-width buttons are not inherently wrong;their area compounds the current dark fill. |
+| [NN/g Visual Hierarchy](https://www.nngroup.com/articles/visual-hierarchy-ux-definition/) | Relative value/saturation,scale and grouping establish hierarchy;importance is contextual,not determined by one hue alone. | Supports jointly adjusting area,fill and surroundings instead of repeatedly changing opacity. This practitioner guidance is not a controlled test of this mockup's aesthetic. |
+| [W3C WCAG2.2 Contrast Minimum](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html) | Ordinary text needs4.5:1 contrast,large text3:1,with stated exceptions. | A paler glass face may need dark text. Check final composited backing/states/palettes during implementation;the generated image is not a contrast-pass receipt. |
+
+Selected proposal: reduce the primary's large dark area by using a compact footer action;use a lighter,lower-chroma tinted glass face with dark theme-derived ink,thin quiet rim and no thick underside/neon halo. Keep only one clearly accented primary. Use stable matte low-chroma memo content and opaque editing paper;the frame/functional layer carries the glass. Preserve the14 user palettes and original actions. Exact tint/alpha/size remain design choices to review,not numbers dictated by research. Do not adopt a simplistic rule that all primary buttons must be pale,all content must be transparent,or that tinted crystal requires glowing bevels.
+
+Official example images are local-only material references under `artifacts/glass-button-research-2026-10-29/references/`: Apple's tinted primary and Google's tonal controls. Their colors/platform layouts are not adopted;the next generated image uses them with the current proposal as supporting references.
+
+## Selected v7 implementation — user2026-10-29
+
+User selected the researched v7 image and asked to implement the memo window, then plan reuse across list/article/write/other popups. Selected reference: docs/design/b1-glass-window-researched-proposal-v7-2026-10-29.png, SHA-256 4748D2D43A417BA56B5AF8B72CEAEA1B905077793D1D22C9A562A859B7D01B0E. Earlier v1–v6 proposals and CSS spikes remain superseded. B1_MEMO_WORKBENCH.md owns implementation/coverage/reuse order. V7 is selected as the design direction; rendered implementation aesthetic review remains separate.
+
+## Rendered-tone adoption — user2026-10-29
+
+User accepted the actual memo rendering and directed the same tone across other UI. The selected v7 and docs/design/b1-memo-workbench-light-2026-10-29.png jointly define this material direction. UI_REVIEW_CHECKLIST.md now owns the required accent-link gate;B1_MEMO_WORKBENCH.md owns incremental rollout. The current theme-link receipt proves actual palette UI preview/save/cancel for the listed memo roles,not all other UI.
