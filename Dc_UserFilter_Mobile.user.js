@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.5.6
+// @version      3.5.7
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -2679,7 +2679,7 @@ const __dcufSettingsPresenter = (() => {
                 gap: 6px;
                 margin-bottom: 7px;
                 color: var(--dcuf-list-fg);
-                font-size: 15px;
+                font-size: 18px;
                 font-weight: 400;
                 line-height: 1.42;
                 word-break: break-all;
@@ -2766,9 +2766,14 @@ const __dcufSettingsPresenter = (() => {
             @media (min-width: 760px) {
                 /* Filtering owns row inline display; arrange its children instead. */
                 [data-dcuf-surface="list-item"] { padding-right: 250px; min-height: 54px; box-sizing: border-box; }
-                [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; font-size: 14px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; }
                 [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 0; bottom: 0; transform: none; justify-content: center; width: 220px; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 11px; }
                 [data-dcuf-surface="list-item"] .dcuf-list-author { flex: none; }
+            }
+            @media (min-width: 760px) and (max-width: 1249px) and (pointer: coarse) {
+                [data-dcuf-surface="list-item"] .dcuf-list-title { font-size: 22px; }
+                [data-dcuf-surface="list-item"] :is(.dcuf-list-subject, .dcuf-list-reply) { font-size: 16px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-meta { font-size: 14px; }
             }
             [data-dcuf-surface="list-toolbar"],
             [data-dcuf-surface="list-actions"] {
@@ -2847,7 +2852,7 @@ const __dcufSettingsPresenter = (() => {
                 height: var(--dcuf-scroll-size);
                 width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                 max-width: none;
-                margin: 10px auto;
+                margin: 0 auto 12px;
                 box-sizing: border-box;
             }
             [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="shown"], [data-dcuf-scroll="hidden"]) {
@@ -3498,20 +3503,19 @@ const __dcufSettingsPresenter = (() => {
             state.spacer.removeAttribute('data-dcuf-scroll-active');
             state.toolbar.setAttribute('data-dcuf-scroll', 'measuring');
             const rect = state.toolbar.getBoundingClientRect();
-            state.origin = rect.top + scrollPosition();
-            state.height = rect.height;
             state.spacer.style.setProperty('--dcuf-scroll-size', `${rect.height}px`);
             state.lastY = scrollPosition();
             state.direction = 0;
             state.travel = 0;
-            state.mode = state.lastY <= state.origin + state.height ? 'top' : 'shown';
-            state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
             const layout = document.querySelector('[data-dcuf-header-layout]');
             if (layout && state.toolbar === document.querySelector('[data-dcuf-surface="list-toolbar"]')) {
                 if (!state.plateGeometry) state.plateGeometry = {node: layout, value: layout.style.getPropertyValue('--dcuf-list-header-height'), priority: layout.style.getPropertyPriority('--dcuf-list-header-height')};
-                const height = Math.max(0, state.origin + state.height - layout.getBoundingClientRect().top - scrollPosition() - 8);
+                const height = Math.max(0, rect.bottom - layout.getBoundingClientRect().top - 8);
                 layout.style.setProperty('--dcuf-list-header-height', `${height}px`);
             }
+            state.mode = rect.bottom > 0 ? 'top' : 'shown';
+            state.spacer.toggleAttribute('data-dcuf-scroll-active', state.mode !== 'top');
+            state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
         };
         const updatePopupHold = (state) => {
             state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
@@ -3528,16 +3532,18 @@ const __dcufSettingsPresenter = (() => {
                 if (scrollMeasurePending) measureScrollToolbar(state);
                 if (scrollPopupPending) updatePopupHold(state);
                 if (y < 0 || y > max + 1) return;
+                const inFlow = state.mode === 'top';
+                const slot = (inFlow ? state.toolbar : state.spacer).getBoundingClientRect();
                 const active = document.activeElement;
                 const focused = state.toolbar.contains(active);
                 const held = pointerHeld || keyboardNavigation || state.popupOpen || focused;
                 const delta = y - state.lastY;
                 state.lastY = y;
-                if (held || state.held !== held) {
-                    state.direction = 0; state.travel = 0;
-                    state.mode = y <= state.origin + state.height ? 'top' : 'shown';
-                } else if (y <= state.origin + state.height) {
+                if (slot.bottom > 0) {
                     state.mode = 'top'; state.direction = 0; state.travel = 0;
+                } else if (held || state.held !== held) {
+                    state.direction = 0; state.travel = 0;
+                    state.mode = 'shown';
                 } else if (delta) {
                     const direction = Math.sign(delta);
                     state.travel = direction === state.direction ? state.travel + Math.abs(delta) : Math.abs(delta);
@@ -3547,12 +3553,13 @@ const __dcufSettingsPresenter = (() => {
                 }
                 state.held = held;
                 const floating = state.mode !== 'top';
+                if (inFlow && floating) state.spacer.style.setProperty('--dcuf-scroll-size', `${slot.height}px`);
                 state.spacer.toggleAttribute('data-dcuf-scroll-active', floating);
                 // Commit both flow changes before measuring: a layout read with
                 // spacer AND toolbar in flow would trigger scroll anchoring.
                 if (state.toolbar.getAttribute('data-dcuf-scroll') !== state.mode) state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
                 if (floating) {
-                    const rect = state.spacer.getBoundingClientRect();
+                    const rect = inFlow ? state.spacer.getBoundingClientRect() : slot;
                     const left = `${rect.left}px`, width = `${rect.width}px`;
                     if (state.toolbar.style.getPropertyValue('--dcuf-scroll-left') !== left) state.toolbar.style.setProperty('--dcuf-scroll-left', left);
                     if (state.toolbar.style.getPropertyValue('--dcuf-scroll-width') !== width) state.toolbar.style.setProperty('--dcuf-scroll-width', width);
@@ -4005,6 +4012,8 @@ const __dcufSettingsPresenter = (() => {
                     item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
                 });
                 connectScrollToolbar(listWrap, toolbar);
+            } else {
+                disconnectScrollToolbar(listWrap);
             }
 
             if (actionBar instanceof HTMLElement && !actionBar.matches('.view_bottom_btnbox')) {
@@ -16048,7 +16057,8 @@ const ThemeModule = (() => {
 
 
         body { background: #fff !important; }
-        html, body { overflow-x: hidden !important; }
+        /* Clip horizontal overflow without turning the body into a vertical scroller. */
+        html, body { overflow-x: clip !important; }
 
 
         html, body, #top, #container, .wrap_inner, .visit_bookmark,
@@ -21688,7 +21698,7 @@ init() {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.5.6' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.5.7' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -21768,6 +21778,7 @@ init() {
             ORIGINAL_TABLE: 'table.gall_list',
             ORIGINAL_TBODY: '.gall_list tbody',
             ORIGINAL_POST_ITEM: 'tr.ub-content',
+            LIST_TOOLBAR: 'article > .list_array_option',
             PAGINATION: '.bottom_paging_box',
             GALL_TABS: '.list_bottom_btnbox',
             SEARCH_FORM: 'form[name="frmSearch"]',
@@ -21843,6 +21854,8 @@ init() {
                 originalTable = candidate;
             } else if (candidate.matches?.(this.SELECTORS.LIST_WRAP)) {
                 originalTable = candidate.querySelector(this.SELECTORS.ORIGINAL_TABLE);
+            } else if (candidate.matches(this.SELECTORS.LIST_TOOLBAR)) {
+                originalTable = candidate.parentElement?.querySelector(this.SELECTORS.ORIGINAL_TABLE);
             } else {
                 originalTable = candidate.closest?.(this.SELECTORS.ORIGINAL_TABLE)
                     || candidate.querySelector?.(this.SELECTORS.ORIGINAL_TABLE)
@@ -22555,6 +22568,7 @@ init() {
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
                         this.SELECTORS.ORIGINAL_TBODY,
+                        this.SELECTORS.LIST_TOOLBAR,
                         this.SELECTORS.GALL_TABS,
                         this.SELECTORS.PAGINATION,
                         this.SELECTORS.PAGE_MOVE_BOX,
@@ -23103,11 +23117,14 @@ init() {
                 }
             }
 
-            return {
-                ready: true,
-                reason: 'ready',
-                detail: { targetWrapCount: targetWraps.length }
-            };
+            const detail = { targetWrapCount: targetWraps.length };
+            if (window.__dcufBootController?.state === 'preparing' && targetWraps.some(listWrap => {
+                const article = listWrap.closest('article');
+                return article && !article.querySelector(':scope > .list_array_option[data-dcuf-scroll]');
+            })) {
+                return { ready: false, reason: 'waiting-list-toolbar', detail };
+            }
+            return { ready: true, reason: 'ready', detail };
         },
 
         getInitialRevealMutationSelectors() {
@@ -23137,6 +23154,7 @@ init() {
                 this.SELECTORS.LIST_WRAP,
                 this.SELECTORS.ORIGINAL_TABLE,
                 this.SELECTORS.ORIGINAL_TBODY,
+                this.SELECTORS.LIST_TOOLBAR,
                 this.SELECTORS.ORIGINAL_POST_ITEM
             ];
         },
@@ -23170,6 +23188,7 @@ init() {
                 let rafId = 0;
                 let timeoutId = 0;
                 let refreshTimerId = 0;
+                let toolbarTimerId = 0;
                 let observer = null;
                 let unsubscribe = null;
 
@@ -23178,6 +23197,7 @@ init() {
                     if (observer) observer.disconnect();
                     if (rafId) window.cancelAnimationFrame(rafId);
                     if (refreshTimerId) window.clearTimeout(refreshTimerId);
+                    if (toolbarTimerId) window.clearTimeout(toolbarTimerId);
                     if (timeoutId) window.clearTimeout(timeoutId);
                     this._initialRevealStartedAt = 0;
                 };
@@ -23185,6 +23205,14 @@ init() {
                 const finish = (reason) => {
                     cleanup();
                     resolve(reason);
+                };
+
+                const waitBrieflyForToolbar = (state) => {
+                    if (state.reason !== 'waiting-list-toolbar' || toolbarTimerId) return;
+                    toolbarTimerId = window.setTimeout(() => {
+                        toolbarTimerId = 0;
+                        checkReady('list-toolbar-grace');
+                    }, 500);
                 };
 
                 const scheduleTimeout = (deadline) => {
@@ -23201,6 +23229,10 @@ init() {
                         });
                         if (lastState.ready) {
                             finish(lastState.reason);
+                            return;
+                        }
+                        if (lastState.reason === 'waiting-list-toolbar') {
+                            finish('filtered-list-without-toolbar');
                             return;
                         }
 
@@ -23271,6 +23303,11 @@ init() {
                             finish(lastState.reason);
                             return;
                         }
+                        if (lastState.reason === 'waiting-list-toolbar') {
+                            if (reason === 'list-toolbar-grace') finish('filtered-list-without-toolbar');
+                            else waitBrieflyForToolbar(lastState);
+                            return;
+                        }
                         const refreshStarted = maybeRefreshStyle(lastState, reason);
                         if (!refreshStarted && canRevealFilteredNativeFallback(lastState)) {
                             this.updateInitialRevealDebug(lastState, {
@@ -23307,6 +23344,7 @@ init() {
                 }
 
                 scheduleTimeout(timeoutDeadline);
+                waitBrieflyForToolbar(lastState);
                 maybeRefreshStyle(lastState, 'start');
                 scheduleCheck('initial');
             });
@@ -24181,7 +24219,7 @@ init() {
 
         return {
             reason,
-            version: '3.5.6',
+            version: '3.5.7',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -24420,7 +24458,7 @@ init() {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.5.6...");
+        console.log("[DC Filter+UI] Initializing v3.5.7...");
         await MobileConvenienceModule.init();
         __dcufHeaderShellHostAdapter.connect(document);
         __dcufGalleryPageHeadHostAdapter.connect(document);
