@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "targets": {
     "mobile": {
-      "version": "3.5.6",
+      "version": "3.5.7",
       "outputPattern": "Dc_UserFilter_Mobile_v{version}.user.js",
       "inputs": [
         { "path": "src/meta/userscript-header.txt", "role": "header" },

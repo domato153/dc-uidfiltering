@@ -1,7 +1,7 @@
 ﻿// ==UserScript==
 // @name         DC_UserFilter_Mobile
 // @namespace    http://tampermonkey.net/
-// @version      3.5.6
+// @version      3.5.7
 // @description  유저 필터링, UI 개선, 개인 차단/해제 기능
 // @author       domato153
 // @match        https://gall.dcinside.com/board/*
@@ -21698,7 +21698,7 @@ init() {
             this._initState = 'initializing';
             this._initPromise = (async () => {
                 this.installDebugApi();
-                this.debugLog('init', 'FilterModule init start', { version: '3.5.6' });
+                this.debugLog('init', 'FilterModule init start', { version: '3.5.7' });
                 const snapshot = await this.loadBootSnapshot();
                 await this.cleanupLegacyManagedBlockConfig(snapshot);
                 await this.reloadSettings(snapshot);
@@ -24219,7 +24219,7 @@ init() {
 
         return {
             reason,
-            version: '3.5.6',
+            version: '3.5.7',
             time: new Date().toISOString(),
             href: location.href,
             heap: getDcufHeapMb(),
@@ -24458,7 +24458,7 @@ init() {
                 }));
             }
         }
-        console.log("[DC Filter+UI] Initializing v3.5.6...");
+        console.log("[DC Filter+UI] Initializing v3.5.7...");
         await MobileConvenienceModule.init();
         __dcufHeaderShellHostAdapter.connect(document);
         __dcufGalleryPageHeadHostAdapter.connect(document);

@@ -2,13 +2,13 @@
 
 ## Current execution
 
-- Active plan: The four-stage Mobile UI/PC port publication is complete. The working branch now has the Mobile page scroll and list readability repair. The queued local artifact inventory and later guidebook discussion are separate.
+- Active plan: The four-stage Mobile UI/PC port publication is complete. Mobile 3.5.7 stages the page scroll and list readability repair for authorized stable publication. The queued local artifact inventory and later guidebook discussion are separate.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
 - Source state: Source checkpoint base HEAD `e7b5771aac34eeb20e72fb0471331942f79fb0b0` on `codex/ui-port-boundary`. Published refs remain main da65ebb4f48b4e8418df093e98345aebe00e31c7, Mobile b9cfe32ae90fadbfe0370341f250f75ac99e2639 and mobile-v3.5.6.
-- Candidate fingerprint: `1b46b720e990cd3388d1fa010d17b231b13616fa8b4c796b03e023419503437f`
+- Candidate fingerprint: `8c9c0c82ada3fa02a24bebcb1623765f74f3619492de69a565a22850bb77b8c7`
 - Publication receipt: `verification/receipts/2026-11-05-stable-356-pc200-publication.json` SHA-256 `3429BA5C14826B81104625544042450E5673D31B3CDA2C10938200ABE557EF1F`. It binds published Mobile3.5.6 FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55 and PC2.0.0, including six startup observations.
-- Current artifact: Working-branch Mobile3.5.6 E8D9D843CA11C4EF333D9883E820489F6594CDF375A8CAA0AFAA3AC0B6BF4235. PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD retains the published bytes.
+- Current artifact: Stable publication candidate Mobile3.5.7 300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41. PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD retains the published bytes.
 - Current scoped checks: Guarded candidate passed 11 page-scroll and initial-reveal cases, five existing toolbar contexts and 266 checks in 14 list repair scenarios. Anonymous source injection on three public list routes confirmed document scroll and top toolbar restoration.
 - Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/stable-3.5.6-pc-2.0.0/published has workflow receipt/public readback. testbed/artifacts/stable-356-final-canary binds actual extension evidence. Keep needed release/evidence bytes until cleanup inventory;old prepared bundle is superseded.
@@ -18,7 +18,7 @@
 - Pending live checks: Candidate behavior with the user's installed extensions, throttled reload and physical-phone legibility remain unverified. Earlier publication startup and source-injection checks have separate scopes.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"E8D9D843CA11C4EF333D9883E820489F6594CDF375A8CAA0AFAA3AC0B6BF4235"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
+{"schemaVersion":1,"mobile":{"sha256":"300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
 ```
 
 ## Pending real-use feedback —2026-11-03
