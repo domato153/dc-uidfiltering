@@ -16,6 +16,7 @@
       }
     ],
     "upsertContracts": [
+      {"id":"desktop-preview-hover-handoff","summary":"The existing Mobile convenience adapter owns anchored preview geometry and request cancellation. An open desktop panel keeps its size and node identity across pointer tracking and title handoff. A ready current response updates title, link and body together. Leaving the title and panel retains delayed dismissal. Touch and viewport changes retain their existing owners."},
       {"id":"pc-shared-material-port","summary":"Stage2 ports the existing Mobile pure B1/v7 value factory unchanged into both target builds. PC target hook composes the exact factory instead of empty CSS. Existing shared presenters/runtime remain sole owners;no PC-specific design,Mobile host selectors,native-page paint,storage,filter,network or lifecycle delta. Mobile artifact must remain byte-identical. Historical mobile-theme-material-values component ID is stable while its source location becomes shared."},
       {
         "id": "b1-write-editor-shell",

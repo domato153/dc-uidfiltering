@@ -220,7 +220,7 @@
             ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop),
             ${selectors.root} > :is(#movie_set_lyr, #autozzal_all_lists_pop),
             :is([data-dcuf-gallery-page-head-role="settings-layer"], [data-dcuf-gallery-page-head-role="guide-layer"], [data-dcuf-gallery-page-head-role^="settings-popup-"]) {
-                animation: dcuf-gallery-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                animation: dcuf-gallery-popup-enter 180ms ease-in;
                 @supports (transition-behavior: allow-discrete) {
                     transition: opacity 130ms ease-in, display 130ms allow-discrete;
                     &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }

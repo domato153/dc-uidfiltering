@@ -112,7 +112,7 @@
                 [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"],
                 [data-dcuf-header-drawer-scope="1"] ${selectors.door} :is(${selectors.rankPopup}, ${selectors.tipPopup}),
                 [data-dcuf-header-drawer-scope="1"] ${selectors.relationPopup}:not([data-dcuf-header-relation-static="1"]) {
-                    animation: dcuf-drawer-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                    animation: dcuf-drawer-popup-enter 180ms ease-in;
                 }
                 @supports (transition-behavior: allow-discrete) {
                     [data-dcuf-header-drawer-scope="1"] ${selectors.door}:not([data-dcuf-header-native-door-popup-only]) :is(${selectors.rankPopup}, ${selectors.tipPopup}),

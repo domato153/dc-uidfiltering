@@ -112,7 +112,7 @@
         cancelPreviewClose() { return __dcufConvenienceHostAdapter.invokeNative('cancelPreviewClose', this); },
         schedulePreviewClose(delay) { return __dcufConvenienceHostAdapter.invokeNative('schedulePreviewClose', this, delay); },
         getPreviewViewportBounds() { return __dcufConvenienceHostAdapter.invokeNative('getPreviewViewportBounds', this); },
-        positionPreviewPanel() { return __dcufConvenienceHostAdapter.invokeNative('positionPreviewPanel', this); },
+        positionPreviewPanel(resize) { return __dcufConvenienceHostAdapter.invokeNative('positionPreviewPanel', this, resize); },
         bindPreviewViewport() { return __dcufConvenienceHostAdapter.invokeNative('bindPreviewViewport', this); },
         unbindPreviewViewport() { return __dcufConvenienceHostAdapter.invokeNative('unbindPreviewViewport', this); },
         isPointInPreviewCorridor(x, y) { return __dcufConvenienceHostAdapter.invokeNative('isPointInPreviewCorridor', this, x, y); },

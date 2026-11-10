@@ -345,7 +345,7 @@
             const height = Math.max(1, Number(viewport?.height) || window.innerHeight || document.documentElement.clientHeight || 1);
             return { left, top, width, height, right: left + width, bottom: top + height };
         },
-        positionPreviewPanel() {
+        positionPreviewPanel(resize = false) {
             const panel = this._previewPanel;
             const anchor = this._previewAnchor;
             if (!(panel instanceof HTMLElement) || !anchor) return;
@@ -359,30 +359,34 @@
             }
             const bounds = this.getPreviewViewportBounds();
             const margin = 12;
-            const width = Math.max(1, Math.min(520, bounds.width - margin * 2));
-            const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
+            if (resize) {
+                const width = Math.max(1, Math.floor(Math.min(520, bounds.width - margin * 2)));
+                // If neither horizontal side can fit at the viewport center,
+                // leave enough vertical space for the pointer to reach titles.
+                const heightLimit = bounds.width < (width + margin * 2) * 2
+                    ? bounds.height * .42 : bounds.height - margin * 2;
+                const height = Math.max(1, Math.floor(Math.min(520, heightLimit)));
+                Object.assign(panel.style, { width: `${width}px`, height: `${height}px`, right: 'auto', bottom: 'auto' });
+            }
+            const width = parseFloat(panel.style.width);
+            const height = parseFloat(panel.style.height);
             const anchorX = Number.isFinite(anchor.x) ? anchor.x : bounds.left + margin;
             const anchorY = Number.isFinite(anchor.y) ? anchor.y : bounds.top + margin;
             // Keep the whole title reachable even when the pointer jumps across it.
             const gapY = Math.max(margin, Math.ceil(anchor.link?.getBoundingClientRect().height || 0) + 4);
             const above = anchorY - bounds.top - margin - gapY;
             const below = bounds.bottom - anchorY - margin - gapY;
-            Object.assign(panel.style, { width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`, right: 'auto', bottom: 'auto' });
-            const desiredHeight = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
-            const placeAbove = desiredHeight > below && above > below;
-            const sideHeight = Math.max(1, Math.min(maxHeight, placeAbove ? above : below));
-            panel.style.maxHeight = `${Math.floor(sideHeight)}px`;
-            const height = Math.min(desiredHeight, sideHeight);
+            if (resize || anchor.above === undefined) anchor.above = height > below && above > below;
             let left = anchorX + 12;
             if (left + width > bounds.right - margin) left = anchorX - width - 12;
             left = Math.max(bounds.left + margin, Math.min(left, bounds.right - width - margin));
-            let top = placeAbove ? anchorY - height - gapY : anchorY + gapY;
+            let top = anchor.above ? anchorY - height - gapY : anchorY + gapY;
             top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - height - margin));
             Object.assign(panel.style, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
         },
         bindPreviewViewport() {
             this.unbindPreviewViewport();
-            const reposition = () => this.positionPreviewPanel();
+            const reposition = (event) => this.positionPreviewPanel(event.type === 'resize');
             this._previewViewportHandler = reposition;
             window.addEventListener('resize', reposition, { passive: true });
             window.visualViewport?.addEventListener('resize', reposition, { passive: true });
@@ -417,7 +421,8 @@
                     const target = event.target instanceof Node ? event.target : null;
                     if (target && (this._previewPanel?.contains(target) || this._previewHoverLink?.contains(target))) {
                         this.cancelPreviewClose();
-                        if (event.pointerType === 'mouse' && this._previewHoverLink?.contains(target) && this._previewAnchor) {
+                        if (event.pointerType === 'mouse' && this._previewHoverLink?.contains(target)
+                            && this._previewAnchor?.link === this._previewHoverLink) {
                             this._previewAnchor.x = event.clientX;
                             this._previewAnchor.y = event.clientY;
                             if (!this._previewPositionFrame) {
@@ -483,18 +488,23 @@
             let mouseAnchor = null;
             const cancel = () => { if (timer) window.clearTimeout(timer); timer = 0; touch = null; mouseAnchor = null; };
             const startMouse = (link, anchor) => {
+                if (!this.isEnabled('postPreview')) return;
                 cancel();
                 this.cancelPreviewClose();
+                this._previewRequest?.abort(); this._previewRequest = null;
+                this._previewHoverLink = link;
                 if (this._previewPanel?.dataset.sourceUrl === link.href) {
-                    this._previewHoverLink = link;
+                    const above = this._previewAnchor?.link === link ? this._previewAnchor.above : undefined;
+                    this._previewAnchor = { ...anchor, link, above };
+                    this.positionPreviewPanel();
                     return;
                 }
                 mouseAnchor = { ...anchor, link };
                 timer = window.setTimeout(() => {
                     timer = 0;
-                    if (!this.isEnabled('postPreview')) return;
+                    if (this._previewHoverLink !== link || !this.isEnabled('postPreview')) return;
                     void this.openPreview(link.href, link.textContent.trim(), mouseAnchor);
-                }, 400);
+                }, this._previewPanel?.classList.contains('dcuf-preview-anchor') ? 100 : 400);
             };
             listContainer.addEventListener('pointerover', (event) => {
                 if (event.pointerType !== 'mouse' || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches) return;
@@ -506,11 +516,13 @@
                 const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
                 if (!link || (event.relatedTarget instanceof Node && link.contains(event.relatedTarget))) return;
                 cancel();
+                if (this._previewHoverLink !== link) return;
+                this._previewRequest?.abort(); this._previewRequest = null;
                 if (event.relatedTarget instanceof Node && this._previewPanel?.contains(event.relatedTarget)) return;
-                if (this._previewHoverLink === link) {
-                    if (this._previewRequest && !this._previewPanel) this.closePreview();
-                    else this.schedulePreviewClose();
-                }
+                if (event.relatedTarget instanceof Element && listContainer.contains(event.relatedTarget)
+                    && event.relatedTarget.closest('a.post-title-link')) return;
+                if (this._previewPanel) this.schedulePreviewClose();
+                else this.closePreview();
             });
             listContainer.addEventListener('pointerdown', (event) => {
                 if (event.pointerType === 'mouse' || !this.isEnabled('postPreview')) return;
@@ -755,14 +767,12 @@
                     const link = document.createElement('a'); link.className = 'dcuf-preview-image-error';
                     link.href = sourceUrl; link.rel = 'noopener noreferrer'; link.textContent = '이미지를 불러오지 못했습니다 · 원문에서 보기';
                     image.replaceWith(link);
-                    this.positionPreviewPanel();
                 };
                 const done = () => {
                     if (image.dataset.dcufPreviewState === 'error') return;
                     const timer = Number(image.dataset.dcufPreviewTimer || 0);
                     if (timer) { window.clearTimeout(timer); this._previewImageTimers.delete(timer); }
                     image.dataset.dcufPreviewState = 'loaded'; image.removeAttribute('data-dcuf-preview-timer');
-                    this.positionPreviewPanel();
                 };
                 image.addEventListener('load', done, { once: true });
                 image.addEventListener('error', fail, { once: true });
@@ -790,9 +800,9 @@
         renderPreviewBody(body, html, sourceUrl) {
             if (!(body instanceof HTMLElement)) return;
             body.innerHTML = html || '<div class="dcuf-preview-status">표시할 본문이 없습니다.</div>';
+            body.scrollTop = 0;
             body.querySelectorAll('video,audio').forEach((media) => { media.muted = true; });
             this.preparePreviewImages(body, sourceUrl);
-            this.positionPreviewPanel();
         },
         createPreviewPanel(url, title, anchor) {
             const panel = document.createElement('aside'); panel.id = 'dcuf-post-preview';
@@ -817,7 +827,7 @@
                     this.schedulePreviewClose();
                 });
             }
-            this.positionPreviewPanel();
+            this.positionPreviewPanel(true);
             this.bindPreviewViewport();
             this.bindPreviewPointerTracking();
             return body;
@@ -827,11 +837,35 @@
             let sourceUrl;
             try { sourceUrl = new URL(url, window.location.href); } catch { return; }
             if (sourceUrl.origin !== window.location.origin) return;
-            this.closePreview();
+            const reusePanel = !anchor?.mobile && window.matchMedia('(hover: hover) and (pointer: fine)').matches
+                && this._previewPanel?.classList.contains('dcuf-preview-anchor');
+            if (reusePanel) {
+                this._previewRequest?.abort(); this._previewRequest = null;
+                this.cancelPreviewClose();
+            } else this.closePreview();
             if (!anchor?.mobile && anchor?.link instanceof HTMLAnchorElement) this._previewHoverLink = anchor.link;
             const reveal = (html) => {
-                const body = this.createPreviewPanel(sourceUrl.href, title, anchor);
+                if (!reusePanel) {
+                    this.renderPreviewBody(this.createPreviewPanel(sourceUrl.href, title, anchor), html, sourceUrl.href);
+                    return;
+                }
+                this.clearPreviewImageRuntime();
+                const panel = this._previewPanel;
+                const heading = panel.querySelector('.dcuf-preview-head strong');
+                const original = panel.querySelector('.dcuf-preview-head a');
+                const body = panel.querySelector('.dcuf-preview-body');
+                panel.dataset.sourceUrl = sourceUrl.href;
+                heading.textContent = title || '글 미리보기';
+                original.href = sourceUrl.href;
                 this.renderPreviewBody(body, html, sourceUrl.href);
+                this._previewAnchor = { ...anchor, mobile: false };
+                this.positionPreviewPanel();
+                if (typeof panel.animate === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    for (const node of [heading, body]) {
+                        node.getAnimations().filter(animation => animation.id === 'dcuf-preview-swap').forEach(animation => animation.cancel());
+                        node.animate([{ opacity: .45 }, { opacity: 1 }], { id: 'dcuf-preview-swap', duration: 115, easing: 'ease-out' });
+                    }
+                }
             };
             const cached = this.getCachedPreview(sourceUrl.href);
             if (cached !== null) { reveal(cached); return; }

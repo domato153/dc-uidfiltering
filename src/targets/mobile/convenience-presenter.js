@@ -48,7 +48,7 @@ function __dcufCreateConveniencePresentation() {
         .dcuf-preview-panel.dcuf-preview-sheet {left:0;right:0;top:auto;bottom:0;width:100%;max-height:78vh;max-height:78dvh;border-radius:18px 18px 0 0;}
         .dcuf-preview-panel.dcuf-preview-anchor {width:min(520px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 24px));max-height:min(620px,calc(100dvh - 24px));}
         @media (prefers-reduced-motion:no-preference) {
-            .dcuf-preview-panel {animation:dcuf-preview-enter 180ms cubic-bezier(.2,.8,.2,1);}
+            .dcuf-preview-panel {animation:dcuf-preview-enter 180ms ease-in;}
             @keyframes dcuf-preview-enter {from {opacity:0;}}
         }
         .dcuf-draft-banner {

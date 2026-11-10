@@ -5,7 +5,7 @@ function __dcufCreateNativeAuthorPresentation(selectors) {
     const cssText=`
 /* Independent B1 author/menu/memo target,2026-10-29. Native bindings,not product output. */
 @media (prefers-reduced-motion:no-preference) {
-    :is(${selectors.shells}).dcuf-native-author-open { animation:dcuf-native-author-enter 180ms cubic-bezier(.2,.8,.2,1); }
+    :is(${selectors.shells}).dcuf-native-author-open { animation:dcuf-native-author-enter 180ms ease-in; }
     @keyframes dcuf-native-author-enter { from { opacity:.12; } }
     @supports (transition-behavior:allow-discrete) {
         :is(${selectors.shells}) { transition:opacity 130ms ease-in,display 130ms allow-discrete; }

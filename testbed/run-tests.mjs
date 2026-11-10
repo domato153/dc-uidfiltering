@@ -6671,6 +6671,7 @@ mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 �
         await links.nth(0).hover();
         await session.page.waitForSelector('#dcuf-post-preview');
         assert.match(await session.page.locator('#dcuf-post-preview .dcuf-preview-body').textContent(), /본문-/);
+        const initialSize = await session.page.locator('#dcuf-post-preview').evaluate(panel => [panel.offsetWidth, panel.offsetHeight]);
         const titleBox = await links.nth(0).boundingBox();
         const gapY = Math.max(12, Math.ceil(titleBox.height) + 4);
         for (const [xPart, yPart] of [[.25, .25], [.75, .75]]) {
@@ -6682,6 +6683,7 @@ mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 �
                 return box && Math.abs(box.left - x - 12) < 2
                     && (Math.abs(box.top - y - gapY) < 2 || Math.abs(y - box.bottom - gapY) < 2);
             }, {x, y, gapY}, {timeout: 1500});
+            assert.deepEqual(await session.page.locator('#dcuf-post-preview').evaluate(panel => [panel.offsetWidth, panel.offsetHeight]), initialSize);
         }
         const panelBox = await session.page.locator('#dcuf-post-preview').boundingBox();
         await session.page.mouse.move(panelBox.x + Math.min(80, panelBox.width / 2), panelBox.y + Math.min(80, panelBox.height / 2));
@@ -6696,8 +6698,20 @@ mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 �
         assert.equal(scrollContract.scrollable, true, '긴 미리보기 본문은 패널 내부에서 스크롤되어야 한다');
         assert.equal(scrollContract.scrollTop > 0, true);
         assert.equal(scrollContract.loadingPlaceholders, 0, '호스트 loading.gif보다 실제 lazy 이미지 주소를 우선해야 한다');
-        await session.page.mouse.click(4, 4);
-        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '패널 밖 빈 공간 클릭은 미리보기를 닫아야 한다');
+        const originalPanel = await session.page.locator('#dcuf-post-preview').elementHandle();
+        const originalUrl = await links.nth(0).evaluate(link => link.href);
+        const finalUrl = await links.nth(2).evaluate(link => link.href);
+        await links.nth(1).hover({ position: { x: 3, y: 5 } });
+        await session.page.waitForFunction(() => Boolean(window.__dcufMobileConvenienceModule._previewRequest));
+        assert.equal(await originalPanel.getAttribute('data-source-url'), originalUrl, 'Pending handoff keeps the original preview visible');
+        await links.nth(2).hover({ position: { x: 3, y: 5 } });
+        await session.page.waitForFunction(url => document.getElementById('dcuf-post-preview')?.dataset.sourceUrl === url, finalUrl);
+        assert.deepEqual(await originalPanel.evaluate(panel => {
+            const body = panel.querySelector('.dcuf-preview-body');
+            return { size: [panel.offsetWidth, panel.offsetHeight], href: panel.querySelector('.dcuf-preview-head a').href, scroll: body.scrollTop };
+        }), { size: initialSize, href: finalUrl, scroll: 0 }, 'Only the latest title replaces content in the same panel');
+        await session.page.mouse.move(4, 4);
+        await session.page.locator('#dcuf-post-preview').waitFor({ state: 'detached' });
 
         await session.page.evaluate(() => {
             const visible = Array.from(document.querySelectorAll('.custom-post-item a.post-title-link')).filter((link) => getComputedStyle(link.closest('.custom-post-item')).display !== 'none');

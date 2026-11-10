@@ -619,7 +619,7 @@
             }
             @media (prefers-reduced-motion: no-preference) {
                 [data-dcuf-role="article"] .pop_wrap[data-dcuf-article-popup] {
-                    animation: dcuf-article-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                    animation: dcuf-article-popup-enter 180ms ease-in;
                     @supports (transition-behavior: allow-discrete) {
                         transition: opacity 130ms ease-in, display 130ms allow-discrete;
                         &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }

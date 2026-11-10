@@ -1,5 +1,7 @@
 # DCUF mobile host-surface contracts
 
+Popup entry and desktop preview handoff, 2026-11-11. Use the same ease-in curve for popup entry across the existing owners. Desktop preview sets its outer size on open or viewport resize and only updates position on mouse movement. Retain its panel and current content while a different title is hovered and loading. A ready response for the current title replaces the header, link and body together and resets the body scroll. Keep the short content fade separate from popup entry. Leaving both the title and panel retains the close delay. Preserve the touch sheet, body scrolling, reduced motion and request cancellation.
+
 Native popup coverage, 2026-11-11. The general-gallery introduction (`#gallery_info`) and its nested rank window (`#hot_rank_pop`) are separate from the minor/mini issue door and stay under the gallery page head. Preserve original nodes, paging, links, image loading and open/close handlers. The drawer presenter paints the original list door/recommendation and related/rank/help panels. Article and comment presenters cover their marked action dialogs and DCCon/textcon family. For verified attached show/hide roots, add opacity motion without an additional listener or timer. Keep browser dialogs and write-editor tools outside this slice. Owned settings and quick-block keep existing actions, with one active selection panel and shared close behavior across entry points. Desktop preview tracks cursor X and Y on the title and flips/clamps at viewport edges.
 
 | Popup | Behavior |
