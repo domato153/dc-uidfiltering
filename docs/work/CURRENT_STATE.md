@@ -2,23 +2,23 @@
 
 ## Current execution
 
-- Active plan: Mobile 3.5.7 is published. The next bounded action is the user-requested local artifact inventory.
+- Active plan: Mobile 3.5.7 is published. The development candidate adds popup transitions and delayed-preview presentation.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
-- Source state: Source checkpoint base HEAD `633deec7105ae599d55e2b4a15fd045f19a21d2c` on `codex/ui-port-boundary`. Official main d5b8246b91d10d57d0cc08d150927a75e087578a, Mobile 174d0a670967ae0feb58ef4f446254acc04b16d0 and tag mobile-v3.5.7.
-- Candidate fingerprint: `8c9c0c82ada3fa02a24bebcb1623765f74f3619492de69a565a22850bb77b8c7`
+- Source state: Source checkpoint base HEAD `184c6ef6feff0a282fad7ecb72488a0dbc377763` on `codex/ui-port-boundary`. Published refs and hashes are bound by the 3.5.7 publication receipt.
+- Candidate fingerprint: `3f880627bff40fbc8a8483bf3b898a5b1684daab5f691f5939cd95d9f4540020`
 - Current stage receipt: `verification/receipts/2026-11-10-stable-357-publication.json` SHA-256 `A8936B33B8E617A20063301277C8E72B6DFC5A6D0E2195F6F698AEFD618A99F8`.
-- Current artifact: Published Mobile 3.5.7 300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41 and PC 2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD.
+- Current artifact: Development Mobile 3.5.7 F7E7762C24D98817592E672EED28B42CD9FD45D8945C50662A8F2E867C58D6B1 and PC 2.0.0 C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12. The publication receipt still identifies the separately published bytes.
 - Current scoped checks: Exact 3.5.7 passed 11 focused regression checks and six Chrome/Tampermonkey startup observations with replay.
 - Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. artifacts/mobile-357-published has official receipt and public readback; testbed/artifacts/stable-357-canary binds startup evidence.
 - Accepted baseline: Actual adopted memo/current v7 detail,pale paired-ink dark buttons,theme accents,inline services/categories and list-only unified plate/original scroll direction. Writer two independent media/HTML and font/link rows;phone nickname uses2 columns/readonly44px reserve. PC keeps native host layout.
-- Last current audit: PASS for official publication only. Workflow 42801017508 completed, canonical and Release checksums matched, notes matched and Pages served the exact index.
+- Last current audit: UNKNOWN for formal candidate acceptance. The earlier official publication remains independently verified.
 - Blockers: No open publication task.
-- Pending live checks: Physical-phone and installed user extension combinations remain outside the release startup evidence.
+- Pending live checks: Popup animation timing and preview tracking in the installed user environment remain to be confirmed.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
+{"schemaVersion":1,"mobile":{"sha256":"F7E7762C24D98817592E672EED28B42CD9FD45D8945C50662A8F2E867C58D6B1"},"pc":{"sha256":"C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

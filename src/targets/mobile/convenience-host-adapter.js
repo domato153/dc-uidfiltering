@@ -17,6 +17,20 @@
             }
             return null;
         };
+        const dismissConveniencePanel = (panel) => {
+            if (!panel) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || typeof panel.animate !== 'function') {
+                panel.remove();
+                return;
+            }
+            const opacity = getComputedStyle(panel).opacity;
+            panel.inert = true;
+            panel.removeAttribute('id');
+            panel.style.animation = 'none';
+            panel.querySelectorAll('audio,video').forEach(media => media.pause());
+            const exit = panel.animate([{ opacity }, { opacity: 0 }], { duration: 130, easing: 'ease-in', fill: 'forwards' });
+            exit.finished.then(() => panel.remove(), () => panel.remove());
+        };
         const markOwnedSurface = (element, surface, role = 'panel', state = 'open') => {
             element.setAttribute('data-dcuf-surface', surface);
             element.setAttribute('data-dcuf-role', role);
@@ -138,7 +152,8 @@
         async showSettings() {
             await this.loadSettings({ force: true });
             this.ensureStyles();
-            this.closeSettings();
+            this.closeSettings(false);
+            document.querySelector('[data-dcuf-surface="convenience-settings"][inert]')?.remove();
             window.__dcufEnsureFilterUiStyles?.();
             {
                 const panel = document.createElement('section');
@@ -230,8 +245,10 @@
             this._settingsPanel = panel;
             this.lockBackgroundScroll('settings');
         },
-        closeSettings() {
-            (this._settingsPanel || document.getElementById('dcuf-mobile-convenience-settings'))?.remove();
+        closeSettings(animate = true) {
+            const panel = this._settingsPanel || document.getElementById('dcuf-mobile-convenience-settings');
+            if (animate) dismissConveniencePanel(panel);
+            else panel?.remove();
             this._settingsPanel = null;
             this.unlockBackgroundScroll('settings');
         },
@@ -344,15 +361,24 @@
             const margin = 12;
             const width = Math.max(1, Math.min(520, bounds.width - margin * 2));
             const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
+            const anchorX = Number.isFinite(anchor.x) ? anchor.x : bounds.left + margin;
+            const anchorY = Number.isFinite(anchor.y) ? anchor.y : bounds.top + margin;
+            const titleRect = anchor.link?.getBoundingClientRect();
+            const withinTitle = titleRect && anchorY >= titleRect.top && anchorY <= titleRect.bottom;
+            const topEdge = withinTitle ? titleRect.top : anchorY;
+            const bottomEdge = withinTitle ? titleRect.bottom : anchorY;
+            const above = topEdge - bounds.top - margin * 2;
+            const below = bounds.bottom - bottomEdge - margin * 2;
             Object.assign(panel.style, { width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`, right: 'auto', bottom: 'auto' });
-            const height = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
-            const anchorX = Number(anchor.x) || bounds.left + margin;
-            const anchorY = Number(anchor.y) || bounds.top + margin;
+            const desiredHeight = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
+            const placeAbove = desiredHeight > below && above > below;
+            const sideHeight = Math.max(1, Math.min(maxHeight, placeAbove ? above : below));
+            panel.style.maxHeight = `${Math.floor(sideHeight)}px`;
+            const height = Math.min(desiredHeight, sideHeight);
             let left = anchorX + 12;
             if (left + width > bounds.right - margin) left = anchorX - width - 12;
             left = Math.max(bounds.left + margin, Math.min(left, bounds.right - width - margin));
-            let top = anchorY + 12;
-            if (top + height > bounds.bottom - margin && anchorY - height - 12 >= bounds.top + margin) top = anchorY - height - 12;
+            let top = placeAbove ? topEdge - height - margin : bottomEdge + margin;
             top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - height - margin));
             Object.assign(panel.style, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
         },
@@ -393,6 +419,16 @@
                     const target = event.target instanceof Node ? event.target : null;
                     if (target && (this._previewPanel?.contains(target) || this._previewHoverLink?.contains(target))) {
                         this.cancelPreviewClose();
+                        if (event.pointerType === 'mouse' && this._previewHoverLink?.contains(target) && this._previewAnchor) {
+                            this._previewAnchor.x = event.clientX;
+                            this._previewAnchor.y = event.clientY;
+                            if (!this._previewPositionFrame) {
+                                this._previewPositionFrame = requestAnimationFrame(() => {
+                                    this._previewPositionFrame = 0;
+                                    this.positionPreviewPanel();
+                                });
+                            }
+                        }
                         return;
                     }
                     if (this.isPointInPreviewCorridor(event.clientX, event.clientY)) this.schedulePreviewClose(320);
@@ -446,7 +482,8 @@
             this.ensurePreviewClickGuard();
             let timer = 0;
             let touch = null;
-            const cancel = () => { if (timer) window.clearTimeout(timer); timer = 0; touch = null; };
+            let mouseAnchor = null;
+            const cancel = () => { if (timer) window.clearTimeout(timer); timer = 0; touch = null; mouseAnchor = null; };
             const startMouse = (link, anchor) => {
                 cancel();
                 this.cancelPreviewClose();
@@ -454,10 +491,11 @@
                     this._previewHoverLink = link;
                     return;
                 }
+                mouseAnchor = { ...anchor, link };
                 timer = window.setTimeout(() => {
                     timer = 0;
                     if (!this.isEnabled('postPreview')) return;
-                    void this.openPreview(link.href, link.textContent.trim(), { ...anchor, link });
+                    void this.openPreview(link.href, link.textContent.trim(), mouseAnchor);
                 }, 400);
             };
             listContainer.addEventListener('pointerover', (event) => {
@@ -471,10 +509,14 @@
                 if (!link || (event.relatedTarget instanceof Node && link.contains(event.relatedTarget))) return;
                 cancel();
                 if (event.relatedTarget instanceof Node && this._previewPanel?.contains(event.relatedTarget)) return;
-                if (this._previewHoverLink === link) this.schedulePreviewClose();
+                if (this._previewHoverLink === link) {
+                    if (this._previewRequest && !this._previewPanel) this.closePreview();
+                    else this.schedulePreviewClose();
+                }
             });
             listContainer.addEventListener('pointerdown', (event) => {
                 if (event.pointerType === 'mouse' || !this.isEnabled('postPreview')) return;
+                if (this._previewRequest && !this._previewPanel) this.closePreview();
                 const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
                 if (!(link instanceof HTMLAnchorElement)) return;
                 cancel();
@@ -487,10 +529,14 @@
                     window.setTimeout(() => {
                         if (this._previewSuppressedLink === link) this._previewSuppressedLink = null;
                     }, 1200);
-                    void this.openPreview(link.href, link.textContent.trim(), { x: event.clientX, y: event.clientY, mobile: true });
+                    void this.openPreview(link.href, link.textContent.trim(), { x: event.clientX, y: event.clientY, mobile: true, link });
                 }, 500);
             }, { passive: true });
             listContainer.addEventListener('pointermove', (event) => {
+                if (event.pointerType === 'mouse' && mouseAnchor?.link.contains(event.target)) {
+                    mouseAnchor.x = event.clientX;
+                    mouseAnchor.y = event.clientY;
+                }
                 if (!touch || touch.id !== event.pointerId) return;
                 if (Math.hypot(event.clientX - touch.x, event.clientY - touch.y) > 12) cancel();
             }, { passive: true });
@@ -514,6 +560,10 @@
             }
             this._previewWindowScrollHandler = (event) => {
                 cancel();
+                if (this._previewRequest && !this._previewPanel) {
+                    this.closePreview();
+                    return;
+                }
                 if (!this._previewPanel?.classList.contains('dcuf-preview-anchor')) return;
                 if (event.target instanceof Node && this._previewPanel.contains(event.target)) return;
                 this.closePreview();
@@ -531,11 +581,12 @@
                     this._previewSuppressedLink = null;
                     return;
                 }
-                if (!this._previewPanel || !(event.target instanceof Node) || this._previewPanel.contains(event.target)) return;
+                if (!(event.target instanceof Node) || this._previewPanel?.contains(event.target)) return;
+                if (!this._previewPanel && !this._previewRequest) return;
                 this.closePreview();
             }, true);
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && this._previewPanel) this.closePreview();
+                if (event.key === 'Escape' && (this._previewPanel || this._previewRequest)) this.closePreview();
             }, true);
         },
         async resolvePreviewMovies(html, sourceUrl, { signal } = {}) {
@@ -746,7 +797,6 @@
             this.positionPreviewPanel();
         },
         createPreviewPanel(url, title, anchor) {
-            this.closePreview();
             const panel = document.createElement('aside'); panel.id = 'dcuf-post-preview';
             const mobile = anchor?.mobile || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
             panel.classList.add('dcuf-preview-panel', mobile ? 'dcuf-preview-sheet' : 'dcuf-preview-anchor');
@@ -755,11 +805,11 @@
             const original = document.createElement('a'); original.href = url; original.textContent = '원문 열기';
             const close = document.createElement('button'); close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '미리보기 닫기'); close.onclick = () => this.closePreview();
             head.append(heading, original, close);
-            const body = document.createElement('div'); body.className = 'dcuf-preview-body'; body.innerHTML = '<div class="dcuf-preview-status">불러오는 중…</div>';
+            const body = document.createElement('div'); body.className = 'dcuf-preview-body';
             panel.append(head, body); document.body.appendChild(panel);
             panel.dataset.sourceUrl = url;
             this._previewPanel = panel;
-            this._previewHoverLink = anchor?.link instanceof HTMLAnchorElement ? anchor.link : null;
+            this._previewHoverLink = !mobile && anchor?.link instanceof HTMLAnchorElement ? anchor.link : null;
             this._previewAnchor = { ...anchor, mobile };
             if (mobile) this.lockBackgroundScroll('preview');
             if (!mobile) {
@@ -779,30 +829,36 @@
             let sourceUrl;
             try { sourceUrl = new URL(url, window.location.href); } catch { return; }
             if (sourceUrl.origin !== window.location.origin) return;
-            const body = this.createPreviewPanel(sourceUrl.href, title, anchor);
+            this.closePreview();
+            if (!anchor?.mobile && anchor?.link instanceof HTMLAnchorElement) this._previewHoverLink = anchor.link;
+            const reveal = (html) => {
+                const body = this.createPreviewPanel(sourceUrl.href, title, anchor);
+                this.renderPreviewBody(body, html, sourceUrl.href);
+            };
             const cached = this.getCachedPreview(sourceUrl.href);
-            if (cached !== null) { this.renderPreviewBody(body, cached, sourceUrl.href); return; }
-            this._previewRequest?.abort();
+            if (cached !== null) { reveal(cached); return; }
             const controller = new AbortController(); this._previewRequest = controller;
             try {
                 const html = await this.fetchPreviewHtml(sourceUrl.href, { signal: controller.signal });
                 const withMovies = await this.resolvePreviewMovies(html, sourceUrl.href, { signal: controller.signal });
+                if (this._previewRequest !== controller || controller.signal.aborted || anchor?.link?.isConnected === false) return;
                 const sanitized = this.sanitizePreviewDocument(withMovies, sourceUrl.href);
                 this.setCachedPreview(sourceUrl.href, sanitized);
-                if (this._previewPanel?.contains(body)) this.renderPreviewBody(body, sanitized, sourceUrl.href);
+                reveal(sanitized);
             } catch (error) {
-                if (error?.name === 'AbortError') return;
-                if (this._previewPanel?.contains(body)) {
-                    body.innerHTML = `<div class="dcuf-preview-status">미리보기를 불러오지 못했습니다.<br>${String(error?.message || error)}</div>`;
-                    this.positionPreviewPanel();
-                }
+                if (error?.name === 'AbortError' || this._previewRequest !== controller || anchor?.link?.isConnected === false) return;
+                reveal('<div class="dcuf-preview-status">미리보기를 불러오지 못했습니다.</div>');
             } finally { if (this._previewRequest === controller) this._previewRequest = null; }
         },
         closePreview() {
             this._previewRequest?.abort(); this._previewRequest = null;
             this.cancelPreviewClose(); this.clearPreviewImageRuntime();
             this.unbindPreviewViewport(); this.unbindPreviewPointerTracking();
-            this._previewPanel?.remove(); this._previewPanel = null;
+            if (this._previewPositionFrame) cancelAnimationFrame(this._previewPositionFrame);
+            this._previewPositionFrame = 0;
+            const panel = this._previewPanel;
+            this._previewPanel = null;
+            dismissConveniencePanel(panel);
             this._previewHoverLink = null;
             this._previewAnchor = null;
             this.unlockBackgroundScroll('preview');

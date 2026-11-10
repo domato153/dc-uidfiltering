@@ -99,7 +99,7 @@ const ThemeModule = (() => {
         if (restore) apply(committedId, 'preview-cancel');
         const panel = overlay.querySelector(`#${PANEL_ID}`);
         if (panel) __dcufPopupGeometryHostAdapter.dispose(panel);
-        overlay.remove();
+        __dcufThemeHost.invokeNative('dismiss-palette', overlay, panel);
         if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
         return true;
     };

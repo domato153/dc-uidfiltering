@@ -6607,14 +6607,21 @@ mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 �
         await session.page.waitForTimeout(300);
         assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '400ms 전에는 hover 미리보기를 열지 않아야 한다');
         await session.page.waitForTimeout(150);
-        await session.page.waitForSelector('#dcuf-post-preview');
-        assert.equal(await session.page.locator('#dcuf-post-preview .dcuf-preview-status').textContent(), '불러오는 중…', '패널은 응답을 기다리지 않고 로딩 상태로 먼저 떠야 한다');
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '본문이 준비될 때까지 패널을 표시하지 않는다');
         await session.page.mouse.move(1240, 860);
-        await session.page.waitForTimeout(380);
-        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '제목에서 빈 공간으로 이동하면 미리보기가 닫혀야 한다');
+        await session.page.waitForTimeout(750);
+        assert.equal(await session.page.locator('#dcuf-post-preview').count(), 0, '떠난 제목의 늦은 응답은 패널을 열지 않는다');
 
         await links.nth(0).hover();
-        await session.page.waitForTimeout(430);
+        await session.page.waitForSelector('#dcuf-post-preview');
+        assert.match(await session.page.locator('#dcuf-post-preview .dcuf-preview-body').textContent(), /본문-/);
+        const titleBox = await links.nth(0).boundingBox();
+        const getPreviewLeft = () => session.page.locator('#dcuf-post-preview').evaluate(panel => parseFloat(panel.style.left));
+        await session.page.mouse.move(titleBox.x + titleBox.width * 0.25, titleBox.y + titleBox.height / 2);
+        await session.page.waitForFunction(x => Math.abs(parseFloat(document.getElementById('dcuf-post-preview').style.left) - x - 12) < 2, titleBox.x + titleBox.width * 0.25);
+        const firstLeft = await getPreviewLeft();
+        await session.page.mouse.move(titleBox.x + titleBox.width * 0.75, titleBox.y + titleBox.height / 2);
+        await session.page.waitForFunction(left => parseFloat(document.getElementById('dcuf-post-preview').style.left) > left, firstLeft);
         const panelBox = await session.page.locator('#dcuf-post-preview').boundingBox();
         await session.page.mouse.move(panelBox.x + Math.min(80, panelBox.width / 2), panelBox.y + Math.min(80, panelBox.height / 2));
         await session.page.waitForTimeout(380);

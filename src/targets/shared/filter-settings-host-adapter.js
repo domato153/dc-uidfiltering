@@ -103,6 +103,8 @@
             }
 
             const closeSettingsPanel = () => {
+                if (div.inert) return;
+                div.inert = true;
                 div.classList.add('dcuf-pop-leave');
                 window.setTimeout(() => {
                     __dcufPopupGeometryHostAdapter.dispose(div);
@@ -286,7 +288,12 @@
 
                 const modernOthers = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
                 panel.innerHTML = __dcufSettingsPresenter.renderHeadtextManager({ currentKey, discovered, current, others: modernOthers });
-                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => panel.remove();
+                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => {
+                    panel.inert = true;
+                    panel.removeAttribute('id');
+                    panel.classList.add('dcuf-pop-leave');
+                    window.setTimeout(() => panel.remove(), 130);
+                };
                 panel.querySelectorAll('[data-dcuf-headtext-value]').forEach((input) => {
                     input.addEventListener('change', async () => {
                         const value = input.dataset.dcufHeadtextValue;
@@ -408,6 +415,7 @@
         },
         showShortcutChanger() {
             if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
+            document.querySelectorAll('[data-dcuf-surface="shortcut-settings"][inert]').forEach(element => element.remove());
 
 
             const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -482,10 +490,15 @@
 
 
             const cleanup = () => {
+                if (modal.inert) return;
                 document.removeEventListener('keydown', keydownHandler, true);
                 document.removeEventListener('keyup', keyupHandler, true);
-                overlay.remove();
-                modal.remove();
+                overlay.inert = modal.inert = true;
+                overlay.removeAttribute('id');
+                modal.removeAttribute('id');
+                overlay.classList.add('dcuf-overlay-leave');
+                modal.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => { overlay.remove(); modal.remove(); }, 130);
                 settingsPanel.style.pointerEvents = 'auto';
             };
 

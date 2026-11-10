@@ -10,6 +10,21 @@
         invokeNative(action, value, options = null) {
             if (action === 'get-by-id') return document.getElementById(value);
             if (action === 'create-element') return document.createElement(value);
+            if (action === 'dismiss-palette') {
+                const overlay = value;
+                const panel = options;
+                overlay.inert = true;
+                overlay.removeAttribute('id');
+                panel?.removeAttribute('id');
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    overlay.remove();
+                } else {
+                    overlay.classList.add('dcuf-overlay-leave');
+                    panel?.classList.add('dcuf-pop-leave');
+                    window.setTimeout(() => overlay.remove(), 130);
+                }
+                return;
+            }
             if (action === 'mark-owned-surface') {
                 const { element, surface, role, state = 'open', presentation = '' } = value || {};
                 if (!(element instanceof Element)) throw new TypeError('mark-owned-surface requires an element');

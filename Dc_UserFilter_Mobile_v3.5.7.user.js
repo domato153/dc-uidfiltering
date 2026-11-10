@@ -953,6 +953,10 @@ function __dcufCreateConveniencePresentation() {
         .dcuf-preview-panel .dcuf-preview-status {color:var(--dcuf-theme-fg-muted,#667085);text-align:center;padding:30px 12px;}
         .dcuf-preview-panel.dcuf-preview-sheet {left:0;right:0;top:auto;bottom:0;width:100%;max-height:78vh;max-height:78dvh;border-radius:18px 18px 0 0;}
         .dcuf-preview-panel.dcuf-preview-anchor {width:min(520px,calc(100vw - 24px));max-height:min(620px,calc(100vh - 24px));max-height:min(620px,calc(100dvh - 24px));}
+        @media (prefers-reduced-motion:no-preference) {
+            .dcuf-preview-panel {animation:dcuf-preview-enter 180ms cubic-bezier(.2,.8,.2,1);}
+            @keyframes dcuf-preview-enter {from {opacity:0;}}
+        }
         .dcuf-draft-banner {
             position:fixed;z-index:2147483644;top:12px;left:50%;transform:translateX(-50%);width:min(520px,calc(100vw - 24px));
             box-sizing:border-box;padding:11px 12px;display:flex;flex-wrap:wrap;align-items:center;gap:8px;
@@ -1718,6 +1722,21 @@ function createDisposableScope(label = 'ui-surface') {
         invokeNative(action, value, options = null) {
             if (action === 'get-by-id') return document.getElementById(value);
             if (action === 'create-element') return document.createElement(value);
+            if (action === 'dismiss-palette') {
+                const overlay = value;
+                const panel = options;
+                overlay.inert = true;
+                overlay.removeAttribute('id');
+                panel?.removeAttribute('id');
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    overlay.remove();
+                } else {
+                    overlay.classList.add('dcuf-overlay-leave');
+                    panel?.classList.add('dcuf-pop-leave');
+                    window.setTimeout(() => overlay.remove(), 130);
+                }
+                return;
+            }
             if (action === 'mark-owned-surface') {
                 const { element, surface, role, state = 'open', presentation = '' } = value || {};
                 if (!(element instanceof Element)) throw new TypeError('mark-owned-surface requires an element');
@@ -2423,9 +2442,9 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface] :focus-visible { outline:3px solid var(--dcuf-theme-focus-ring,rgba(63,109,224,.2));outline-offset:2px; }
         [data-dcuf-surface][data-dcuf-role="panel"] { position:fixed;z-index:2147483646;left:50%;top:50%;display:flex;flex-direction:column;width:min(var(--dcuf-panel-width,540px),calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden;border:1px solid var(--dcuf-panel-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:var(--dcuf-radius-panel);background:var(--dcuf-panel-background,var(--dcuf-theme-canvas,#f6f7f9));backdrop-filter:var(--dcuf-panel-backdrop,none);box-shadow:var(--dcuf-panel-shadow,var(--dcuf-theme-panel-shadow,0 20px 60px #0005));transform:translate(-50%,-50%);animation:dcuf-modern-panel-in var(--dcuf-motion-panel) cubic-bezier(.2,.8,.2,1); }
         [data-dcuf-surface][data-dcuf-role="overlay"] { position:fixed;z-index:2147483646;inset:0;background:var(--dcuf-panel-scrim,rgba(18,25,35,.56));animation:dcuf-modern-overlay-in var(--dcuf-motion-panel) ease; }
-        [data-dcuf-surface].dcuf-pop-leave { opacity:0;transform:translate(-50%,calc(-50% + 8px));transition:opacity var(--dcuf-motion-panel) ease,transform var(--dcuf-motion-panel) ease; }
-        [data-dcuf-surface].dcuf-overlay-leave { opacity:0;transition:opacity var(--dcuf-motion-panel) ease; }
-        @keyframes dcuf-modern-panel-in { from { opacity:0;transform:translate(-50%,calc(-50% + 10px)); } }
+        [data-dcuf-surface].dcuf-pop-leave,
+        [data-dcuf-surface].dcuf-overlay-leave { animation:none;opacity:0;pointer-events:none;transition:opacity 130ms ease-in; }
+        @keyframes dcuf-modern-panel-in { from { opacity:0; } }
         @keyframes dcuf-modern-overlay-in { from { opacity:0; } }
         @media (prefers-reduced-motion:reduce) { [data-dcuf-surface],[data-dcuf-surface] * { animation-duration:0s;transition-duration:0s;scroll-behavior:auto; } }
     `;
@@ -2435,6 +2454,17 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface="personal-menu"] .dcuf-fab-button { display:inline-flex;align-items:center;justify-content:center;appearance:none;box-sizing:border-box;min-width:calc(var(--dcuf-fab-width,152px) * var(--dcuf-menu-button-width-ratio,1));height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));padding:0 calc(var(--dcuf-fab-padding-x,28px) * var(--dcuf-menu-button-padding-ratio,1));padding-block:var(--dcuf-menu-button-padding-block,0);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-menu-button-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:calc(var(--dcuf-fab-font-size,32px) * var(--dcuf-menu-button-font-ratio,1));font-weight:var(--dcuf-menu-button-weight,800);line-height:1;cursor:pointer;touch-action:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-menu-background,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-menu-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));backdrop-filter:var(--dcuf-menu-backdrop,none); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] { display:none; }
+        @media (prefers-reduced-motion:no-preference) {
+            [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer {
+                opacity:1;transition:opacity 180ms cubic-bezier(.2,.8,.2,1),display 180ms allow-discrete;
+            }
+            [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] {
+                opacity:0;pointer-events:none;transition-duration:130ms;
+            }
+            @starting-style {
+                [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer:not([hidden]) { opacity:0; }
+            }
+        }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item { display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;min-height:56px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dcuf-theme-fg,#27313f);text-align:left;cursor:pointer; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item:hover,[data-dcuf-surface="personal-menu"] .dcuf-menu-item:focus-visible { background:var(--dcuf-personal-menu-hover,transparent); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-icon { display:grid;width:34px;height:34px;place-items:center;border-radius:10px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
@@ -15872,7 +15902,7 @@ const ThemeModule = (() => {
         if (restore) apply(committedId, 'preview-cancel');
         const panel = overlay.querySelector(`#${PANEL_ID}`);
         if (panel) __dcufPopupGeometryHostAdapter.dispose(panel);
-        overlay.remove();
+        __dcufThemeHost.invokeNative('dismiss-palette', overlay, panel);
         if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
         return true;
     };
@@ -17726,6 +17756,8 @@ const ThemeModule = (() => {
             }
 
             const closeSettingsPanel = () => {
+                if (div.inert) return;
+                div.inert = true;
                 div.classList.add('dcuf-pop-leave');
                 window.setTimeout(() => {
                     __dcufPopupGeometryHostAdapter.dispose(div);
@@ -17909,7 +17941,12 @@ const ThemeModule = (() => {
 
                 const modernOthers = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
                 panel.innerHTML = __dcufSettingsPresenter.renderHeadtextManager({ currentKey, discovered, current, others: modernOthers });
-                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => panel.remove();
+                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => {
+                    panel.inert = true;
+                    panel.removeAttribute('id');
+                    panel.classList.add('dcuf-pop-leave');
+                    window.setTimeout(() => panel.remove(), 130);
+                };
                 panel.querySelectorAll('[data-dcuf-headtext-value]').forEach((input) => {
                     input.addEventListener('change', async () => {
                         const value = input.dataset.dcufHeadtextValue;
@@ -18031,6 +18068,7 @@ const ThemeModule = (() => {
         },
         showShortcutChanger() {
             if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
+            document.querySelectorAll('[data-dcuf-surface="shortcut-settings"][inert]').forEach(element => element.remove());
 
 
             const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -18105,10 +18143,15 @@ const ThemeModule = (() => {
 
 
             const cleanup = () => {
+                if (modal.inert) return;
                 document.removeEventListener('keydown', keydownHandler, true);
                 document.removeEventListener('keyup', keyupHandler, true);
-                overlay.remove();
-                modal.remove();
+                overlay.inert = modal.inert = true;
+                overlay.removeAttribute('id');
+                modal.removeAttribute('id');
+                overlay.classList.add('dcuf-overlay-leave');
+                modal.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => { overlay.remove(); modal.remove(); }, 130);
                 settingsPanel.style.pointerEvents = 'auto';
             };
 
@@ -18187,6 +18230,7 @@ const ThemeModule = (() => {
         _previewPointerEndHandler: null,
         _previewOutsideGesture: null,
         _previewAnchor: null,
+        _previewPositionFrame: 0,
         _overlayScrollOwners: new Set(),
         _overlayScrollState: null,
         _settingsPanel: null,
@@ -18248,7 +18292,7 @@ const ThemeModule = (() => {
         async init() { return __dcufConvenienceHostAdapter.invokeNative('init', this); },
         ensureStyles() { return __dcufConvenienceHostAdapter.invokeNative('ensureStyles', this); },
         async showSettings() { return __dcufConvenienceHostAdapter.invokeNative('showSettings', this); },
-        closeSettings() { return __dcufConvenienceHostAdapter.invokeNative('closeSettings', this); },
+        closeSettings(animate) { return __dcufConvenienceHostAdapter.invokeNative('closeSettings', this, animate); },
         normalizedListUrl(urlLike) { return __dcufConvenienceHostAdapter.invokeNative('normalizedListUrl', this, urlLike); },
         getPostNoFromLink(link) { return __dcufConvenienceHostAdapter.invokeNative('getPostNoFromLink', this, link); },
         bindList(listContainer) { return __dcufConvenienceHostAdapter.invokeNative('bindList', this, listContainer); },
@@ -18541,6 +18585,20 @@ const ThemeModule = (() => {
             }
             return null;
         };
+        const dismissConveniencePanel = (panel) => {
+            if (!panel) return;
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || typeof panel.animate !== 'function') {
+                panel.remove();
+                return;
+            }
+            const opacity = getComputedStyle(panel).opacity;
+            panel.inert = true;
+            panel.removeAttribute('id');
+            panel.style.animation = 'none';
+            panel.querySelectorAll('audio,video').forEach(media => media.pause());
+            const exit = panel.animate([{ opacity }, { opacity: 0 }], { duration: 130, easing: 'ease-in', fill: 'forwards' });
+            exit.finished.then(() => panel.remove(), () => panel.remove());
+        };
         const markOwnedSurface = (element, surface, role = 'panel', state = 'open') => {
             element.setAttribute('data-dcuf-surface', surface);
             element.setAttribute('data-dcuf-role', role);
@@ -18662,7 +18720,8 @@ const ThemeModule = (() => {
         async showSettings() {
             await this.loadSettings({ force: true });
             this.ensureStyles();
-            this.closeSettings();
+            this.closeSettings(false);
+            document.querySelector('[data-dcuf-surface="convenience-settings"][inert]')?.remove();
             window.__dcufEnsureFilterUiStyles?.();
             {
                 const panel = document.createElement('section');
@@ -18754,8 +18813,10 @@ const ThemeModule = (() => {
             this._settingsPanel = panel;
             this.lockBackgroundScroll('settings');
         },
-        closeSettings() {
-            (this._settingsPanel || document.getElementById('dcuf-mobile-convenience-settings'))?.remove();
+        closeSettings(animate = true) {
+            const panel = this._settingsPanel || document.getElementById('dcuf-mobile-convenience-settings');
+            if (animate) dismissConveniencePanel(panel);
+            else panel?.remove();
             this._settingsPanel = null;
             this.unlockBackgroundScroll('settings');
         },
@@ -18868,15 +18929,24 @@ const ThemeModule = (() => {
             const margin = 12;
             const width = Math.max(1, Math.min(520, bounds.width - margin * 2));
             const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
+            const anchorX = Number.isFinite(anchor.x) ? anchor.x : bounds.left + margin;
+            const anchorY = Number.isFinite(anchor.y) ? anchor.y : bounds.top + margin;
+            const titleRect = anchor.link?.getBoundingClientRect();
+            const withinTitle = titleRect && anchorY >= titleRect.top && anchorY <= titleRect.bottom;
+            const topEdge = withinTitle ? titleRect.top : anchorY;
+            const bottomEdge = withinTitle ? titleRect.bottom : anchorY;
+            const above = topEdge - bounds.top - margin * 2;
+            const below = bounds.bottom - bottomEdge - margin * 2;
             Object.assign(panel.style, { width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`, right: 'auto', bottom: 'auto' });
-            const height = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
-            const anchorX = Number(anchor.x) || bounds.left + margin;
-            const anchorY = Number(anchor.y) || bounds.top + margin;
+            const desiredHeight = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
+            const placeAbove = desiredHeight > below && above > below;
+            const sideHeight = Math.max(1, Math.min(maxHeight, placeAbove ? above : below));
+            panel.style.maxHeight = `${Math.floor(sideHeight)}px`;
+            const height = Math.min(desiredHeight, sideHeight);
             let left = anchorX + 12;
             if (left + width > bounds.right - margin) left = anchorX - width - 12;
             left = Math.max(bounds.left + margin, Math.min(left, bounds.right - width - margin));
-            let top = anchorY + 12;
-            if (top + height > bounds.bottom - margin && anchorY - height - 12 >= bounds.top + margin) top = anchorY - height - 12;
+            let top = placeAbove ? topEdge - height - margin : bottomEdge + margin;
             top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - height - margin));
             Object.assign(panel.style, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
         },
@@ -18917,6 +18987,16 @@ const ThemeModule = (() => {
                     const target = event.target instanceof Node ? event.target : null;
                     if (target && (this._previewPanel?.contains(target) || this._previewHoverLink?.contains(target))) {
                         this.cancelPreviewClose();
+                        if (event.pointerType === 'mouse' && this._previewHoverLink?.contains(target) && this._previewAnchor) {
+                            this._previewAnchor.x = event.clientX;
+                            this._previewAnchor.y = event.clientY;
+                            if (!this._previewPositionFrame) {
+                                this._previewPositionFrame = requestAnimationFrame(() => {
+                                    this._previewPositionFrame = 0;
+                                    this.positionPreviewPanel();
+                                });
+                            }
+                        }
                         return;
                     }
                     if (this.isPointInPreviewCorridor(event.clientX, event.clientY)) this.schedulePreviewClose(320);
@@ -18970,7 +19050,8 @@ const ThemeModule = (() => {
             this.ensurePreviewClickGuard();
             let timer = 0;
             let touch = null;
-            const cancel = () => { if (timer) window.clearTimeout(timer); timer = 0; touch = null; };
+            let mouseAnchor = null;
+            const cancel = () => { if (timer) window.clearTimeout(timer); timer = 0; touch = null; mouseAnchor = null; };
             const startMouse = (link, anchor) => {
                 cancel();
                 this.cancelPreviewClose();
@@ -18978,10 +19059,11 @@ const ThemeModule = (() => {
                     this._previewHoverLink = link;
                     return;
                 }
+                mouseAnchor = { ...anchor, link };
                 timer = window.setTimeout(() => {
                     timer = 0;
                     if (!this.isEnabled('postPreview')) return;
-                    void this.openPreview(link.href, link.textContent.trim(), { ...anchor, link });
+                    void this.openPreview(link.href, link.textContent.trim(), mouseAnchor);
                 }, 400);
             };
             listContainer.addEventListener('pointerover', (event) => {
@@ -18995,10 +19077,14 @@ const ThemeModule = (() => {
                 if (!link || (event.relatedTarget instanceof Node && link.contains(event.relatedTarget))) return;
                 cancel();
                 if (event.relatedTarget instanceof Node && this._previewPanel?.contains(event.relatedTarget)) return;
-                if (this._previewHoverLink === link) this.schedulePreviewClose();
+                if (this._previewHoverLink === link) {
+                    if (this._previewRequest && !this._previewPanel) this.closePreview();
+                    else this.schedulePreviewClose();
+                }
             });
             listContainer.addEventListener('pointerdown', (event) => {
                 if (event.pointerType === 'mouse' || !this.isEnabled('postPreview')) return;
+                if (this._previewRequest && !this._previewPanel) this.closePreview();
                 const link = event.target instanceof Element ? event.target.closest('a.post-title-link') : null;
                 if (!(link instanceof HTMLAnchorElement)) return;
                 cancel();
@@ -19011,10 +19097,14 @@ const ThemeModule = (() => {
                     window.setTimeout(() => {
                         if (this._previewSuppressedLink === link) this._previewSuppressedLink = null;
                     }, 1200);
-                    void this.openPreview(link.href, link.textContent.trim(), { x: event.clientX, y: event.clientY, mobile: true });
+                    void this.openPreview(link.href, link.textContent.trim(), { x: event.clientX, y: event.clientY, mobile: true, link });
                 }, 500);
             }, { passive: true });
             listContainer.addEventListener('pointermove', (event) => {
+                if (event.pointerType === 'mouse' && mouseAnchor?.link.contains(event.target)) {
+                    mouseAnchor.x = event.clientX;
+                    mouseAnchor.y = event.clientY;
+                }
                 if (!touch || touch.id !== event.pointerId) return;
                 if (Math.hypot(event.clientX - touch.x, event.clientY - touch.y) > 12) cancel();
             }, { passive: true });
@@ -19038,6 +19128,10 @@ const ThemeModule = (() => {
             }
             this._previewWindowScrollHandler = (event) => {
                 cancel();
+                if (this._previewRequest && !this._previewPanel) {
+                    this.closePreview();
+                    return;
+                }
                 if (!this._previewPanel?.classList.contains('dcuf-preview-anchor')) return;
                 if (event.target instanceof Node && this._previewPanel.contains(event.target)) return;
                 this.closePreview();
@@ -19055,11 +19149,12 @@ const ThemeModule = (() => {
                     this._previewSuppressedLink = null;
                     return;
                 }
-                if (!this._previewPanel || !(event.target instanceof Node) || this._previewPanel.contains(event.target)) return;
+                if (!(event.target instanceof Node) || this._previewPanel?.contains(event.target)) return;
+                if (!this._previewPanel && !this._previewRequest) return;
                 this.closePreview();
             }, true);
             document.addEventListener('keydown', (event) => {
-                if (event.key === 'Escape' && this._previewPanel) this.closePreview();
+                if (event.key === 'Escape' && (this._previewPanel || this._previewRequest)) this.closePreview();
             }, true);
         },
         async resolvePreviewMovies(html, sourceUrl, { signal } = {}) {
@@ -19270,7 +19365,6 @@ const ThemeModule = (() => {
             this.positionPreviewPanel();
         },
         createPreviewPanel(url, title, anchor) {
-            this.closePreview();
             const panel = document.createElement('aside'); panel.id = 'dcuf-post-preview';
             const mobile = anchor?.mobile || !window.matchMedia?.('(hover: hover) and (pointer: fine)').matches;
             panel.classList.add('dcuf-preview-panel', mobile ? 'dcuf-preview-sheet' : 'dcuf-preview-anchor');
@@ -19279,11 +19373,11 @@ const ThemeModule = (() => {
             const original = document.createElement('a'); original.href = url; original.textContent = '원문 열기';
             const close = document.createElement('button'); close.type = 'button'; close.textContent = '✕'; close.setAttribute('aria-label', '미리보기 닫기'); close.onclick = () => this.closePreview();
             head.append(heading, original, close);
-            const body = document.createElement('div'); body.className = 'dcuf-preview-body'; body.innerHTML = '<div class="dcuf-preview-status">불러오는 중…</div>';
+            const body = document.createElement('div'); body.className = 'dcuf-preview-body';
             panel.append(head, body); document.body.appendChild(panel);
             panel.dataset.sourceUrl = url;
             this._previewPanel = panel;
-            this._previewHoverLink = anchor?.link instanceof HTMLAnchorElement ? anchor.link : null;
+            this._previewHoverLink = !mobile && anchor?.link instanceof HTMLAnchorElement ? anchor.link : null;
             this._previewAnchor = { ...anchor, mobile };
             if (mobile) this.lockBackgroundScroll('preview');
             if (!mobile) {
@@ -19303,30 +19397,36 @@ const ThemeModule = (() => {
             let sourceUrl;
             try { sourceUrl = new URL(url, window.location.href); } catch { return; }
             if (sourceUrl.origin !== window.location.origin) return;
-            const body = this.createPreviewPanel(sourceUrl.href, title, anchor);
+            this.closePreview();
+            if (!anchor?.mobile && anchor?.link instanceof HTMLAnchorElement) this._previewHoverLink = anchor.link;
+            const reveal = (html) => {
+                const body = this.createPreviewPanel(sourceUrl.href, title, anchor);
+                this.renderPreviewBody(body, html, sourceUrl.href);
+            };
             const cached = this.getCachedPreview(sourceUrl.href);
-            if (cached !== null) { this.renderPreviewBody(body, cached, sourceUrl.href); return; }
-            this._previewRequest?.abort();
+            if (cached !== null) { reveal(cached); return; }
             const controller = new AbortController(); this._previewRequest = controller;
             try {
                 const html = await this.fetchPreviewHtml(sourceUrl.href, { signal: controller.signal });
                 const withMovies = await this.resolvePreviewMovies(html, sourceUrl.href, { signal: controller.signal });
+                if (this._previewRequest !== controller || controller.signal.aborted || anchor?.link?.isConnected === false) return;
                 const sanitized = this.sanitizePreviewDocument(withMovies, sourceUrl.href);
                 this.setCachedPreview(sourceUrl.href, sanitized);
-                if (this._previewPanel?.contains(body)) this.renderPreviewBody(body, sanitized, sourceUrl.href);
+                reveal(sanitized);
             } catch (error) {
-                if (error?.name === 'AbortError') return;
-                if (this._previewPanel?.contains(body)) {
-                    body.innerHTML = `<div class="dcuf-preview-status">미리보기를 불러오지 못했습니다.<br>${String(error?.message || error)}</div>`;
-                    this.positionPreviewPanel();
-                }
+                if (error?.name === 'AbortError' || this._previewRequest !== controller || anchor?.link?.isConnected === false) return;
+                reveal('<div class="dcuf-preview-status">미리보기를 불러오지 못했습니다.</div>');
             } finally { if (this._previewRequest === controller) this._previewRequest = null; }
         },
         closePreview() {
             this._previewRequest?.abort(); this._previewRequest = null;
             this.cancelPreviewClose(); this.clearPreviewImageRuntime();
             this.unbindPreviewViewport(); this.unbindPreviewPointerTracking();
-            this._previewPanel?.remove(); this._previewPanel = null;
+            if (this._previewPositionFrame) cancelAnimationFrame(this._previewPositionFrame);
+            this._previewPositionFrame = 0;
+            const panel = this._previewPanel;
+            this._previewPanel = null;
+            dismissConveniencePanel(panel);
             this._previewHoverLink = null;
             this._previewAnchor = null;
             this.unlockBackgroundScroll('preview');
@@ -19631,9 +19731,15 @@ const ThemeModule = (() => {
             const range = panel.querySelector('#dc-personal-block-size-range');
             const valueOutput = panel.querySelector('.dcuf-fab-size-value');
             const closePanel = (restoreSaved) => {
+                if (overlay.inert) return;
                 if (restoreSaved) this.applyFabScalePercent(savedPercent);
                 document.removeEventListener('keydown', handleKeydown, true);
-                overlay.remove();
+                overlay.inert = true;
+                overlay.removeAttribute('id');
+                panel.removeAttribute('id');
+                overlay.classList.add('dcuf-overlay-leave');
+                panel.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => overlay.remove(), 130);
             };
             const handleKeydown = (event) => {
                 if (event.key !== 'Escape') return;
@@ -19752,6 +19858,7 @@ const ThemeModule = (() => {
                 if (isClosing) return;
                 isClosing = true;
                 document.removeEventListener('keydown', handleKeydown, true);
+                overlay.inert = true;
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => overlay.remove(), 210);
@@ -19830,6 +19937,7 @@ const ThemeModule = (() => {
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             drawer.hidden = true;
+            drawer.inert = true;
             fab.setAttribute('aria-expanded', 'false');
         },
 
@@ -19864,6 +19972,7 @@ const ThemeModule = (() => {
             const willOpen = drawer.hidden;
             if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
+            drawer.inert = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
         },
@@ -19917,6 +20026,7 @@ const ThemeModule = (() => {
             drawer.id = 'dc-personal-block-drawer';
             drawer.className = 'dcuf-menu-drawer';
             drawer.hidden = true;
+            drawer.inert = true;
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
             drawer.innerHTML = `
@@ -20069,6 +20179,7 @@ const ThemeModule = (() => {
             legacyMethods.restoreSelectionTargets.call(this);
             const popup = document.getElementById('dc-selection-popup');
             if (popup) {
+                popup.inert = true;
                 popup.classList.add('dcuf-pop-leave');
                 window.setTimeout(() => popup.remove(), 120);
             }
@@ -20277,6 +20388,8 @@ const ThemeModule = (() => {
 
 
             const closePopup = () => {
+                if (popup.inert) return;
+                popup.inert = overlay.inert = true;
                 popup.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {
@@ -20652,6 +20765,8 @@ const ThemeModule = (() => {
 
 
             const closePanel = () => {
+                if (panel.inert) return;
+                panel.inert = overlay.inert = true;
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {
@@ -24685,6 +24800,10 @@ function __dcufCreateNativeAuthorPresentation(selectors) {
     if(!selectors||!required.every(k=>typeof selectors[k]==='string'&&selectors[k].startsWith('.dcuf-native-')))throw new TypeError('Invalid native author bindings');
     const cssText=`
 /* Independent B1 author/menu/memo target,2026-10-29. Native bindings,not product output. */
+@media (prefers-reduced-motion:no-preference) {
+    :is(${selectors.shells}).dcuf-native-author-open { animation:dcuf-native-author-enter 180ms cubic-bezier(.2,.8,.2,1); }
+    @keyframes dcuf-native-author-enter { from { opacity:.12; } }
+}
 ${selectors.shells} {box-sizing:border-box;color:var(--dcuf-theme-fg);border:1px solid var(--dcuf-b1-rim);border-radius:14px;background:var(--dcuf-b1-sheen),var(--dcuf-b1-floating);box-shadow:var(--dcuf-b1-shadow),inset 0 1px 0 #ffffff26;backdrop-filter:var(--dcuf-b1-floating-filter);font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;}
 ${selectors.menu} {width:224px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:6px;font-size:13px;line-height:1.5;}
 ${selectors.menuRows} {box-sizing:border-box;height:auto;min-height:0;padding:0;margin:0;border:0;background:transparent;list-style:none;}

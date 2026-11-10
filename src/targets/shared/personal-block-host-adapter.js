@@ -101,9 +101,15 @@
             const range = panel.querySelector('#dc-personal-block-size-range');
             const valueOutput = panel.querySelector('.dcuf-fab-size-value');
             const closePanel = (restoreSaved) => {
+                if (overlay.inert) return;
                 if (restoreSaved) this.applyFabScalePercent(savedPercent);
                 document.removeEventListener('keydown', handleKeydown, true);
-                overlay.remove();
+                overlay.inert = true;
+                overlay.removeAttribute('id');
+                panel.removeAttribute('id');
+                overlay.classList.add('dcuf-overlay-leave');
+                panel.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => overlay.remove(), 130);
             };
             const handleKeydown = (event) => {
                 if (event.key !== 'Escape') return;
@@ -222,6 +228,7 @@
                 if (isClosing) return;
                 isClosing = true;
                 document.removeEventListener('keydown', handleKeydown, true);
+                overlay.inert = true;
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => overlay.remove(), 210);
@@ -300,6 +307,7 @@
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             drawer.hidden = true;
+            drawer.inert = true;
             fab.setAttribute('aria-expanded', 'false');
         },
 
@@ -334,6 +342,7 @@
             const willOpen = drawer.hidden;
             if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
+            drawer.inert = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
         },
@@ -387,6 +396,7 @@
             drawer.id = 'dc-personal-block-drawer';
             drawer.className = 'dcuf-menu-drawer';
             drawer.hidden = true;
+            drawer.inert = true;
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
             drawer.innerHTML = `
@@ -539,6 +549,7 @@
             legacyMethods.restoreSelectionTargets.call(this);
             const popup = document.getElementById('dc-selection-popup');
             if (popup) {
+                popup.inert = true;
                 popup.classList.add('dcuf-pop-leave');
                 window.setTimeout(() => popup.remove(), 120);
             }
@@ -747,6 +758,8 @@
 
 
             const closePopup = () => {
+                if (popup.inert) return;
+                popup.inert = overlay.inert = true;
                 popup.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {
@@ -1122,6 +1135,8 @@
 
 
             const closePanel = () => {
+                if (panel.inert) return;
+                panel.inert = overlay.inert = true;
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {

@@ -1406,6 +1406,21 @@ function createDisposableScope(label = 'ui-surface') {
         invokeNative(action, value, options = null) {
             if (action === 'get-by-id') return document.getElementById(value);
             if (action === 'create-element') return document.createElement(value);
+            if (action === 'dismiss-palette') {
+                const overlay = value;
+                const panel = options;
+                overlay.inert = true;
+                overlay.removeAttribute('id');
+                panel?.removeAttribute('id');
+                if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+                    overlay.remove();
+                } else {
+                    overlay.classList.add('dcuf-overlay-leave');
+                    panel?.classList.add('dcuf-pop-leave');
+                    window.setTimeout(() => overlay.remove(), 130);
+                }
+                return;
+            }
             if (action === 'mark-owned-surface') {
                 const { element, surface, role, state = 'open', presentation = '' } = value || {};
                 if (!(element instanceof Element)) throw new TypeError('mark-owned-surface requires an element');
@@ -2256,9 +2271,9 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface] :focus-visible { outline:3px solid var(--dcuf-theme-focus-ring,rgba(63,109,224,.2));outline-offset:2px; }
         [data-dcuf-surface][data-dcuf-role="panel"] { position:fixed;z-index:2147483646;left:50%;top:50%;display:flex;flex-direction:column;width:min(var(--dcuf-panel-width,540px),calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden;border:1px solid var(--dcuf-panel-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:var(--dcuf-radius-panel);background:var(--dcuf-panel-background,var(--dcuf-theme-canvas,#f6f7f9));backdrop-filter:var(--dcuf-panel-backdrop,none);box-shadow:var(--dcuf-panel-shadow,var(--dcuf-theme-panel-shadow,0 20px 60px #0005));transform:translate(-50%,-50%);animation:dcuf-modern-panel-in var(--dcuf-motion-panel) cubic-bezier(.2,.8,.2,1); }
         [data-dcuf-surface][data-dcuf-role="overlay"] { position:fixed;z-index:2147483646;inset:0;background:var(--dcuf-panel-scrim,rgba(18,25,35,.56));animation:dcuf-modern-overlay-in var(--dcuf-motion-panel) ease; }
-        [data-dcuf-surface].dcuf-pop-leave { opacity:0;transform:translate(-50%,calc(-50% + 8px));transition:opacity var(--dcuf-motion-panel) ease,transform var(--dcuf-motion-panel) ease; }
-        [data-dcuf-surface].dcuf-overlay-leave { opacity:0;transition:opacity var(--dcuf-motion-panel) ease; }
-        @keyframes dcuf-modern-panel-in { from { opacity:0;transform:translate(-50%,calc(-50% + 10px)); } }
+        [data-dcuf-surface].dcuf-pop-leave,
+        [data-dcuf-surface].dcuf-overlay-leave { animation:none;opacity:0;pointer-events:none;transition:opacity 130ms ease-in; }
+        @keyframes dcuf-modern-panel-in { from { opacity:0; } }
         @keyframes dcuf-modern-overlay-in { from { opacity:0; } }
         @media (prefers-reduced-motion:reduce) { [data-dcuf-surface],[data-dcuf-surface] * { animation-duration:0s;transition-duration:0s;scroll-behavior:auto; } }
     `;
@@ -2268,6 +2283,17 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface="personal-menu"] .dcuf-fab-button { display:inline-flex;align-items:center;justify-content:center;appearance:none;box-sizing:border-box;min-width:calc(var(--dcuf-fab-width,152px) * var(--dcuf-menu-button-width-ratio,1));height:calc(var(--dcuf-fab-height,76px) * var(--dcuf-menu-button-height-ratio,1));padding:0 calc(var(--dcuf-fab-padding-x,28px) * var(--dcuf-menu-button-padding-ratio,1));padding-block:var(--dcuf-menu-button-padding-block,0);border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:999px;background:var(--dcuf-menu-button-background,linear-gradient(180deg,var(--dcuf-theme-card-top,#fff),var(--dcuf-theme-surface-raised,#f7f8fa)));color:var(--dcuf-menu-button-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-menu-shadow,0 10px 24px var(--dcuf-theme-accent-shadow,rgba(49,95,219,.2)));backdrop-filter:var(--dcuf-menu-backdrop,none);font-family:inherit;font-size:calc(var(--dcuf-fab-font-size,32px) * var(--dcuf-menu-button-font-ratio,1));font-weight:var(--dcuf-menu-button-weight,800);line-height:1;cursor:pointer;touch-action:none; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer { position:absolute;z-index:2147483641;display:grid;gap:5px;width:260px;padding:7px;border:1px solid var(--dcuf-b1-rim,var(--dcuf-theme-border-strong,#cbd2db));border-radius:16px;background:var(--dcuf-menu-background,var(--dcuf-theme-card-top,#fff));box-shadow:var(--dcuf-menu-shadow,var(--dcuf-theme-panel-shadow,0 18px 42px #0003));backdrop-filter:var(--dcuf-menu-backdrop,none); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] { display:none; }
+        @media (prefers-reduced-motion:no-preference) {
+            [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer {
+                opacity:1;transition:opacity 180ms cubic-bezier(.2,.8,.2,1),display 180ms allow-discrete;
+            }
+            [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer[hidden] {
+                opacity:0;pointer-events:none;transition-duration:130ms;
+            }
+            @starting-style {
+                [data-dcuf-surface="personal-menu"] .dcuf-menu-drawer:not([hidden]) { opacity:0; }
+            }
+        }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item { display:grid;grid-template-columns:38px minmax(0,1fr);align-items:center;gap:10px;min-height:56px;padding:7px 9px;border:1px solid transparent;border-radius:12px;background:transparent;color:var(--dcuf-theme-fg,#27313f);text-align:left;cursor:pointer; }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-item:hover,[data-dcuf-surface="personal-menu"] .dcuf-menu-item:focus-visible { background:var(--dcuf-personal-menu-hover,transparent); }
         [data-dcuf-surface="personal-menu"] .dcuf-menu-icon { display:grid;width:34px;height:34px;place-items:center;border-radius:10px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
@@ -2551,7 +2577,7 @@ const ThemeModule = (() => {
         if (restore) apply(committedId, 'preview-cancel');
         const panel = overlay.querySelector(`#${PANEL_ID}`);
         if (panel) __dcufPopupGeometryHostAdapter.dispose(panel);
-        overlay.remove();
+        __dcufThemeHost.invokeNative('dismiss-palette', overlay, panel);
         if (returnFocus instanceof HTMLElement && returnFocus.isConnected) returnFocus.focus({ preventScroll: true });
         return true;
     };
@@ -3601,6 +3627,8 @@ const ThemeModule = (() => {
             }
 
             const closeSettingsPanel = () => {
+                if (div.inert) return;
+                div.inert = true;
                 div.classList.add('dcuf-pop-leave');
                 window.setTimeout(() => {
                     __dcufPopupGeometryHostAdapter.dispose(div);
@@ -3784,7 +3812,12 @@ const ThemeModule = (() => {
 
                 const modernOthers = Object.entries(rules).filter(([key]) => key !== currentKey).sort(([a], [b]) => a.localeCompare(b));
                 panel.innerHTML = __dcufSettingsPresenter.renderHeadtextManager({ currentKey, discovered, current, others: modernOthers });
-                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => panel.remove();
+                panel.querySelector('[data-dcuf-headtext-action="close"]').onclick = () => {
+                    panel.inert = true;
+                    panel.removeAttribute('id');
+                    panel.classList.add('dcuf-pop-leave');
+                    window.setTimeout(() => panel.remove(), 130);
+                };
                 panel.querySelectorAll('[data-dcuf-headtext-value]').forEach((input) => {
                     input.addEventListener('change', async () => {
                         const value = input.dataset.dcufHeadtextValue;
@@ -3906,6 +3939,7 @@ const ThemeModule = (() => {
         },
         showShortcutChanger() {
             if (document.getElementById(this.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
+            document.querySelectorAll('[data-dcuf-surface="shortcut-settings"][inert]').forEach(element => element.remove());
 
 
             const settingsPanel = document.getElementById(this.CONSTANTS.UI_IDS.SETTINGS_PANEL);
@@ -3980,10 +4014,15 @@ const ThemeModule = (() => {
 
 
             const cleanup = () => {
+                if (modal.inert) return;
                 document.removeEventListener('keydown', keydownHandler, true);
                 document.removeEventListener('keyup', keyupHandler, true);
-                overlay.remove();
-                modal.remove();
+                overlay.inert = modal.inert = true;
+                overlay.removeAttribute('id');
+                modal.removeAttribute('id');
+                overlay.classList.add('dcuf-overlay-leave');
+                modal.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => { overlay.remove(); modal.remove(); }, 130);
                 settingsPanel.style.pointerEvents = 'auto';
             };
 
@@ -4304,9 +4343,15 @@ const ThemeModule = (() => {
             const range = panel.querySelector('#dc-personal-block-size-range');
             const valueOutput = panel.querySelector('.dcuf-fab-size-value');
             const closePanel = (restoreSaved) => {
+                if (overlay.inert) return;
                 if (restoreSaved) this.applyFabScalePercent(savedPercent);
                 document.removeEventListener('keydown', handleKeydown, true);
-                overlay.remove();
+                overlay.inert = true;
+                overlay.removeAttribute('id');
+                panel.removeAttribute('id');
+                overlay.classList.add('dcuf-overlay-leave');
+                panel.classList.add('dcuf-pop-leave');
+                window.setTimeout(() => overlay.remove(), 130);
             };
             const handleKeydown = (event) => {
                 if (event.key !== 'Escape') return;
@@ -4425,6 +4470,7 @@ const ThemeModule = (() => {
                 if (isClosing) return;
                 isClosing = true;
                 document.removeEventListener('keydown', handleKeydown, true);
+                overlay.inert = true;
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => overlay.remove(), 210);
@@ -4503,6 +4549,7 @@ const ThemeModule = (() => {
             const drawer = document.getElementById('dc-personal-block-drawer');
             if (!fab || !drawer) return;
             drawer.hidden = true;
+            drawer.inert = true;
             fab.setAttribute('aria-expanded', 'false');
         },
 
@@ -4537,6 +4584,7 @@ const ThemeModule = (() => {
             const willOpen = drawer.hidden;
             if (willOpen) window.__dcufEnsureFilterUiStyles?.();
             drawer.hidden = !willOpen;
+            drawer.inert = !willOpen;
             fab.setAttribute('aria-expanded', String(willOpen));
             if (willOpen) this.positionFabDrawer();
         },
@@ -4590,6 +4638,7 @@ const ThemeModule = (() => {
             drawer.id = 'dc-personal-block-drawer';
             drawer.className = 'dcuf-menu-drawer';
             drawer.hidden = true;
+            drawer.inert = true;
             drawer.setAttribute('role', 'menu');
             drawer.setAttribute('aria-label', 'DC 유저 필터 기능');
             drawer.innerHTML = `
@@ -4742,6 +4791,7 @@ const ThemeModule = (() => {
             legacyMethods.restoreSelectionTargets.call(this);
             const popup = document.getElementById('dc-selection-popup');
             if (popup) {
+                popup.inert = true;
                 popup.classList.add('dcuf-pop-leave');
                 window.setTimeout(() => popup.remove(), 120);
             }
@@ -4950,6 +5000,8 @@ const ThemeModule = (() => {
 
 
             const closePopup = () => {
+                if (popup.inert) return;
+                popup.inert = overlay.inert = true;
                 popup.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {
@@ -5325,6 +5377,8 @@ const ThemeModule = (() => {
 
 
             const closePanel = () => {
+                if (panel.inert) return;
+                panel.inert = overlay.inert = true;
                 panel.classList.add('dcuf-pop-leave');
                 overlay.classList.add('dcuf-overlay-leave');
                 window.setTimeout(() => {
