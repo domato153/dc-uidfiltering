@@ -2,9 +2,9 @@
 
 활동량·글댓비·IP 필터와 개인 차단으로 보고 싶은 글을 더 편하게 읽는 사용자 스크립트입니다.
 
-**최신 버전: 모바일 3.5.7 · PC 2.0.0**
+**최신 버전: 모바일 3.5.8 · PC 2.0.1**
 
-[모바일 3.5.7 패치 노트](https://github.com/domato153/dc-uidfiltering/releases/tag/mobile-v3.5.7)
+[모바일 3.5.8 패치 노트](https://github.com/domato153/dc-uidfiltering/releases/tag/mobile-v3.5.8)
 
 ## 설치
 

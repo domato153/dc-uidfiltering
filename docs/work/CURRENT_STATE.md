@@ -2,13 +2,13 @@
 
 ## Current execution
 
-- Active plan: Mobile 3.5.7 is published. The development candidate adds slower popup entry, fixed-size desktop previews with title handoff, native popup coverage and the list size repair. PC shares the popup entry, quick-block and settings dismissal updates.
+- Active plan: Prepare Mobile 3.5.8 and PC 2.0.1 for combined stable publication. The prior 3.5.7 publication receipt remains the public baseline until readback.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
 - Source state: Source checkpoint base HEAD `b5dd248437e6cc8019646fdde600935359932b58` on `codex/ui-port-boundary`. Published refs and hashes are bound by the 3.5.7 publication receipt.
-- Candidate fingerprint: `ff6cf7ffd2345ffd29948c1d5f3ccb5fd540fca4011eff2cbbee0eeb8cb92349`
+- Candidate fingerprint: `ae5ec8f7804d81cce5721ec720bdc89190d7bdea382333a9971ff48ad2e2cf74`
 - Current stage receipt: `verification/receipts/2026-11-10-stable-357-publication.json` SHA-256 `A8936B33B8E617A20063301277C8E72B6DFC5A6D0E2195F6F698AEFD618A99F8`.
-- Current artifact: Development Mobile 3.5.7 80EADA91380DB3D27E5DF757B271A26529DD94522B4D5ED7D9F6C88A7E24C84B and PC 2.0.0 4726EAD781E76072324B931ED732F3FCBABEB362798BA227B6CAE97376EF2314. The publication receipt identifies the separately published bytes.
+- Current artifact: Development Mobile 3.5.8 193F234278A0C7AD6568E5B7D7E52F293A1D8AF28F265F8FC791613374BC113D and PC 2.0.1 79496F269741C99D77B7C2581F35EBA16D2769AD59A7091DE965808F0B265954. The publication receipt identifies the separately published bytes.
 - Current popup handoff checks: Chrome 157 measured both settings and quick-block at opacity 0.086 after 50ms. Guarded desktop preview tests exercised unchanged outer size, rapid title handoff on a retained node, aborted requests, content scroll reset, hover exit and viewport containment. Touch preview and PC quick-block/settings paths passed their scoped checks.
 - Current scoped checks: Guarded Mobile and PC builds passed quick-block and settings-shortcut coverage. The scoped Mobile checks cover pointer preview, native comment pickers including reduced motion, article action fixtures and the narrow general-gallery rank window. Public comic_new6 on Chrome 157 with the injected Mobile build and GM shim verified opening and closing the original door/info/rank and actual rank paging at 980 and 390px, plus textcon entry. Two older drawer tests hit the same header interception before opening on the previous and current candidates. The public author click reached the native POST lookup, which was blocked by the probe. No account or live vote was submitted.
 - Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
@@ -19,7 +19,7 @@
 - Pending live checks: Popup animation timing and preview tracking in the installed user environment remain to be confirmed.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"80EADA91380DB3D27E5DF757B271A26529DD94522B4D5ED7D9F6C88A7E24C84B"},"pc":{"sha256":"4726EAD781E76072324B931ED732F3FCBABEB362798BA227B6CAE97376EF2314"}}
+{"schemaVersion":1,"mobile":{"sha256":"193F234278A0C7AD6568E5B7D7E52F293A1D8AF28F265F8FC791613374BC113D"},"pc":{"sha256":"79496F269741C99D77B7C2581F35EBA16D2769AD59A7091DE965808F0B265954"}}
 ```
 
 ## Pending real-use feedback —2026-11-03
