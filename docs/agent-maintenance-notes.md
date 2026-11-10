@@ -742,3 +742,7 @@ Latest writer direction:two independent horizontal strips(media through HTML,fon
 ## Stable version numbering —2026-11-05
 
 User requires one decimal digit per version component,including carry1.9.9→2.0.0. Mobile3.5.5→3.5.6 and PC1.9.9→2.0.0 are the authorized current promotion. Read actual official refs before selecting a version;update only build/targets.json and rebuild generated files. Release authority does not create missing GitHub workflow OAuth permissions or justify a fabricated canary PASS.
+
+## Page scroll and late list toolbar —2026-11-10
+
+The published Mobile runtime scrolls the document in the default fixture. A viewport-height body and independently constrained root reproduce the reported two-step scrolling because the list/article reset's horizontal hidden value computes vertical overflow to auto. Compare trusted wheel input against both document and body offsets. Separately, a late upstream height change leaves the captured list toolbar origin stale and can pin the original row over the visible heading. Read the in-flow toolbar or its spacer as the current boundary and keep both flow footprints equal. Gate the normal initial reveal on the existing toolbar connection for up to 500ms only after the filtered rows and their styles are ready. The list can reveal at the end of that grace period and the existing mutation subscriber can connect a later native toolbar. The actual extension cascade and physical phone remain separate from the controlled replay.

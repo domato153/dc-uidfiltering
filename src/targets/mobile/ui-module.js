@@ -16,6 +16,7 @@
             ORIGINAL_TABLE: 'table.gall_list',
             ORIGINAL_TBODY: '.gall_list tbody',
             ORIGINAL_POST_ITEM: 'tr.ub-content',
+            LIST_TOOLBAR: 'article > .list_array_option',
             PAGINATION: '.bottom_paging_box',
             GALL_TABS: '.list_bottom_btnbox',
             SEARCH_FORM: 'form[name="frmSearch"]',
@@ -91,6 +92,8 @@
                 originalTable = candidate;
             } else if (candidate.matches?.(this.SELECTORS.LIST_WRAP)) {
                 originalTable = candidate.querySelector(this.SELECTORS.ORIGINAL_TABLE);
+            } else if (candidate.matches(this.SELECTORS.LIST_TOOLBAR)) {
+                originalTable = candidate.parentElement?.querySelector(this.SELECTORS.ORIGINAL_TABLE);
             } else {
                 originalTable = candidate.closest?.(this.SELECTORS.ORIGINAL_TABLE)
                     || candidate.querySelector?.(this.SELECTORS.ORIGINAL_TABLE)
@@ -803,6 +806,7 @@
                         this.SELECTORS.LIST_WRAP,
                         this.SELECTORS.ORIGINAL_TABLE,
                         this.SELECTORS.ORIGINAL_TBODY,
+                        this.SELECTORS.LIST_TOOLBAR,
                         this.SELECTORS.GALL_TABS,
                         this.SELECTORS.PAGINATION,
                         this.SELECTORS.PAGE_MOVE_BOX,
@@ -1351,11 +1355,14 @@
                 }
             }
 
-            return {
-                ready: true,
-                reason: 'ready',
-                detail: { targetWrapCount: targetWraps.length }
-            };
+            const detail = { targetWrapCount: targetWraps.length };
+            if (window.__dcufBootController?.state === 'preparing' && targetWraps.some(listWrap => {
+                const article = listWrap.closest('article');
+                return article && !article.querySelector(':scope > .list_array_option[data-dcuf-scroll]');
+            })) {
+                return { ready: false, reason: 'waiting-list-toolbar', detail };
+            }
+            return { ready: true, reason: 'ready', detail };
         },
 
         getInitialRevealMutationSelectors() {
@@ -1385,6 +1392,7 @@
                 this.SELECTORS.LIST_WRAP,
                 this.SELECTORS.ORIGINAL_TABLE,
                 this.SELECTORS.ORIGINAL_TBODY,
+                this.SELECTORS.LIST_TOOLBAR,
                 this.SELECTORS.ORIGINAL_POST_ITEM
             ];
         },
@@ -1418,6 +1426,7 @@
                 let rafId = 0;
                 let timeoutId = 0;
                 let refreshTimerId = 0;
+                let toolbarTimerId = 0;
                 let observer = null;
                 let unsubscribe = null;
 
@@ -1426,6 +1435,7 @@
                     if (observer) observer.disconnect();
                     if (rafId) window.cancelAnimationFrame(rafId);
                     if (refreshTimerId) window.clearTimeout(refreshTimerId);
+                    if (toolbarTimerId) window.clearTimeout(toolbarTimerId);
                     if (timeoutId) window.clearTimeout(timeoutId);
                     this._initialRevealStartedAt = 0;
                 };
@@ -1433,6 +1443,14 @@
                 const finish = (reason) => {
                     cleanup();
                     resolve(reason);
+                };
+
+                const waitBrieflyForToolbar = (state) => {
+                    if (state.reason !== 'waiting-list-toolbar' || toolbarTimerId) return;
+                    toolbarTimerId = window.setTimeout(() => {
+                        toolbarTimerId = 0;
+                        checkReady('list-toolbar-grace');
+                    }, 500);
                 };
 
                 const scheduleTimeout = (deadline) => {
@@ -1449,6 +1467,10 @@
                         });
                         if (lastState.ready) {
                             finish(lastState.reason);
+                            return;
+                        }
+                        if (lastState.reason === 'waiting-list-toolbar') {
+                            finish('filtered-list-without-toolbar');
                             return;
                         }
 
@@ -1519,6 +1541,11 @@
                             finish(lastState.reason);
                             return;
                         }
+                        if (lastState.reason === 'waiting-list-toolbar') {
+                            if (reason === 'list-toolbar-grace') finish('filtered-list-without-toolbar');
+                            else waitBrieflyForToolbar(lastState);
+                            return;
+                        }
                         const refreshStarted = maybeRefreshStyle(lastState, reason);
                         if (!refreshStarted && canRevealFilteredNativeFallback(lastState)) {
                             this.updateInitialRevealDebug(lastState, {
@@ -1555,6 +1582,7 @@
                 }
 
                 scheduleTimeout(timeoutDeadline);
+                waitBrieflyForToolbar(lastState);
                 maybeRefreshStyle(lastState, 'start');
                 scheduleCheck('initial');
             });

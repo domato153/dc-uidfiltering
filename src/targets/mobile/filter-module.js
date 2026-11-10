@@ -85,7 +85,8 @@
 
 
         body { background: #fff !important; }
-        html, body { overflow-x: hidden !important; }
+        /* Clip horizontal overflow without turning the body into a vertical scroller. */
+        html, body { overflow-x: clip !important; }
 
 
         html, body, #top, #container, .wrap_inner, .visit_bookmark,

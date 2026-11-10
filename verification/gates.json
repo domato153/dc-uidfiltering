@@ -98,6 +98,7 @@
         { "id": "mobile-build", "command": "node", "args": ["tools/build-userscript.mjs", "--testbed-output", "testbed/artifacts/runtime-under-test.user.js"], "prerequisite": true },
         { "id": "header-recent-title-contract", "command": "node", "args": ["testbed/run-header-cascade-audit.mjs", "--recent-title-contract", "--gnb-reset-contract", "--historical-visual-projection", "--require-runtime-under-test", "--output", "testbed/artifacts/acceptance-header-recent-title-contract.json"] },
         { "id": "concept01-scroll-contract", "command": "node", "args": ["testbed/run-concept01-scroll.mjs", "--require-runtime-under-test"] },
+        { "id": "page-scroll-contract", "command": "node", "args": ["testbed/ui-page-scroll-contract.mjs", "--require-runtime-under-test"] },
         { "id": "header-layout-contract", "command": "node", "args": ["testbed/run-header-layout-redesign.mjs", "--require-runtime-under-test"] },
         { "id": "toolbar-composition-transfer", "command": "node", "args": ["testbed/test-toolbar-visual-contract.mjs"] },
         { "id": "b1-product-contract", "command": "node", "args": ["testbed/run-b1-product.mjs", "--require-runtime-under-test"] },

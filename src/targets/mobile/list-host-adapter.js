@@ -35,20 +35,19 @@
             state.spacer.removeAttribute('data-dcuf-scroll-active');
             state.toolbar.setAttribute('data-dcuf-scroll', 'measuring');
             const rect = state.toolbar.getBoundingClientRect();
-            state.origin = rect.top + scrollPosition();
-            state.height = rect.height;
             state.spacer.style.setProperty('--dcuf-scroll-size', `${rect.height}px`);
             state.lastY = scrollPosition();
             state.direction = 0;
             state.travel = 0;
-            state.mode = state.lastY <= state.origin + state.height ? 'top' : 'shown';
-            state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
             const layout = document.querySelector('[data-dcuf-header-layout]');
             if (layout && state.toolbar === document.querySelector('[data-dcuf-surface="list-toolbar"]')) {
                 if (!state.plateGeometry) state.plateGeometry = {node: layout, value: layout.style.getPropertyValue('--dcuf-list-header-height'), priority: layout.style.getPropertyPriority('--dcuf-list-header-height')};
-                const height = Math.max(0, state.origin + state.height - layout.getBoundingClientRect().top - scrollPosition() - 8);
+                const height = Math.max(0, rect.bottom - layout.getBoundingClientRect().top - 8);
                 layout.style.setProperty('--dcuf-list-header-height', `${height}px`);
             }
+            state.mode = rect.bottom > 0 ? 'top' : 'shown';
+            state.spacer.toggleAttribute('data-dcuf-scroll-active', state.mode !== 'top');
+            state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
         };
         const updatePopupHold = (state) => {
             state.popupOpen = Array.from(state.toolbar.querySelectorAll('[data-dcuf-role="category-popup"], [data-dcuf-role="page-size-popup"]'))
@@ -65,16 +64,18 @@
                 if (scrollMeasurePending) measureScrollToolbar(state);
                 if (scrollPopupPending) updatePopupHold(state);
                 if (y < 0 || y > max + 1) return;
+                const inFlow = state.mode === 'top';
+                const slot = (inFlow ? state.toolbar : state.spacer).getBoundingClientRect();
                 const active = document.activeElement;
                 const focused = state.toolbar.contains(active);
                 const held = pointerHeld || keyboardNavigation || state.popupOpen || focused;
                 const delta = y - state.lastY;
                 state.lastY = y;
-                if (held || state.held !== held) {
-                    state.direction = 0; state.travel = 0;
-                    state.mode = y <= state.origin + state.height ? 'top' : 'shown';
-                } else if (y <= state.origin + state.height) {
+                if (slot.bottom > 0) {
                     state.mode = 'top'; state.direction = 0; state.travel = 0;
+                } else if (held || state.held !== held) {
+                    state.direction = 0; state.travel = 0;
+                    state.mode = 'shown';
                 } else if (delta) {
                     const direction = Math.sign(delta);
                     state.travel = direction === state.direction ? state.travel + Math.abs(delta) : Math.abs(delta);
@@ -84,12 +85,13 @@
                 }
                 state.held = held;
                 const floating = state.mode !== 'top';
+                if (inFlow && floating) state.spacer.style.setProperty('--dcuf-scroll-size', `${slot.height}px`);
                 state.spacer.toggleAttribute('data-dcuf-scroll-active', floating);
                 // Commit both flow changes before measuring: a layout read with
                 // spacer AND toolbar in flow would trigger scroll anchoring.
                 if (state.toolbar.getAttribute('data-dcuf-scroll') !== state.mode) state.toolbar.setAttribute('data-dcuf-scroll', state.mode);
                 if (floating) {
-                    const rect = state.spacer.getBoundingClientRect();
+                    const rect = inFlow ? state.spacer.getBoundingClientRect() : slot;
                     const left = `${rect.left}px`, width = `${rect.width}px`;
                     if (state.toolbar.style.getPropertyValue('--dcuf-scroll-left') !== left) state.toolbar.style.setProperty('--dcuf-scroll-left', left);
                     if (state.toolbar.style.getPropertyValue('--dcuf-scroll-width') !== width) state.toolbar.style.setProperty('--dcuf-scroll-width', width);
@@ -542,6 +544,8 @@
                     item.querySelectorAll(':scope > a').forEach((action) => mark(listWrap, action, { role: 'category-option' }));
                 });
                 connectScrollToolbar(listWrap, toolbar);
+            } else {
+                disconnectScrollToolbar(listWrap);
             }
 
             if (actionBar instanceof HTMLElement && !actionBar.matches('.view_bottom_btnbox')) {

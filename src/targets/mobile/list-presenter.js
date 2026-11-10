@@ -60,7 +60,7 @@
                 gap: 6px;
                 margin-bottom: 7px;
                 color: var(--dcuf-list-fg);
-                font-size: 15px;
+                font-size: 18px;
                 font-weight: 400;
                 line-height: 1.42;
                 word-break: break-all;
@@ -147,9 +147,14 @@
             @media (min-width: 760px) {
                 /* Filtering owns row inline display; arrange its children instead. */
                 [data-dcuf-surface="list-item"] { padding-right: 250px; min-height: 54px; box-sizing: border-box; }
-                [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; font-size: 14px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-title { margin: 0; min-height: 29px; align-items: center; }
                 [data-dcuf-surface="list-item"] .dcuf-list-meta { position: absolute; right: 16px; top: 0; bottom: 0; transform: none; justify-content: center; width: 220px; flex-direction: column; align-items: flex-end; gap: 4px; font-size: 11px; }
                 [data-dcuf-surface="list-item"] .dcuf-list-author { flex: none; }
+            }
+            @media (min-width: 760px) and (max-width: 1249px) and (pointer: coarse) {
+                [data-dcuf-surface="list-item"] .dcuf-list-title { font-size: 22px; }
+                [data-dcuf-surface="list-item"] :is(.dcuf-list-subject, .dcuf-list-reply) { font-size: 16px; }
+                [data-dcuf-surface="list-item"] .dcuf-list-meta { font-size: 14px; }
             }
             [data-dcuf-surface="list-toolbar"],
             [data-dcuf-surface="list-actions"] {
@@ -228,7 +233,7 @@
                 height: var(--dcuf-scroll-size);
                 width: calc(100% - 2 * var(--dcuf-page-gutter,10px));
                 max-width: none;
-                margin: 10px auto;
+                margin: 0 auto 12px;
                 box-sizing: border-box;
             }
             [data-dcuf-surface="list-toolbar"]:is([data-dcuf-scroll="shown"], [data-dcuf-scroll="hidden"]) {
