@@ -92,6 +92,32 @@ async function checkDocumentScroll(page) {
 }
 
 try {
+    await run('page size delegates to the original gallery commands', {
+        route: '/mini/board/lists?id=test',
+        html: listPage({ variant: 'mini' }).replace('</body>', `<script>
+            const picker = document.querySelector('#sarray_numbers');
+            picker.innerHTML = '<option value="30">30개</option><option value="50">50개</option><option value="100">100개</option>';
+            picker.nextElementSibling.querySelector('a').textContent = '50개';
+            document.querySelector('#listSizeLayer').innerHTML = [30,50,100].map(n => '<li><a href="javascript:listDisp(' + n + ')">' + n + '개</a></li>').join('');
+            window.fixtureSizeChanges = [];
+            window.listDisp = n => { window.fixtureSizeChanges.push(n); };
+        </script></body>`),
+        check: async page => {
+            const picker = page.locator('#sarray_numbers');
+            assert.equal(await picker.inputValue(), '50');
+            await page.evaluate(() => {
+                const toolbar = document.querySelector('.list_array_option');
+                const listWrap = document.querySelector('[data-dcuf-surface="list-host"]');
+                window.__dcufListHostAdapter.connectControls({ listWrap, toolbar });
+            });
+            for (const size of ['100', '30', '50']) await picker.selectOption(size);
+            await page.waitForFunction(() => window.fixtureSizeChanges.length >= 3);
+            assert.deepEqual(await page.evaluate(() => window.fixtureSizeChanges), [100, 30, 50]);
+            await page.evaluate(() => window.__dcufListHostAdapter.dispose(document.querySelector('[data-dcuf-surface="list-host"]')));
+            await picker.evaluate(select => select.dispatchEvent(new Event('change')));
+            assert.deepEqual(await page.evaluate(() => window.fixtureSizeChanges), [100, 30, 50]);
+        }
+    });
     for (const [variant, route, width, touch, expectedSize] of lists) {
         await run(`${variant} list document scroll`, {
             route, html: constrainedPage(listPage({ variant })), width, touch, check: checkDocumentScroll

@@ -7,6 +7,12 @@ function __dcufCreateNativeAuthorPresentation(selectors) {
 @media (prefers-reduced-motion:no-preference) {
     :is(${selectors.shells}).dcuf-native-author-open { animation:dcuf-native-author-enter 180ms cubic-bezier(.2,.8,.2,1); }
     @keyframes dcuf-native-author-enter { from { opacity:.12; } }
+    @supports (transition-behavior:allow-discrete) {
+        :is(${selectors.shells}) { transition:opacity 130ms ease-in,display 130ms allow-discrete; }
+        :is(${selectors.shells}):is([style*="display:none"],[style*="display: none"]) {
+            animation:none;opacity:0;pointer-events:none;
+        }
+    }
 }
 ${selectors.shells} {box-sizing:border-box;color:var(--dcuf-theme-fg);border:1px solid var(--dcuf-b1-rim);border-radius:14px;background:var(--dcuf-b1-sheen),var(--dcuf-b1-floating);box-shadow:var(--dcuf-b1-shadow),inset 0 1px 0 #ffffff26;backdrop-filter:var(--dcuf-b1-floating-filter);font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;}
 ${selectors.menu} {width:224px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:6px;font-size:13px;line-height:1.5;}

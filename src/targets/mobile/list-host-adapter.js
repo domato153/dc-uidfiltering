@@ -12,6 +12,7 @@
         ]);
         const controlTransactions = new WeakMap();
         const paginationListeners = new WeakMap();
+        const pageSizeListeners = new WeakMap();
         const searchDrawerRoots = new Set();
         const searchRootsByOwner = new WeakMap();
         const ownerBySearchRoot = new WeakMap();
@@ -483,6 +484,25 @@
                 });
             });
         };
+        const bindPageSize = (owner, select, trigger, popup) => {
+            const previous = pageSizeListeners.get(owner);
+            if (previous && previous.select === select && previous.popup === popup && previous.trigger === trigger) return;
+            if (previous) {
+                previous.select.removeEventListener('change', previous.change);
+                pageSizeListeners.delete(owner);
+            }
+            if (!(select instanceof HTMLSelectElement) || select.id !== 'sarray_numbers'
+                || popup?.id !== 'listSizeLayer' || !trigger || select.onchange) return;
+            const findCommand = (value) => /^(30|50|100)$/.test(value)
+                ? popup.querySelector(`a[href="javascript:listDisp(${value})"]`)
+                : null;
+            const size = trigger.textContent.trim().match(/^(30|50|100)\s*개/)?.[1];
+            if (!size || !findCommand(size) || !Array.from(select.options).some(option => option.value === size)) return;
+            select.value = size;
+            const change = () => findCommand(select.value)?.click();
+            select.addEventListener('change', change);
+            pageSizeListeners.set(owner, { select, trigger, popup, change });
+        };
         const connectControls = ({
             listWrap,
             toolbar = null,
@@ -516,7 +536,7 @@
                 const rightBox = toolbar.querySelector(':scope > .right_box');
                 const outputArray = toolbar.querySelector('.output_array');
                 const pageSizeShell = toolbar.querySelector('.select_box.array_num');
-                const countSelect = toolbar.querySelector('select');
+                const countSelect = pageSizeShell?.querySelector('select');
                 const legacyPageSize = pageSizeShell?.querySelector(':scope > .select_area');
                 const pageSizePopup = pageSizeShell?.querySelector(':scope > .option_box');
                 const primaryGroup = toolbar.querySelector('.switch_btnbox');
@@ -530,6 +550,7 @@
                 mark(listWrap, countSelect, { role: 'page-size' });
                 mark(listWrap, legacyPageSize, { role: 'legacy-page-size', state: countSelect ? 'superseded' : 'active' });
                 mark(listWrap, pageSizePopup, { role: 'page-size-popup', state: 'closed' });
+                bindPageSize(listWrap, countSelect, legacyPageSize, pageSizePopup);
                 mark(listWrap, primaryGroup, { role: 'primary-group' });
                 releaseInlineGeometry(listWrap, rightBox, ['position', 'right', 'top', 'bottom', 'left']);
                 releaseInlineGeometry(listWrap, outputArray, ['position', 'right', 'top', 'bottom', 'left', 'margin-top']);
@@ -546,6 +567,7 @@
                 connectScrollToolbar(listWrap, toolbar);
             } else {
                 disconnectScrollToolbar(listWrap);
+                bindPageSize(listWrap);
             }
 
             if (actionBar instanceof HTMLElement && !actionBar.matches('.view_bottom_btnbox')) {
@@ -622,6 +644,7 @@
             disconnectScrollToolbar(listWrap);
             disconnectSearchDrawers(listWrap);
             disconnectPaginationNavigation(listWrap);
+            bindPageSize(listWrap);
             const transaction = controlTransactions.get(listWrap);
             if (!transaction) return;
             const transactionEntries = Array.from(transaction.entries());

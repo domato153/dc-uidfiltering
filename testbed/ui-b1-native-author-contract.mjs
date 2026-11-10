@@ -43,7 +43,26 @@ export async function runNativeAuthorContract({browser,server,control=false,onCa
    await e.page.locator('#gall_color').click();await e.page.locator('#um_picker_lay').waitFor({state:'visible'});
    const color=await authorGeometry(e.page,'#um_picker_lay');assert.ok(color.box.x>=-1&&color.box.right<=(state.viewport?.width||980)+1,'Nested native palette fits horizontally');
    assert.ok(color.box.y>=-1&&color.box.bottom<=(state.viewport?.height||2306)+1,'Nested palette and its close remain within vertical viewport');
-   const close=e.page.locator('#um_picker_lay > .poply_bgblueclose');await close.click();await e.page.locator('#um_picker_lay').waitFor({state:'hidden'});
+   const close=e.page.locator('#um_picker_lay > .poply_bgblueclose');
+   if(!control&&Object.keys(state).length===0){
+     await e.page.locator('#um_picker_lay.dcuf-native-author-open').evaluate(async picker=>{
+       await Promise.all(picker.getAnimations().map(animation=>animation.finished));
+       picker.addEventListener('click',()=>{
+         const style=getComputedStyle(picker);
+         window.__dcufTestPickerClose={
+           hostDisplay:picker.style.display,display:style.display,pointerEvents:style.pointerEvents,
+           transitions:picker.getAnimations().map(animation=>animation.transitionProperty).sort(),
+         };
+       },{once:true});
+     });
+   }
+   await close.click();
+   if(!control&&Object.keys(state).length===0){
+     assert.deepEqual(await e.page.evaluate(()=>window.__dcufTestPickerClose),{
+       hostDisplay:'none',display:'block',pointerEvents:'none',transitions:['display','opacity'],
+     },'Native picker close hides semantically before the exit paint finishes');
+   }
+   await e.page.locator('#um_picker_lay').waitFor({state:'hidden'});
    await e.page.locator('#gall_color').click();await e.page.locator('#um_picker_lay').waitFor({state:'visible'});
    await e.page.locator('#um_picker_lay .btn_cancle').click();await e.page.locator('#um_picker_lay').waitFor({state:'hidden'});
    assert.equal(await e.page.locator('#gall_memo').inputValue(),'합성 임시 메모');

@@ -3510,6 +3510,7 @@ const __dcufSettingsPresenter = (() => {
         ]);
         const controlTransactions = new WeakMap();
         const paginationListeners = new WeakMap();
+        const pageSizeListeners = new WeakMap();
         const searchDrawerRoots = new Set();
         const searchRootsByOwner = new WeakMap();
         const ownerBySearchRoot = new WeakMap();
@@ -3981,6 +3982,25 @@ const __dcufSettingsPresenter = (() => {
                 });
             });
         };
+        const bindPageSize = (owner, select, trigger, popup) => {
+            const previous = pageSizeListeners.get(owner);
+            if (previous && previous.select === select && previous.popup === popup && previous.trigger === trigger) return;
+            if (previous) {
+                previous.select.removeEventListener('change', previous.change);
+                pageSizeListeners.delete(owner);
+            }
+            if (!(select instanceof HTMLSelectElement) || select.id !== 'sarray_numbers'
+                || popup?.id !== 'listSizeLayer' || !trigger || select.onchange) return;
+            const findCommand = (value) => /^(30|50|100)$/.test(value)
+                ? popup.querySelector(`a[href="javascript:listDisp(${value})"]`)
+                : null;
+            const size = trigger.textContent.trim().match(/^(30|50|100)\s*개/)?.[1];
+            if (!size || !findCommand(size) || !Array.from(select.options).some(option => option.value === size)) return;
+            select.value = size;
+            const change = () => findCommand(select.value)?.click();
+            select.addEventListener('change', change);
+            pageSizeListeners.set(owner, { select, trigger, popup, change });
+        };
         const connectControls = ({
             listWrap,
             toolbar = null,
@@ -4014,7 +4034,7 @@ const __dcufSettingsPresenter = (() => {
                 const rightBox = toolbar.querySelector(':scope > .right_box');
                 const outputArray = toolbar.querySelector('.output_array');
                 const pageSizeShell = toolbar.querySelector('.select_box.array_num');
-                const countSelect = toolbar.querySelector('select');
+                const countSelect = pageSizeShell?.querySelector('select');
                 const legacyPageSize = pageSizeShell?.querySelector(':scope > .select_area');
                 const pageSizePopup = pageSizeShell?.querySelector(':scope > .option_box');
                 const primaryGroup = toolbar.querySelector('.switch_btnbox');
@@ -4028,6 +4048,7 @@ const __dcufSettingsPresenter = (() => {
                 mark(listWrap, countSelect, { role: 'page-size' });
                 mark(listWrap, legacyPageSize, { role: 'legacy-page-size', state: countSelect ? 'superseded' : 'active' });
                 mark(listWrap, pageSizePopup, { role: 'page-size-popup', state: 'closed' });
+                bindPageSize(listWrap, countSelect, legacyPageSize, pageSizePopup);
                 mark(listWrap, primaryGroup, { role: 'primary-group' });
                 releaseInlineGeometry(listWrap, rightBox, ['position', 'right', 'top', 'bottom', 'left']);
                 releaseInlineGeometry(listWrap, outputArray, ['position', 'right', 'top', 'bottom', 'left', 'margin-top']);
@@ -4044,6 +4065,7 @@ const __dcufSettingsPresenter = (() => {
                 connectScrollToolbar(listWrap, toolbar);
             } else {
                 disconnectScrollToolbar(listWrap);
+                bindPageSize(listWrap);
             }
 
             if (actionBar instanceof HTMLElement && !actionBar.matches('.view_bottom_btnbox')) {
@@ -4120,6 +4142,7 @@ const __dcufSettingsPresenter = (() => {
             disconnectScrollToolbar(listWrap);
             disconnectSearchDrawers(listWrap);
             disconnectPaginationNavigation(listWrap);
+            bindPageSize(listWrap);
             const transaction = controlTransactions.get(listWrap);
             if (!transaction) return;
             const transactionEntries = Array.from(transaction.entries());
@@ -24803,6 +24826,12 @@ function __dcufCreateNativeAuthorPresentation(selectors) {
 @media (prefers-reduced-motion:no-preference) {
     :is(${selectors.shells}).dcuf-native-author-open { animation:dcuf-native-author-enter 180ms cubic-bezier(.2,.8,.2,1); }
     @keyframes dcuf-native-author-enter { from { opacity:.12; } }
+    @supports (transition-behavior:allow-discrete) {
+        :is(${selectors.shells}) { transition:opacity 130ms ease-in,display 130ms allow-discrete; }
+        :is(${selectors.shells}):is([style*="display:none"],[style*="display: none"]) {
+            animation:none;opacity:0;pointer-events:none;
+        }
+    }
 }
 ${selectors.shells} {box-sizing:border-box;color:var(--dcuf-theme-fg);border:1px solid var(--dcuf-b1-rim);border-radius:14px;background:var(--dcuf-b1-sheen),var(--dcuf-b1-floating);box-shadow:var(--dcuf-b1-shadow),inset 0 1px 0 #ffffff26;backdrop-filter:var(--dcuf-b1-floating-filter);font-family:system-ui,-apple-system,"Malgun Gothic",sans-serif;}
 ${selectors.menu} {width:224px;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;padding:6px;font-size:13px;line-height:1.5;}
@@ -30371,7 +30400,8 @@ ${selectors.contents} { max-height:calc(100dvh - 128px); }
         } else if (popup.id === 'um_picker_lay' && popup.closest('#user_memo_config.dcuf-native-memo')) {
             toggleAuthorClass(popup, 'dcuf-native-memo-picker', true);
         } else return false;
-        const visible = isVisible(popup);
+        // A discrete display transition can still paint after the host closes.
+        const visible = popup.style.display !== 'none' && isVisible(popup);
         toggleAuthorClass(popup, 'dcuf-native-author-open', visible);
         if (isMenu && visible && popup.closest('.custom-post-item')) {
             // The original anchor can be0x0; measure the positive UL and original writer.

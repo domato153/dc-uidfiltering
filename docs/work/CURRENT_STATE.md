@@ -2,14 +2,14 @@
 
 ## Current execution
 
-- Active plan: Mobile 3.5.7 is published. The development candidate adds popup transitions and delayed-preview presentation.
+- Active plan: Mobile 3.5.7 is published. The development candidate adds popup transitions, delayed-preview presentation, and the native list size repair.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
-- Source state: Source checkpoint base HEAD `184c6ef6feff0a282fad7ecb72488a0dbc377763` on `codex/ui-port-boundary`. Published refs and hashes are bound by the 3.5.7 publication receipt.
-- Candidate fingerprint: `3f880627bff40fbc8a8483bf3b898a5b1684daab5f691f5939cd95d9f4540020`
+- Source state: Source checkpoint base HEAD `072f4372ede25429984fc4edb3854a40959efabe` on `codex/ui-port-boundary`. Published refs and hashes are bound by the 3.5.7 publication receipt.
+- Candidate fingerprint: `c85e7a3e1a7972ce2abd5862e22042c2c93b7525546faa72d8ad761109d8a5af`
 - Current stage receipt: `verification/receipts/2026-11-10-stable-357-publication.json` SHA-256 `A8936B33B8E617A20063301277C8E72B6DFC5A6D0E2195F6F698AEFD618A99F8`.
-- Current artifact: Development Mobile 3.5.7 F7E7762C24D98817592E672EED28B42CD9FD45D8945C50662A8F2E867C58D6B1 and PC 2.0.0 C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12. The publication receipt still identifies the separately published bytes.
-- Current scoped checks: Exact 3.5.7 passed 11 focused regression checks and six Chrome/Tampermonkey startup observations with replay.
+- Current artifact: Development Mobile 3.5.7 F20310C58EC0B6783C54FDCE71951F2C2CD20431F971731D8918C4AE072BE631 and PC 2.0.0 C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12. The publication receipt still identifies the separately published bytes.
+- Current scoped checks: The guarded development Mobile runtime passed 12 page-scroll and list-control checks and the native author contract in nine states. Chrome 157 with the same injected runtime and a GM shim verified 30/50/100 navigation and actual returned row counts on public general, minor and mini lists. This is separate from installed-extension and physical-device coverage.
 - Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. artifacts/mobile-357-published has official receipt and public readback; testbed/artifacts/stable-357-canary binds startup evidence.
 - Accepted baseline: Actual adopted memo/current v7 detail,pale paired-ink dark buttons,theme accents,inline services/categories and list-only unified plate/original scroll direction. Writer two independent media/HTML and font/link rows;phone nickname uses2 columns/readonly44px reserve. PC keeps native host layout.
@@ -18,7 +18,7 @@
 - Pending live checks: Popup animation timing and preview tracking in the installed user environment remain to be confirmed.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"F7E7762C24D98817592E672EED28B42CD9FD45D8945C50662A8F2E867C58D6B1"},"pc":{"sha256":"C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12"}}
+{"schemaVersion":1,"mobile":{"sha256":"F20310C58EC0B6783C54FDCE71951F2C2CD20431F971731D8918C4AE072BE631"},"pc":{"sha256":"C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

@@ -5516,7 +5516,8 @@
         } else if (popup.id === 'um_picker_lay' && popup.closest('#user_memo_config.dcuf-native-memo')) {
             toggleAuthorClass(popup, 'dcuf-native-memo-picker', true);
         } else return false;
-        const visible = isVisible(popup);
+        // A discrete display transition can still paint after the host closes.
+        const visible = popup.style.display !== 'none' && isVisible(popup);
         toggleAuthorClass(popup, 'dcuf-native-author-open', visible);
         if (isMenu && visible && popup.closest('.custom-post-item')) {
             // The original anchor can be0x0; measure the positive UL and original writer.
