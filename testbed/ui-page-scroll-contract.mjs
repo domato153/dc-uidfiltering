@@ -91,6 +91,27 @@ async function checkDocumentScroll(page) {
     assert.ok(Math.abs(bottom.y - endY) <= 1 && bottom.body === 0 && bottom.gap <= 2, JSON.stringify({ endY, ...bottom }));
 }
 
+async function checkHiddenAdRail(page) {
+    const observed = await page.evaluate(async () => {
+        const frame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        await frame();
+        const root = document.scrollingElement;
+        const before = root.scrollHeight;
+        const rail = document.createElement('div');
+        rail.className = 'stickyunit_rail';
+        rail.style.cssText = 'position:absolute;left:0;top:0;bottom:-400px;width:160px;display:flex;pointer-events:none';
+        const ad = document.createElement('div');
+        ad.className = 'stickyunit';
+        rail.append(ad);
+        document.body.append(rail);
+        const after = root.scrollHeight;
+        const adDisplay = getComputedStyle(ad).display;
+        ad.remove();
+        return { before, after, empty: root.scrollHeight, rail: getComputedStyle(rail).display, ad: adDisplay };
+    });
+    assert.deepEqual(observed, { before: observed.before, after: observed.before, empty: observed.before, rail: 'none', ad: 'none' });
+}
+
 try {
     await run('page size delegates to the original gallery commands', {
         route: '/mini/board/lists?id=test',
@@ -113,8 +134,11 @@ try {
             for (const size of ['100', '30', '50']) await picker.selectOption(size);
             await page.waitForFunction(() => window.fixtureSizeChanges.length >= 3);
             assert.deepEqual(await page.evaluate(() => window.fixtureSizeChanges), [100, 30, 50]);
-            await page.evaluate(() => window.__dcufListHostAdapter.dispose(document.querySelector('[data-dcuf-surface="list-host"]')));
-            await picker.evaluate(select => select.dispatchEvent(new Event('change')));
+            await picker.evaluate(select => {
+                // A pending rerender may reconnect the live owner between browser tasks.
+                window.__dcufListHostAdapter.dispose(document.querySelector('[data-dcuf-surface="list-host"]'));
+                select.dispatchEvent(new Event('change'));
+            });
             assert.deepEqual(await page.evaluate(() => window.fixtureSizeChanges), [100, 30, 50]);
         }
     });
@@ -132,6 +156,12 @@ try {
     }
     await run('article document scroll', {
         route: '/board/view?id=test&no=1001', html: constrainedPage(viewPage()), check: checkDocumentScroll
+    });
+    await run('late native ad rail cannot extend the list past its content', {
+        route: '/board/lists?id=test', html: listPage(), check: checkHiddenAdRail
+    });
+    await run('late native ad rail cannot extend the article past its content', {
+        route: '/board/view?id=test&no=1001', html: viewPage({ darkAtStart: true }), width: 980, touch: true, check: checkHiddenAdRail
     });
     await run('writer document scroll', {
         route: '/mgallery/board/write?id=test', html: constrainedPage(writePage({ variant: 'minor' })), check: checkDocumentScroll

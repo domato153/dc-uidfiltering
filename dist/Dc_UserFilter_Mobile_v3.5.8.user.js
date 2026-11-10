@@ -16208,6 +16208,9 @@ const ThemeModule = (() => {
             display: none !important;
         }
 
+        /* The empty ad rail retains an inline negative bottom offset after its ad is hidden. */
+        .stickyunit_rail { display: none !important; }
+
 
         /* --- 기본 레이아웃 재정의 --- */
         ${__dcufBuildHeaderDrawerVisibilityCss(__dcufDescribeHeaderDrawerVisibilitySelectors())}
