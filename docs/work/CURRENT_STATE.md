@@ -2,20 +2,20 @@
 
 ## Current execution
 
-- Active plan: The four-stage Mobile UI/PC port publication is complete. Mobile 3.5.7 stages the page scroll and list readability repair for authorized stable publication. The queued local artifact inventory and later guidebook discussion are separate.
+- Active plan: Mobile 3.5.7 is published. The next bounded action is the user-requested local artifact inventory.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
-- Source state: Source checkpoint base HEAD `e7b5771aac34eeb20e72fb0471331942f79fb0b0` on `codex/ui-port-boundary`. Published refs remain main da65ebb4f48b4e8418df093e98345aebe00e31c7, Mobile b9cfe32ae90fadbfe0370341f250f75ac99e2639 and mobile-v3.5.6.
+- Source state: Source checkpoint base HEAD `633deec7105ae599d55e2b4a15fd045f19a21d2c` on `codex/ui-port-boundary`. Official main d5b8246b91d10d57d0cc08d150927a75e087578a, Mobile 174d0a670967ae0feb58ef4f446254acc04b16d0 and tag mobile-v3.5.7.
 - Candidate fingerprint: `8c9c0c82ada3fa02a24bebcb1623765f74f3619492de69a565a22850bb77b8c7`
-- Publication receipt: `verification/receipts/2026-11-05-stable-356-pc200-publication.json` SHA-256 `3429BA5C14826B81104625544042450E5673D31B3CDA2C10938200ABE557EF1F`. It binds published Mobile3.5.6 FCBFB8A0B6D580A3493B791CFA717B6AA88A5F79D8694FC6CBBE493538C6AD55 and PC2.0.0, including six startup observations.
-- Current artifact: Stable publication candidate Mobile3.5.7 300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41. PC2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD retains the published bytes.
-- Current scoped checks: Guarded candidate passed 11 page-scroll and initial-reveal cases, five existing toolbar contexts and 266 checks in 14 list repair scenarios. Anonymous source injection on three public list routes confirmed document scroll and top toolbar restoration.
+- Current stage receipt: `verification/receipts/2026-11-10-stable-357-publication.json` SHA-256 `A8936B33B8E617A20063301277C8E72B6DFC5A6D0E2195F6F698AEFD618A99F8`.
+- Current artifact: Published Mobile 3.5.7 300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41 and PC 2.0.0 F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD.
+- Current scoped checks: Exact 3.5.7 passed 11 focused regression checks and six Chrome/Tampermonkey startup observations with replay.
 - Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
-- Local-only state: `LOCAL_ONLY_EVIDENCE`;artifacts/stable-3.5.6-pc-2.0.0/published has workflow receipt/public readback. testbed/artifacts/stable-356-final-canary binds actual extension evidence. Keep needed release/evidence bytes until cleanup inventory;old prepared bundle is superseded.
+- Local-only state: `LOCAL_ONLY_EVIDENCE`. artifacts/mobile-357-published has official receipt and public readback; testbed/artifacts/stable-357-canary binds startup evidence.
 - Accepted baseline: Actual adopted memo/current v7 detail,pale paired-ink dark buttons,theme accents,inline services/categories and list-only unified plate/original scroll direction. Writer two independent media/HTML and font/link rows;phone nickname uses2 columns/readonly44px reserve. PC keeps native host layout.
-- Last current audit: UNKNOWN for formal candidate acceptance. The earlier publication passed its separate exact-artifact audit under workflow41990171245.
-- Blockers: No open publication task. The working-branch repair has scoped evidence.
-- Pending live checks: Candidate behavior with the user's installed extensions, throttled reload and physical-phone legibility remain unverified. Earlier publication startup and source-injection checks have separate scopes.
+- Last current audit: PASS for official publication only. Workflow 42801017508 completed, canonical and Release checksums matched, notes matched and Pages served the exact index.
+- Blockers: No open publication task.
+- Pending live checks: Physical-phone and installed user extension combinations remain outside the release startup evidence.
 
 ```dcuf-current-artifacts
 {"schemaVersion":1,"mobile":{"sha256":"300A173839FC88897CAC06F1543F516177814DD9C324BC7550A3F8484EC99F41"},"pc":{"sha256":"F6B52CF2E323EA58489003B8D7ECE35724CBE6D15B6C69A90A23F57CD300DCBD"}}
