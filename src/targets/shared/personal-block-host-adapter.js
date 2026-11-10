@@ -519,7 +519,7 @@
             document.body.classList.add('selection-mode-active');
             legacyMethods.markSelectionTargets.call(this);
 
-
+            document.querySelector('#dc-selection-popup[inert]')?.remove();
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
             popup.className = 'dcuf-selection-prompt';
@@ -551,7 +551,7 @@
             if (popup) {
                 popup.inert = true;
                 popup.classList.add('dcuf-pop-leave');
-                window.setTimeout(() => popup.remove(), 120);
+                window.setTimeout(() => popup.remove(), 130);
             }
         },
 
@@ -586,6 +586,7 @@
             document.body.classList.add('selection-mode-active');
             legacyMethods.markSelectionTargets.call(this);
 
+            document.querySelector('#dc-selection-popup[inert]')?.remove();
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
             markOwnedSurface(popup, 'personal-selection', 'panel');

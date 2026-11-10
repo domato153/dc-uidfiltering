@@ -2488,6 +2488,7 @@ test('간편차단 UI로 개인 차단과 차단 해제가 동작한다', 'funct
             commentRole: activeTarget === 'mobile' ? 'author' : null
         });
         await session.page.locator(`${target} .ub-writer`).dispatchEvent('click');
+        assert.equal(await session.page.locator('#dc-selection-popup').count(), 1, 'the fading prompt cannot share an ID with the active chooser');
         await session.page.locator(`#dc-selection-popup button[data-type="uid"][data-value="${uid}"]`).click();
         await waitForHidden(session.page, target);
         assert.deepEqual(await session.page.locator(`${target} .ub-writer`).evaluate((element) => ({
@@ -3730,6 +3731,61 @@ mobileTest('gallery native door keeps trusted controls and both popups across vi
             assertNoRuntimeErrors(await getMetrics(session.page), session.consoleErrors);
         } finally { await session.close(); }
     }
+});
+
+mobileTest('major gallery information and rank retain their original controls at narrow width', 'functional', async ({ browser, server }) => {
+    const session = await createTestPage(browser, server.baseUrl, { storage: noStatsStorage, viewport: { width: 390, height: 560 } });
+    try {
+        await session.goto('/board/lists?id=test');
+        await session.page.evaluate(() => {
+            document.getElementById('dcuf-testbed-controls').style.display = 'none';
+            const head = document.querySelector('.page_head');
+            head.insertAdjacentHTML('beforeend', `
+                <button class="fixture-info" type="button">갤러리 정보</button>
+                <div class="pop_wrap type3" id="gallery_info" style="left:50%;margin-left:-210px;display:none">
+                    <div class="pop_content gall_info">
+                        <div class="pop_head"><h3>갤러리 정보</h3></div>
+                        <div class="inner"><div class="gallinfo_box"><div class="btnbox">
+                            <button class="btn_hotgall_allview" type="button">전체 순위</button>
+                            <div class="pop_wrap type2" id="hot_rank_pop" style="left:-564px;display:none">
+                                <div class="pop_content pop_hot_gall">
+                                    <div class="pop_head"><h3>흥한갤 전체 순위</h3></div>
+                                    <ul class="pop_hotmgall_listbox" style="height:600px"><li>합성 갤러리</li></ul>
+                                    <div class="btn_box"><button class="heung_gall_next" type="button">다음</button></div>
+                                </div>
+                                <button class="under poply_close" type="button">닫기</button>
+                            </div>
+                        </div></div></div>
+                    </div>
+                    <button class="poply_bgblueclose" type="button">닫기</button>
+                </div>`);
+            const info = head.querySelector('#gallery_info');
+            const rank = info.querySelector('#hot_rank_pop');
+            head.querySelector('.fixture-info').onclick = () => { info.style.display = 'block'; };
+            info.querySelector('.btn_hotgall_allview').onclick = () => { rank.style.display = 'block'; };
+            info.querySelector('.poply_bgblueclose').onclick = () => { info.style.display = 'none'; };
+            rank.querySelector('.poply_close').onclick = () => { rank.style.display = 'none'; };
+            rank.querySelector('.heung_gall_next').onclick = event => { event.currentTarget.dataset.called = '1'; };
+        });
+        await session.page.locator('.fixture-info').press('Enter');
+        const info = session.page.locator('#gallery_info');
+        await info.locator('.btn_hotgall_allview').click();
+        const rank = info.locator('#hot_rank_pop');
+        const rect = await rank.boundingBox();
+        assert.ok(rect.x >= 0 && rect.x + rect.width <= 390 && rect.y >= 0 && rect.y + rect.height <= 560);
+        assert.equal(await rank.evaluate(node => getComputedStyle(node).animationName), 'dcuf-gallery-popup-enter');
+        const next = rank.locator('.heung_gall_next');
+        assert.ok(await next.evaluate(node => {
+            const r = node.getBoundingClientRect();
+            return node.contains(document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2));
+        }), 'Rank controls must be reachable before scrolling the long list');
+        await next.click();
+        assert.equal(await next.getAttribute('data-called'), '1');
+        await rank.locator('.poply_close').click();
+        await rank.waitFor({ state: 'hidden' });
+        await info.locator('.poply_bgblueclose').click();
+        await info.waitFor({ state: 'hidden' });
+    } finally { await session.close(); }
 });
 
 mobileTest('major gallery recommendation keeps its original carousel controls', 'functional', async ({ browser, server }) => {
@@ -6616,12 +6672,17 @@ mobileTest('글 미리보기는 정밀 마우스 400ms 대기와 단일 요청 �
         await session.page.waitForSelector('#dcuf-post-preview');
         assert.match(await session.page.locator('#dcuf-post-preview .dcuf-preview-body').textContent(), /본문-/);
         const titleBox = await links.nth(0).boundingBox();
-        const getPreviewLeft = () => session.page.locator('#dcuf-post-preview').evaluate(panel => parseFloat(panel.style.left));
-        await session.page.mouse.move(titleBox.x + titleBox.width * 0.25, titleBox.y + titleBox.height / 2);
-        await session.page.waitForFunction(x => Math.abs(parseFloat(document.getElementById('dcuf-post-preview').style.left) - x - 12) < 2, titleBox.x + titleBox.width * 0.25);
-        const firstLeft = await getPreviewLeft();
-        await session.page.mouse.move(titleBox.x + titleBox.width * 0.75, titleBox.y + titleBox.height / 2);
-        await session.page.waitForFunction(left => parseFloat(document.getElementById('dcuf-post-preview').style.left) > left, firstLeft);
+        const gapY = Math.max(12, Math.ceil(titleBox.height) + 4);
+        for (const [xPart, yPart] of [[.25, .25], [.75, .75]]) {
+            const x = titleBox.x + titleBox.width * xPart;
+            const y = titleBox.y + titleBox.height * yPart;
+            await session.page.mouse.move(x, y);
+            await session.page.waitForFunction(({x, y, gapY}) => {
+                const box = document.getElementById('dcuf-post-preview')?.getBoundingClientRect();
+                return box && Math.abs(box.left - x - 12) < 2
+                    && (Math.abs(box.top - y - gapY) < 2 || Math.abs(y - box.bottom - gapY) < 2);
+            }, {x, y, gapY}, {timeout: 1500});
+        }
         const panelBox = await session.page.locator('#dcuf-post-preview').boundingBox();
         await session.page.mouse.move(panelBox.x + Math.min(80, panelBox.width / 2), panelBox.y + Math.min(80, panelBox.height / 2));
         await session.page.waitForTimeout(380);

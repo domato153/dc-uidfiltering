@@ -363,12 +363,10 @@
             const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
             const anchorX = Number.isFinite(anchor.x) ? anchor.x : bounds.left + margin;
             const anchorY = Number.isFinite(anchor.y) ? anchor.y : bounds.top + margin;
-            const titleRect = anchor.link?.getBoundingClientRect();
-            const withinTitle = titleRect && anchorY >= titleRect.top && anchorY <= titleRect.bottom;
-            const topEdge = withinTitle ? titleRect.top : anchorY;
-            const bottomEdge = withinTitle ? titleRect.bottom : anchorY;
-            const above = topEdge - bounds.top - margin * 2;
-            const below = bounds.bottom - bottomEdge - margin * 2;
+            // Keep the whole title reachable even when the pointer jumps across it.
+            const gapY = Math.max(margin, Math.ceil(anchor.link?.getBoundingClientRect().height || 0) + 4);
+            const above = anchorY - bounds.top - margin - gapY;
+            const below = bounds.bottom - anchorY - margin - gapY;
             Object.assign(panel.style, { width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`, right: 'auto', bottom: 'auto' });
             const desiredHeight = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
             const placeAbove = desiredHeight > below && above > below;
@@ -378,7 +376,7 @@
             let left = anchorX + 12;
             if (left + width > bounds.right - margin) left = anchorX - width - 12;
             left = Math.max(bounds.left + margin, Math.min(left, bounds.right - width - margin));
-            let top = placeAbove ? topEdge - height - margin : bottomEdge + margin;
+            let top = placeAbove ? anchorY - height - gapY : anchorY + gapY;
             top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - height - margin));
             Object.assign(panel.style, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
         },

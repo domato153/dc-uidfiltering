@@ -8,7 +8,8 @@ export async function runB1ContentContract({browser,server}) {
     for(const [width,height,dark] of [[980,900,false],[980,900,true],[390,900,false],[390,520,true],[980,2306,false]]) {
         const e=await createTestPage(browser,server.baseUrl,{viewport:{width,height},storage:{[storageKeys.threshold]:0,[storageKeys.palette]:'teal'}});
         try {
-            await e.page.emulateMedia({reducedMotion:'reduce'});
+            const reducedMotion = width !== 980 || height !== 900 || dark;
+            await e.page.emulateMedia({reducedMotion:reducedMotion?'reduce':'no-preference'});
             await e.page.route(url=>url.origin===server.baseUrl&&url.pathname==='/board/view',async route=>{
                 const response=await route.fetch();let html=await response.text();
                 html=html.replace(/<body\b[^>]*>/,match=>match+'<div class="dcwrap width1160">').replace('</body>','</div></body>');
@@ -23,6 +24,7 @@ export async function runB1ContentContract({browser,server}) {
             for(const [id,trigger] of [['div_txtcon','.tx_txtcon'],['div_con','.tx_dccon']]) {
                 await e.page.locator(`#focus_cmt .dccon_guidebox > ${trigger}`).click();
                 const popup=e.page.locator(`#${id}`);await popup.waitFor({state:'visible'});
+                assert.equal(await popup.evaluate(node=>getComputedStyle(node).animationName),reducedMotion?'none':'dcuf-comment-popup-enter');
                 await popup.scrollIntoViewIfNeeded();
                 const title=popup.locator('[data-dcuf-comment-role="popup-title"]').first();
                 await title.waitFor({state:'visible'});

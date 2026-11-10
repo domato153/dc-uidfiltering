@@ -62,7 +62,7 @@
             e.preventDefault();
 
             const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-            if (settingsPanel) settingsPanel.remove();
+            if (settingsPanel && !settingsPanel.inert) settingsPanel.querySelector(`#${FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON}`)?.click();
             else await FilterModule.showSettings();
         }, true);
     }

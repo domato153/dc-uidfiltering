@@ -14,6 +14,7 @@ export async function runB1ArticleActionsContract({browser,server}) {
     await e.page.locator(`[data-action-fixture="${kind}"]`).click();
     const popup=e.page.locator(`[data-fixture-root="${kind}"]`);
     await e.page.waitForFunction(kind=>document.querySelector(`[data-fixture-root="${kind}"]`)?.getAttribute('data-dcuf-article-popup')===kind,kind,{timeout:4000});
+    assert.equal(await popup.evaluate(node=>getComputedStyle(node).animationName),'dcuf-article-popup-enter');
     const title=popup.locator('[data-dcuf-article-part="title"]').first();await title.waitFor({state:'visible'});
     const control=popup.locator('[data-dcuf-article-part="close"]').last();await control.scrollIntoViewIfNeeded();
     const m=await popup.evaluate(n=>{const r=n.getBoundingClientRect(),s=getComputedStyle(n),p=n.querySelector(':scope > .pop_content'),t=n.querySelector('[data-dcuf-article-part="title"]'),c=Array.from(n.querySelectorAll('[data-dcuf-article-part="close"]')).find(el=>el.closest('[data-dcuf-article-popup]')===n),a=c.getBoundingClientRect();return{left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,blur:s.backdropFilter,background:s.backgroundColor,sheen:s.backgroundImage,radius:parseFloat(s.borderRadius),panel:getComputedStyle(p).backgroundColor,titleWidth:t.getBoundingClientRect().width,closeWidth:a.width,closeHeight:a.height,closeHit:c.contains(document.elementFromPoint(a.x+a.width/2,a.y+a.height/2)),overflow:n.scrollWidth-n.clientWidth};});

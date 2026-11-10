@@ -145,6 +145,89 @@
         ${selectors.root} .pop_tipbox.setting_list [data-dcuf-gallery-page-head-role="menu-control"] { color: var(--dcuf-theme-fg); margin: 0; }
         ${selectors.root} .pop_tipbox.setting_list [data-dcuf-gallery-page-head-role="menu-toggle"] > label { padding-inline-end: 32px; }
         ${selectors.root} [data-dcuf-gallery-page-head-role="settings-layer"] .checkbox[data-dcuf-gallery-page-head-role="menu-toggle"] input:checked + .checkmark { background: var(--dcuf-theme-accent); }
+        /* Major galleries keep information and rankings inside the page head,
+           separate from the issue drawer used by minor and mini galleries. */
+        ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop) {
+            position: fixed;
+            inset: min(14dvh, 96px) 12px auto !important;
+            width: min(480px, calc(100vw - 24px));
+            height: auto;
+            margin: 0 auto !important;
+            box-sizing: border-box;
+            border: 1px solid var(--dcuf-b1-rim);
+            border-radius: 14px;
+            background: transparent;
+            color: var(--dcuf-theme-fg);
+            z-index: 10020;
+            isolation: isolate;
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop { width: min(820px, calc(100vw - 24px)); z-index: 2; }
+        ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop)::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            border-radius: inherit;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            backdrop-filter: var(--dcuf-b1-floating-filter);
+            box-shadow: var(--dcuf-b1-shadow);
+            pointer-events: none;
+        }
+        ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop) > .pop_content {
+            box-sizing: border-box; width: 100%; min-width: 0; height: auto; padding: 0; border: 0; background: transparent; color: inherit;
+        }
+        ${selectors.root} #gallery_info .pop_head {
+            box-sizing: border-box; min-height: 54px; height: auto; padding: 12px 52px 12px 16px; border: 0; border-bottom: 1px solid var(--dcuf-b1-line); background: transparent; color: inherit;
+        }
+        ${selectors.root} #gallery_info .pop_head h3 { margin: 0; color: inherit; font: 700 16px/1.5 system-ui,sans-serif; }
+        ${selectors.root} #gallery_info > .gall_info > .inner {
+            box-sizing: border-box; display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px; width: auto; height: auto; padding: 14px 16px; background: transparent;
+        }
+        ${selectors.root} #gallery_info .imgbox { float: none; max-width: 100%; margin: 0; overflow: hidden; border-radius: 8px; }
+        ${selectors.root} #gallery_info .imgbox img { max-width: 100%; object-fit: cover; }
+        ${selectors.root} #gallery_info .gallinfo_box { flex: 1 1 180px; float: none; width: auto; min-width: 0; margin: 0; }
+        ${selectors.root} #gallery_info :is(.gallinfo, .gallinfo .info, .gallinfo .info span, .pop_hotmgall_listbox a) { color: var(--dcuf-theme-fg); }
+        ${selectors.root} #gallery_info .btn_hotgall_allview {
+            border-color: var(--dcuf-b1-rim); border-radius: 8px; background: var(--dcuf-v7-primary-fill); color: var(--dcuf-v7-primary-ink);
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop > .pop_content {
+            max-height: min(75dvh, 620px); overflow: auto; overscroll-behavior: contain;
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop .btn_box {
+            position: sticky; left: 0; bottom: 0; z-index: 1; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding-block: 6px; margin: 0; background: var(--dcuf-b1-paper);
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop .btn_box > :is(.btn_prev, .btn_next) {
+            display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+            border: 1px solid var(--dcuf-b1-rim); border-radius: 8px; background: var(--dcuf-v7-reading); color: inherit;
+        }
+        ${selectors.root} #gallery_info:has(#hot_rank_pop:not([style*="display:none"], [style*="display: none"])) > :is(.gall_info, .poply_bgblueclose) { visibility: hidden; }
+        ${selectors.root} #gallery_info:has(#hot_rank_pop:not([style*="display:none"], [style*="display: none"]))::before { visibility: hidden; }
+        ${selectors.root} #gallery_info #hot_rank_pop { visibility: visible; }
+        ${selectors.root} #gallery_info .pop_hotmgall_listbox { box-sizing: border-box; width: auto; min-width: 540px; padding-inline: 14px; }
+        ${selectors.root} #gallery_info .pop_hotmgall_listbox > li { box-sizing: border-box; width: 20%; }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close) {
+            position: absolute; inset: 8px 8px auto auto; z-index: 3; display: grid; place-items: center;
+            width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit;
+        }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close) > .sp_img {
+            position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+        }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close)::after { content: '×'; font: 22px/1 system-ui,sans-serif; }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close):is(:hover,:focus-visible) { background: var(--dcuf-theme-accent-soft); }
+        @media (prefers-reduced-motion: no-preference) {
+            ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop),
+            ${selectors.root} > :is(#movie_set_lyr, #autozzal_all_lists_pop),
+            :is([data-dcuf-gallery-page-head-role="settings-layer"], [data-dcuf-gallery-page-head-role="guide-layer"], [data-dcuf-gallery-page-head-role^="settings-popup-"]) {
+                animation: dcuf-gallery-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                @supports (transition-behavior: allow-discrete) {
+                    transition: opacity 130ms ease-in, display 130ms allow-discrete;
+                    &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }
+                }
+            }
+            @keyframes dcuf-gallery-popup-enter { from { opacity: 0; } }
+        }
         [data-dcuf-gallery-page-head-role="layer-anchor"] > div[data-dcuf-gallery-page-head-role="guide-backdrop"] { position: fixed; inset: 0; background: #14262826; z-index: 2147483000; }
         [data-dcuf-gallery-page-head-role="layer-anchor"] > div[data-dcuf-gallery-page-head-role="guide-layer"] { position: fixed; left: 50%; top: var(--dcuf-gallery-guide-center,calc(50% - 48px)) !important; margin: 0 !important; transform: translate(-50%,-50%); width: min(640px,calc(100vw - 32px)); max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px - var(--dcuf-gallery-guide-clearance,96px)); box-sizing: border-box; overflow: hidden; border: 1px solid var(--dcuf-b1-rim); border-radius: 16px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px)); box-shadow: var(--dcuf-b1-shadow); z-index: 2147483001 !important; }
         [data-dcuf-gallery-page-head-role="guide-layer"] > [data-dcuf-gallery-page-head-role="layer-panel"] { width: 100%; height: auto; min-height: 0; padding: 0; border: 0; background: transparent; color: inherit; }

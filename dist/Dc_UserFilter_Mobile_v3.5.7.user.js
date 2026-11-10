@@ -2573,6 +2573,9 @@ const __dcufSettingsPresenter = (() => {
         [data-dcuf-surface="personal-selection"] .cancel-btn,[data-dcuf-surface="personal-size"] .dcuf-button--secondary { min-height:var(--dcuf-personal-utility-height,44px);padding:var(--dcuf-personal-utility-padding,9px 14px);border-color:var(--dcuf-child-quiet-rim,color-mix(in srgb,var(--dcuf-theme-accent,#4263eb) 24%,var(--dcuf-theme-border,#d9dde3)));border-radius:var(--dcuf-child-quiet-radius,var(--dcuf-radius-control));background:var(--dcuf-child-quiet-bg,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff)));color:var(--dcuf-personal-quiet-ink,var(--dcuf-theme-accent-ink,#315fdb));box-shadow:var(--dcuf-child-quiet-shadow,var(--dcuf-control-shadow,none));font-weight:var(--dcuf-child-control-weight,780); }
         [data-dcuf-surface="personal-selection"] .cancel-btn:hover,[data-dcuf-surface="personal-selection"] .cancel-btn:focus-visible,[data-dcuf-surface="personal-size"] .dcuf-button--secondary:hover,[data-dcuf-surface="personal-size"] .dcuf-button--secondary:focus-visible { background:var(--dcuf-child-action-hover,var(--dcuf-control-glaze,none) var(--dcuf-control-secondary-fill,var(--dcuf-theme-accent-soft,#e9efff))); }
         [data-dcuf-surface="personal-selection"].dcuf-selection-prompt { display:grid;grid-template-columns:38px minmax(0,1fr) auto;align-items:center;gap:10px; }
+        @media (prefers-reduced-motion:no-preference) {
+            [data-dcuf-surface="personal-selection"].dcuf-selection-prompt:not(.dcuf-pop-leave) { animation:dcuf-modern-panel-in var(--dcuf-motion-panel) cubic-bezier(.2,.8,.2,1); }
+        }
         [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-icon { display:grid;width:36px;height:36px;place-items:center;border-radius:11px;background:var(--dcuf-theme-accent-soft,#e9efff);color:var(--dcuf-theme-accent-ink,#4263eb); }
         [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-copy h4,[data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-copy p { margin:0; }
         [data-dcuf-surface="personal-selection"] .dcuf-selection-prompt-copy p { color:var(--dcuf-theme-fg-muted,#687384);font-size:11.5px; }
@@ -4831,6 +4834,16 @@ const __dcufSettingsPresenter = (() => {
                 opacity: 1;
                 line-height: 29px;
             }
+            @media (prefers-reduced-motion: no-preference) {
+                [data-dcuf-role="article"] .pop_wrap[data-dcuf-article-popup] {
+                    animation: dcuf-article-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                    @supports (transition-behavior: allow-discrete) {
+                        transition: opacity 130ms ease-in, display 130ms allow-discrete;
+                        &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }
+                    }
+                }
+                @keyframes dcuf-article-popup-enter { from { opacity: 0; } }
+            }
             [data-dcuf-role="article"] .pop_wrap[data-dcuf-article-popup] {
                 box-sizing: border-box; color: var(--dcuf-view-fg); font: 400 14px/1.5 system-ui, sans-serif;
                 border: 1px solid var(--dcuf-b1-rim); border-radius: 16px;
@@ -6092,6 +6105,17 @@ const __dcufSettingsPresenter = (() => {
             [data-dcuf-role="native-comment-popup"] {
                 z-index: 2147483647;
                 overflow: visible;
+            }
+            @media (prefers-reduced-motion: no-preference) {
+                [data-dcuf-role="comments-root"] .dccon_guidebox > :is(#div_con, #div_txtcon),
+                [data-dcuf-role="native-comment-popup"]:is([data-dcuf-comment-role="comment-picker"], [data-dcuf-comment-role="comment-detail"], [data-dcuf-comment-role="comment-info"], [data-dcuf-comment-role="comment-folder"]) {
+                    animation: dcuf-comment-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                    @supports (transition-behavior: allow-discrete) {
+                        transition: opacity 130ms ease-in, display 130ms allow-discrete;
+                        &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }
+                    }
+                }
+                @keyframes dcuf-comment-popup-enter { from { opacity: 0; } }
             }
             [data-dcuf-role="comments-root"] [data-dcuf-role="native-comment-popup"]:not(.dcuf-native-author-anchor):not(.dcuf-native-author-menu):not(.dcuf-native-memo):not(.dcuf-native-memo-picker) {
                 border: 1px solid var(--dcuf-b1-rim, var(--dcuf-comment-border));
@@ -11985,6 +12009,89 @@ const __dcufSettingsPresenter = (() => {
         ${selectors.root} .pop_tipbox.setting_list [data-dcuf-gallery-page-head-role="menu-control"] { color: var(--dcuf-theme-fg); margin: 0; }
         ${selectors.root} .pop_tipbox.setting_list [data-dcuf-gallery-page-head-role="menu-toggle"] > label { padding-inline-end: 32px; }
         ${selectors.root} [data-dcuf-gallery-page-head-role="settings-layer"] .checkbox[data-dcuf-gallery-page-head-role="menu-toggle"] input:checked + .checkmark { background: var(--dcuf-theme-accent); }
+        /* Major galleries keep information and rankings inside the page head,
+           separate from the issue drawer used by minor and mini galleries. */
+        ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop) {
+            position: fixed;
+            inset: min(14dvh, 96px) 12px auto !important;
+            width: min(480px, calc(100vw - 24px));
+            height: auto;
+            margin: 0 auto !important;
+            box-sizing: border-box;
+            border: 1px solid var(--dcuf-b1-rim);
+            border-radius: 14px;
+            background: transparent;
+            color: var(--dcuf-theme-fg);
+            z-index: 10020;
+            isolation: isolate;
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop { width: min(820px, calc(100vw - 24px)); z-index: 2; }
+        ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop)::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            border-radius: inherit;
+            background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+            backdrop-filter: var(--dcuf-b1-floating-filter);
+            box-shadow: var(--dcuf-b1-shadow);
+            pointer-events: none;
+        }
+        ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop) > .pop_content {
+            box-sizing: border-box; width: 100%; min-width: 0; height: auto; padding: 0; border: 0; background: transparent; color: inherit;
+        }
+        ${selectors.root} #gallery_info .pop_head {
+            box-sizing: border-box; min-height: 54px; height: auto; padding: 12px 52px 12px 16px; border: 0; border-bottom: 1px solid var(--dcuf-b1-line); background: transparent; color: inherit;
+        }
+        ${selectors.root} #gallery_info .pop_head h3 { margin: 0; color: inherit; font: 700 16px/1.5 system-ui,sans-serif; }
+        ${selectors.root} #gallery_info > .gall_info > .inner {
+            box-sizing: border-box; display: flex; align-items: flex-start; flex-wrap: wrap; gap: 12px; width: auto; height: auto; padding: 14px 16px; background: transparent;
+        }
+        ${selectors.root} #gallery_info .imgbox { float: none; max-width: 100%; margin: 0; overflow: hidden; border-radius: 8px; }
+        ${selectors.root} #gallery_info .imgbox img { max-width: 100%; object-fit: cover; }
+        ${selectors.root} #gallery_info .gallinfo_box { flex: 1 1 180px; float: none; width: auto; min-width: 0; margin: 0; }
+        ${selectors.root} #gallery_info :is(.gallinfo, .gallinfo .info, .gallinfo .info span, .pop_hotmgall_listbox a) { color: var(--dcuf-theme-fg); }
+        ${selectors.root} #gallery_info .btn_hotgall_allview {
+            border-color: var(--dcuf-b1-rim); border-radius: 8px; background: var(--dcuf-v7-primary-fill); color: var(--dcuf-v7-primary-ink);
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop > .pop_content {
+            max-height: min(75dvh, 620px); overflow: auto; overscroll-behavior: contain;
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop .btn_box {
+            position: sticky; left: 0; bottom: 0; z-index: 1; width: 100%;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding-block: 6px; margin: 0; background: var(--dcuf-b1-paper);
+        }
+        ${selectors.root} #gallery_info #hot_rank_pop .btn_box > :is(.btn_prev, .btn_next) {
+            display: grid; place-items: center; width: 32px; height: 32px; padding: 0;
+            border: 1px solid var(--dcuf-b1-rim); border-radius: 8px; background: var(--dcuf-v7-reading); color: inherit;
+        }
+        ${selectors.root} #gallery_info:has(#hot_rank_pop:not([style*="display:none"], [style*="display: none"])) > :is(.gall_info, .poply_bgblueclose) { visibility: hidden; }
+        ${selectors.root} #gallery_info:has(#hot_rank_pop:not([style*="display:none"], [style*="display: none"]))::before { visibility: hidden; }
+        ${selectors.root} #gallery_info #hot_rank_pop { visibility: visible; }
+        ${selectors.root} #gallery_info .pop_hotmgall_listbox { box-sizing: border-box; width: auto; min-width: 540px; padding-inline: 14px; }
+        ${selectors.root} #gallery_info .pop_hotmgall_listbox > li { box-sizing: border-box; width: 20%; }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close) {
+            position: absolute; inset: 8px 8px auto auto; z-index: 3; display: grid; place-items: center;
+            width: 36px; height: 36px; margin: 0; padding: 0; border: 0; border-radius: 8px; background: transparent; color: inherit;
+        }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close) > .sp_img {
+            position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%);
+        }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close)::after { content: '×'; font: 22px/1 system-ui,sans-serif; }
+        ${selectors.root} #gallery_info :is(.poply_bgblueclose, .under.poply_close):is(:hover,:focus-visible) { background: var(--dcuf-theme-accent-soft); }
+        @media (prefers-reduced-motion: no-preference) {
+            ${selectors.root} :is(#gallery_info, #gallery_info #hot_rank_pop),
+            ${selectors.root} > :is(#movie_set_lyr, #autozzal_all_lists_pop),
+            :is([data-dcuf-gallery-page-head-role="settings-layer"], [data-dcuf-gallery-page-head-role="guide-layer"], [data-dcuf-gallery-page-head-role^="settings-popup-"]) {
+                animation: dcuf-gallery-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                @supports (transition-behavior: allow-discrete) {
+                    transition: opacity 130ms ease-in, display 130ms allow-discrete;
+                    &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }
+                }
+            }
+            @keyframes dcuf-gallery-popup-enter { from { opacity: 0; } }
+        }
         [data-dcuf-gallery-page-head-role="layer-anchor"] > div[data-dcuf-gallery-page-head-role="guide-backdrop"] { position: fixed; inset: 0; background: #14262826; z-index: 2147483000; }
         [data-dcuf-gallery-page-head-role="layer-anchor"] > div[data-dcuf-gallery-page-head-role="guide-layer"] { position: fixed; left: 50%; top: var(--dcuf-gallery-guide-center,calc(50% - 48px)) !important; margin: 0 !important; transform: translate(-50%,-50%); width: min(640px,calc(100vw - 32px)); max-width: calc(100vw - 32px); max-height: calc(100dvh - 32px - var(--dcuf-gallery-guide-clearance,96px)); box-sizing: border-box; overflow: hidden; border: 1px solid var(--dcuf-b1-rim); border-radius: 16px; background: var(--dcuf-b1-sheen),var(--dcuf-b1-floating); color: var(--dcuf-theme-fg); backdrop-filter: var(--dcuf-b1-floating-filter,blur(24px)); box-shadow: var(--dcuf-b1-shadow); z-index: 2147483001 !important; }
         [data-dcuf-gallery-page-head-role="guide-layer"] > [data-dcuf-gallery-page-head-role="layer-panel"] { width: 100%; height: auto; min-height: 0; padding: 0; border: 0; background: transparent; color: inherit; }
@@ -13367,6 +13474,22 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
             /* Native empty gallery-box retains15px bottom margin after its
                contents are concealed;that margin collapses between our rows. */
             :where([data-dcuf-list-header])[data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-part="carrier"] { margin: 0; }
+            @media (prefers-reduced-motion: no-preference) {
+                [data-dcuf-header-drawer-scope="1"] ${selectors.door}[data-dcuf-header-native-door-open="1"]:not([data-dcuf-header-native-door-popup-only]),
+                [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"],
+                [data-dcuf-header-drawer-scope="1"] ${selectors.door} :is(${selectors.rankPopup}, ${selectors.tipPopup}),
+                [data-dcuf-header-drawer-scope="1"] ${selectors.relationPopup}:not([data-dcuf-header-relation-static="1"]) {
+                    animation: dcuf-drawer-popup-enter 180ms cubic-bezier(.2,.8,.2,1);
+                }
+                @supports (transition-behavior: allow-discrete) {
+                    [data-dcuf-header-drawer-scope="1"] ${selectors.door}:not([data-dcuf-header-native-door-popup-only]) :is(${selectors.rankPopup}, ${selectors.tipPopup}),
+                    [data-dcuf-header-drawer-scope="1"] ${selectors.relationPopup}:not([data-dcuf-header-relation-static="1"]) {
+                        transition: opacity 130ms ease-in, display 130ms allow-discrete;
+                        &:is([style*="display:none"], [style*="display: none"]) { animation: none; opacity: 0; pointer-events: none; }
+                    }
+                }
+                @keyframes dcuf-drawer-popup-enter { from { opacity: 0; } }
+            }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"] {
                 position: relative;
                 z-index: 3;
@@ -13416,7 +13539,6 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 overflow: hidden;
                 pointer-events: none;
                 z-index: 60;
-                transition: opacity 0.18s ease;
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer="1"][data-open="1"] .dcuf-header-drawer__body {
                 display: block;
@@ -13530,9 +13652,11 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 box-sizing: border-box;
                 margin: 0;
                 float: none;
-                border: 1px solid var(--dcuf-border, #dfe5ee);
-                background: #fff;
-                box-shadow: 0 10px 22px rgba(12, 22, 40, 0.12);
+                border: 1px solid var(--dcuf-b1-rim);
+                border-radius: 14px;
+                background: var(--dcuf-b1-sheen), var(--dcuf-b1-floating);
+                color: var(--dcuf-theme-fg);
+                box-shadow: var(--dcuf-b1-shadow);
                 overflow: auto;
                 z-index: 60;
             }
@@ -13544,10 +13668,8 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
                 max-width: 100%;
                 float: none;
             }
-            [data-dcuf-header-drawer-scope="1"].dc-filter-dark-mode ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] {
-                background: #1a222e;
-                border-color: #3d4c60;
-                color: #d2dced;
+            [data-dcuf-header-drawer-scope="1"] ${selectors.recommendation}[data-dcuf-header-native-recom-open="1"] > ${selectors.recommendationText} a {
+                color: var(--dcuf-theme-fg);
             }
             [data-dcuf-header-drawer-scope="1"] [data-dcuf-header-drawer-popup="1"] {
                 position: fixed !important;
@@ -13900,7 +14022,7 @@ ${selectors.shellTag}[data-dcuf-gallery-page-head-role^="settings-popup-"] :is(b
         const hasOpenNativePopup = (source) => source instanceof HTMLElement
             && ['#hot_rank_pop2', '#hot_tip_pop'].some((selector) => {
                 const popup = source.querySelector(selector);
-                return popup instanceof HTMLElement && getComputedStyle(popup).display !== 'none';
+                return popup instanceof HTMLElement && popup.style.display !== 'none' && getComputedStyle(popup).display !== 'none';
             });
         const ensureDrawerStyle = () => {
             const definition = nativeStyleDefinition;
@@ -18954,12 +19076,10 @@ const ThemeModule = (() => {
             const maxHeight = Math.max(1, Math.min(620, bounds.height - margin * 2));
             const anchorX = Number.isFinite(anchor.x) ? anchor.x : bounds.left + margin;
             const anchorY = Number.isFinite(anchor.y) ? anchor.y : bounds.top + margin;
-            const titleRect = anchor.link?.getBoundingClientRect();
-            const withinTitle = titleRect && anchorY >= titleRect.top && anchorY <= titleRect.bottom;
-            const topEdge = withinTitle ? titleRect.top : anchorY;
-            const bottomEdge = withinTitle ? titleRect.bottom : anchorY;
-            const above = topEdge - bounds.top - margin * 2;
-            const below = bounds.bottom - bottomEdge - margin * 2;
+            // Keep the whole title reachable even when the pointer jumps across it.
+            const gapY = Math.max(margin, Math.ceil(anchor.link?.getBoundingClientRect().height || 0) + 4);
+            const above = anchorY - bounds.top - margin - gapY;
+            const below = bounds.bottom - anchorY - margin - gapY;
             Object.assign(panel.style, { width: `${Math.floor(width)}px`, maxHeight: `${Math.floor(maxHeight)}px`, right: 'auto', bottom: 'auto' });
             const desiredHeight = Math.min(maxHeight, panel.getBoundingClientRect().height || maxHeight);
             const placeAbove = desiredHeight > below && above > below;
@@ -18969,7 +19089,7 @@ const ThemeModule = (() => {
             let left = anchorX + 12;
             if (left + width > bounds.right - margin) left = anchorX - width - 12;
             left = Math.max(bounds.left + margin, Math.min(left, bounds.right - width - margin));
-            let top = placeAbove ? topEdge - height - margin : bottomEdge + margin;
+            let top = placeAbove ? anchorY - height - gapY : anchorY + gapY;
             top = Math.max(bounds.top + margin, Math.min(top, bounds.bottom - height - margin));
             Object.assign(panel.style, { left: `${Math.round(left)}px`, top: `${Math.round(top)}px` });
         },
@@ -20172,7 +20292,7 @@ const ThemeModule = (() => {
             document.body.classList.add('selection-mode-active');
             legacyMethods.markSelectionTargets.call(this);
 
-
+            document.querySelector('#dc-selection-popup[inert]')?.remove();
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
             popup.className = 'dcuf-selection-prompt';
@@ -20204,7 +20324,7 @@ const ThemeModule = (() => {
             if (popup) {
                 popup.inert = true;
                 popup.classList.add('dcuf-pop-leave');
-                window.setTimeout(() => popup.remove(), 120);
+                window.setTimeout(() => popup.remove(), 130);
             }
         },
 
@@ -20239,6 +20359,7 @@ const ThemeModule = (() => {
             document.body.classList.add('selection-mode-active');
             legacyMethods.markSelectionTargets.call(this);
 
+            document.querySelector('#dc-selection-popup[inert]')?.remove();
             const popup = document.createElement('div');
             popup.id = 'dc-selection-popup';
             markOwnedSurface(popup, 'personal-selection', 'panel');
@@ -24617,8 +24738,8 @@ init() {
                 if (document.getElementById(FilterModule.CONSTANTS.UI_IDS.SHORTCUT_MODAL)) return;
                 e.preventDefault();
                 const settingsPanel = document.getElementById(FilterModule.CONSTANTS.UI_IDS.SETTINGS_PANEL);
-                if (settingsPanel) {
-                    settingsPanel.remove();
+                if (settingsPanel && !settingsPanel.inert) {
+                    settingsPanel.querySelector(`#${FilterModule.CONSTANTS.UI_IDS.CLOSE_BUTTON}`)?.click();
                 } else {
                     await FilterModule.showSettings();
                 }

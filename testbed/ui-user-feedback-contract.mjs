@@ -39,7 +39,9 @@ export async function runShortcutFeedbackContract({browser,server,observeOnly=fa
    }
    for(const chord of ['Control+Alt+F2','Control+Alt+K']) {
     await parent.locator('#dcinside-change-shortcut-btn').click();await p.keyboard.press(chord);const expected=await modal.locator('output').innerText();await modal.getByRole('button',{name:'변경',exact:true}).click();await modal.waitFor({state:'detached'});check(await value()===expected,'Valid shortcut retains string storage');
-    await parent.locator('#dcinside-filter-close').click();await parent.waitFor({state:'detached'});await p.keyboard.press(chord);await parent.waitFor({state:'visible'});
+    await p.keyboard.press(chord);
+    check(await parent.evaluate(node=>node.inert&&node.classList.contains('dcuf-pop-leave')),'Shortcut closes through the panel fade and disables input immediately');
+    await parent.waitFor({state:'detached'});await p.keyboard.press(chord);await parent.waitFor({state:'visible'});
    }
    // An IME-shaped replay must also launch the saved logical K shortcut.
     await parent.locator('#dcinside-filter-close').click();await parent.waitFor({state:'detached'});await p.evaluate(()=>document.body.dispatchEvent(new KeyboardEvent('keydown',{key:'Process',code:'KeyK',ctrlKey:true,altKey:true,isComposing:true,bubbles:true,cancelable:true})));await parent.waitFor({state:'visible',timeout:2500});

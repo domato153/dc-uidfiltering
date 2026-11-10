@@ -2,14 +2,14 @@
 
 ## Current execution
 
-- Active plan: Mobile 3.5.7 is published. The development candidate adds popup transitions, delayed-preview presentation, and the native list size repair.
+- Active plan: Mobile 3.5.7 is published. The development candidate adds native popup coverage, two-axis pointer preview, and the native list size repair. The PC candidate shares the quick-block and settings dismissal repairs.
 - Workspace path: `.` (private prompt supplies exact worktree). Preserve debug.log unread/unstaged.
 - Active stage: `stable-closeout`;next action `post-release-artifact-inventory`.
-- Source state: Source checkpoint base HEAD `072f4372ede25429984fc4edb3854a40959efabe` on `codex/ui-port-boundary`. Published refs and hashes are bound by the 3.5.7 publication receipt.
-- Candidate fingerprint: `c85e7a3e1a7972ce2abd5862e22042c2c93b7525546faa72d8ad761109d8a5af`
+- Source state: Source checkpoint base HEAD `cd14084d3384ba678ea2f56b07c32e80e2b2ccd7` on `codex/ui-port-boundary`. Published refs and hashes are bound by the 3.5.7 publication receipt.
+- Candidate fingerprint: `23fe12e9d391a16b200cb95c59658f9e0457894e6b13a99e0b92aa9d921bbc4b`
 - Current stage receipt: `verification/receipts/2026-11-10-stable-357-publication.json` SHA-256 `A8936B33B8E617A20063301277C8E72B6DFC5A6D0E2195F6F698AEFD618A99F8`.
-- Current artifact: Development Mobile 3.5.7 F20310C58EC0B6783C54FDCE71951F2C2CD20431F971731D8918C4AE072BE631 and PC 2.0.0 C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12. The publication receipt still identifies the separately published bytes.
-- Current scoped checks: The guarded development Mobile runtime passed 12 page-scroll and list-control checks and the native author contract in nine states. Chrome 157 with the same injected runtime and a GM shim verified 30/50/100 navigation and actual returned row counts on public general, minor and mini lists. This is separate from installed-extension and physical-device coverage.
+- Current artifact: Development Mobile 3.5.7 67817D880601E6574DB336CBD24F6124540F5FADEE152324CBF5FDAC528CD2B8 and PC 2.0.0 B2E128D6AAD2A820CC440F4B3F8E5EC8E15BFAF369D92CB3F37321A15AAB6B28. The publication receipt identifies the separately published bytes.
+- Current scoped checks: Guarded Mobile and PC builds passed quick-block and settings-shortcut coverage. The scoped Mobile checks cover pointer preview, native comment pickers including reduced motion, article action fixtures and the narrow general-gallery rank window. Public comic_new6 on Chrome 157 with the injected Mobile build and GM shim verified opening and closing the original door/info/rank and actual rank paging at 980 and 390px, plus textcon entry. Two older drawer tests hit the same header interception before opening on the previous and current candidates. The public author click reached the native POST lookup, which was blocked by the probe. No account or live vote was submitted.
 - Reviewable proposal: Adopted site/index/README and real examples are official. Nickname-fixed writer image is published on main/Mobile and Pages;public hash matches. Latest filename/version policy preserves single-digit components1.9.9→2.0.0.
 - Local-only state: `LOCAL_ONLY_EVIDENCE`. artifacts/mobile-357-published has official receipt and public readback; testbed/artifacts/stable-357-canary binds startup evidence.
 - Accepted baseline: Actual adopted memo/current v7 detail,pale paired-ink dark buttons,theme accents,inline services/categories and list-only unified plate/original scroll direction. Writer two independent media/HTML and font/link rows;phone nickname uses2 columns/readonly44px reserve. PC keeps native host layout.
@@ -18,7 +18,7 @@
 - Pending live checks: Popup animation timing and preview tracking in the installed user environment remain to be confirmed.
 
 ```dcuf-current-artifacts
-{"schemaVersion":1,"mobile":{"sha256":"F20310C58EC0B6783C54FDCE71951F2C2CD20431F971731D8918C4AE072BE631"},"pc":{"sha256":"C09669DDDE8BEFB44E118F35364F7AEDFE64982D8AC46BB553724FD4D8538C12"}}
+{"schemaVersion":1,"mobile":{"sha256":"67817D880601E6574DB336CBD24F6124540F5FADEE152324CBF5FDAC528CD2B8"},"pc":{"sha256":"B2E128D6AAD2A820CC440F4B3F8E5EC8E15BFAF369D92CB3F37321A15AAB6B28"}}
 ```
 
 ## Pending real-use feedback —2026-11-03

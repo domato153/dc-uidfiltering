@@ -198,7 +198,7 @@
         const hasOpenNativePopup = (source) => source instanceof HTMLElement
             && ['#hot_rank_pop2', '#hot_tip_pop'].some((selector) => {
                 const popup = source.querySelector(selector);
-                return popup instanceof HTMLElement && getComputedStyle(popup).display !== 'none';
+                return popup instanceof HTMLElement && popup.style.display !== 'none' && getComputedStyle(popup).display !== 'none';
             });
         const ensureDrawerStyle = () => {
             const definition = nativeStyleDefinition;
